@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:your_project/views/login/login_page.dart';
+import 'package:frontend/views/login/login_page.dart';
 
 class AppRoutes {
   static const String home = '/';
