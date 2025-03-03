@@ -7,12 +7,12 @@ class InteractiveStarRating extends StatefulWidget {
   final Function(int rating) onRatingChanged;
 
   const InteractiveStarRating({
-    Key? key,
+    super.key,
     this.maxRating = 5,
     this.color = Colors.black,
     this.size = 30,
     required this.onRatingChanged,
-  }) : super(key: key);
+  });
 
   @override
   _InteractiveStarRatingState createState() => _InteractiveStarRatingState();
