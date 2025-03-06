@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 9090
   servlet:
     context-path: /quanly_sach
 spring:
@@ -12,4 +12,5 @@ jpa:
   hibernate:
     ddl-auto: update
   show-sql: true
-  
+jwt:
+  secret: 6AqXCh9nL6Wn9bYr5RtxZ+T9H2OsmDhp1XrZwo8Gy30=

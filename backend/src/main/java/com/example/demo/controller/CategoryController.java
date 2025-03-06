@@ -13,11 +13,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.entity.Category;
-import com.example.demo.entity.NhaXuatBan;
 import com.example.demo.service.CategoryService;
 
 @RestController
-@RequestMapping("/categories")
+@RequestMapping("/quanly_sach/categories")
 public class CategoryController {
     @Autowired
     private CategoryService categoryService;

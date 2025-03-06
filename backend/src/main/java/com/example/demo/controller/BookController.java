@@ -14,7 +14,7 @@ import com.example.demo.entity.Book;
 import com.example.demo.service.BookService;
 
 @RestController
-@RequestMapping("/books")
+@RequestMapping("/quanly_sach/books")
 public class BookController {
     @Autowired
     private BookService bookService;

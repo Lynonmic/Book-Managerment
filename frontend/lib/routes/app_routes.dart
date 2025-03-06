@@ -8,6 +8,6 @@ class AppRoutes {
   static const String profile = '/profile';
 
   static Map<String, WidgetBuilder> getRoutes() {
-    return {home: (context) => const HomePage()};
+    return {home: (context) => const LoginPage()};
   }
 }
