@@ -6,23 +6,37 @@ class ApiService {
 
   static Future<Map<String, dynamic>> loginUser(String email, String password) async {
     try {
+      print("🔹 Gửi request đến API...");
+      print("📤 URL: $baseUrl");
+      print("📤 Headers: {Content-Type: application/json}");
+      print("📤 Body: ${jsonEncode({"email": email, "password": password})}");
+
       final response = await http.post(
         Uri.parse(baseUrl),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
-          "email": email, 
-          "password": password, 
+          "email": email,
+          "password": password,
         }),
       );
 
+      print("🔹 Nhận phản hồi từ API...");
+      print("📥 Status Code: ${response.statusCode}");
+      print("📥 Response Body: ${response.body}");
+
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return {"success": true, "token": data};
+        return {"success": true, "token": response.body}; // Trả về token trực tiếp
       } else {
-        return {"success": false, "message": response.body};
+        // Parse JSON để lấy thông báo lỗi nếu có
+        final errorData = jsonDecode(response.body);
+        return {
+          "success": false,
+          "message": errorData["message"] ?? "Sai email hoặc mật khẩu!",
+        };
       }
     } catch (e) {
-      return {"success": false, "message": "Lỗi kết nối"};
+      print("⚠️ Lỗi kết nối: $e");
+      return {"success": false, "message": "Lỗi kết nối đến server!"};
     }
   }
 }

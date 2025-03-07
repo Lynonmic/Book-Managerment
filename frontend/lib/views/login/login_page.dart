@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/service/api_service.dart';
 import 'package:frontend/views/book/book_page.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -23,43 +22,23 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    try {
-      print("🔹 Gửi request đến API...");
-      print("📤 URL: http://10.0.2.2:9090/quanly_sach/auth/login");
-      print("📤 Headers: ${{"Content-Type": "application/json"}}");
-      print("📤 Body: ${jsonEncode({"email": email, "password": password})}");
+    var response = await ApiService.loginUser(email, password);
 
-      var response = await http.post(
-        Uri.parse("http://10.0.2.2:9090/quanly_sach/auth/login"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"email": email, "password": password}),
+    if (response["success"]) {
+      String token = response["token"];
+      print("✅ Đăng nhập thành công, Token: $token");
+      _showMessage("Đăng nhập thành công!");
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const BookPage()),
       );
-
-      print("🔹 Nhận phản hồi từ API...");
-      print("📥 Status Code: ${response.statusCode}");
-      print("📥 Response Body: ${response.body}");
-
-      if (response.statusCode == 200) {
-        String token = response.body;
-        print("✅ Đăng nhập thành công, Token: $token");
-        _showMessage("Đăng nhập thành công!");
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const BookPage()),
-        );
-      } else {
-        _showMessage("❌ Sai email hoặc mật khẩu!");
-      }
-    } catch (e) {
-      print("⚠️ Lỗi kết nối: $e");
-      _showMessage("Lỗi kết nối đến server!");
+    } else {
+      _showMessage("❌ ${response["message"]}");
     }
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
