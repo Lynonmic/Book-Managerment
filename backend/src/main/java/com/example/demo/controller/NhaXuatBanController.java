@@ -16,7 +16,7 @@ import com.example.demo.entity.NhaXuatBan;
 import com.example.demo.service.NhaXuatBanService;
 
 @RestController
-@RequestMapping("/nha-xuat-ban")
+@RequestMapping("/quanly_sach/nha-xuat-ban")
 public class NhaXuatBanController {
     @Autowired
     private NhaXuatBanService nhaXuatBanService;
