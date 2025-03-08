@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/service/api_service.dart';
 import 'package:frontend/views/book/book_page.dart';
+import 'package:frontend/views/login/signin_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,6 +13,8 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  bool isPasswordVisible = false;
 
   Future<void> _login() async {
     String email = _emailController.text.trim();
@@ -38,7 +41,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -74,6 +79,7 @@ class _LoginPageState extends State<LoginPage> {
               // Ô nhập Email
               TextField(
                 controller: _emailController,
+
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.white, // Nền trắng
@@ -90,7 +96,7 @@ class _LoginPageState extends State<LoginPage> {
               // Ô nhập Password
               TextField(
                 controller: _passwordController,
-                obscureText: true,
+                obscureText: !isPasswordVisible,
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.white, // Nền trắng
@@ -99,6 +105,20 @@ class _LoginPageState extends State<LoginPage> {
                     borderRadius: BorderRadius.circular(50),
                   ),
                   prefixIcon: const Icon(Icons.lock, color: Colors.black),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      isPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      color: Colors.black,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        isPasswordVisible =
+                            !isPasswordVisible; // 🔄 Đảo trạng thái
+                      });
+                    },
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -135,7 +155,12 @@ class _LoginPageState extends State<LoginPage> {
               Center(
                 child: TextButton(
                   onPressed: () {
-                    // Chuyển sang trang đăng ký
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SigninPage(),
+                      ),
+                    );
                   },
                   child: const Text(
                     "Chưa có tài khoản? Đăng ký ngay",

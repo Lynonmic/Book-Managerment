@@ -29,6 +29,13 @@
     <properties>
         <java.version>21</java.version>
     </properties>
+    <repositories>
+        <repository>
+            <id>cloudinary</id>
+            <url>https://repo.cloudinary.com/artifactory/libs-release</url>
+        </repository>
+    </repositories>
+    
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -94,7 +101,12 @@
             <version>0.11.5</version>
             <scope>runtime</scope>
         </dependency>
-        
+        <dependency>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http44</artifactId>
+            <version>1.29.0</version>
+        </dependency>
+
 
     </dependencies>
 

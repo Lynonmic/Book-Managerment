@@ -27,17 +27,17 @@ public class User {
     @Column(nullable = false)
     private String ten_khach_hang;
 
-    @Column(nullable = false)
-    private String url_avata;
+    @Column(nullable = false) // Bắt buộc phải có ảnh (dùng ảnh mặc định nếu không có)
+    private String url_avata = "https://res.cloudinary.com/duthhwipq/image/upload/v1741449466/w6nxcdrb23fvtzeda3aj.webp";
 
     @Column(unique = true, nullable = false)
     private String email;
-    
+
     @Column(nullable = false)
     @JsonIgnore
     private String password; // Lưu mật khẩu đã mã hóa
-    @Column
-    private String 	so_dien_thoai;
+    @Column(name = "so_dien_thoai", unique = true)
+    private String soDienThoai;
 
     @Column
     private String dia_chi;

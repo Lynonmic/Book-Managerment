@@ -14,3 +14,8 @@ jpa:
   show-sql: true
 jwt:
   secret: 6AqXCh9nL6Wn9bYr5RtxZ+T9H2OsmDhp1XrZwo8Gy30=
+
+cloudinary:
+  cloud-name: duthhwipq
+  api-key: 735636338239818
+  api-secret: ww3wSfsLqr047sgmPwShAii0iJ8
