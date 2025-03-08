@@ -10,4 +10,5 @@ import com.example.demo.entity.User;
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer> {
     Optional<User> getUserByEmail(String email);
+    Optional<User> getUserBySoDienThoai(String soDienThoai);
 }
