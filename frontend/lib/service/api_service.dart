@@ -1,42 +1,85 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 class ApiService {
-  static const String baseUrl = "http://10.0.2.2:9090/quanly_sach/auth/login";
+  static const String baseUrl = "http://10.0.2.2:9090/quanly_sach/auth";
 
-  static Future<Map<String, dynamic>> loginUser(String email, String password) async {
+  static Future<Map<String, dynamic>> loginUser(
+    String email,
+    String password,
+  ) async {
     try {
-      print("🔹 Gửi request đến API...");
-      print("📤 URL: $baseUrl");
-      print("📤 Headers: {Content-Type: application/json}");
-      print("📤 Body: ${jsonEncode({"email": email, "password": password})}");
-
       final response = await http.post(
-        Uri.parse(baseUrl),
+        Uri.parse("$baseUrl/login"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": email,
-          "password": password,
-        }),
+        body: jsonEncode({"email": email, "password": password}),
       );
 
-      print("🔹 Nhận phản hồi từ API...");
-      print("📥 Status Code: ${response.statusCode}");
-      print("📥 Response Body: ${response.body}");
+      final responseJson = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        return {"success": true, "token": response.body}; // Trả về token trực tiếp
+        return {"success": true, "token": responseJson["token"]};
       } else {
-        // Parse JSON để lấy thông báo lỗi nếu có
-        final errorData = jsonDecode(response.body);
         return {
           "success": false,
-          "message": errorData["message"] ?? "Sai email hoặc mật khẩu!",
+          "message": responseJson["message"] ?? "Sai email hoặc mật khẩu!",
         };
       }
     } catch (e) {
-      print("⚠️ Lỗi kết nối: $e");
       return {"success": false, "message": "Lỗi kết nối đến server!"};
+    }
+  }
+
+  static Future<Map<String, dynamic>> registerUser(
+    String tenKhachHang,
+    String email,
+    String password,
+    String phone,
+    String address,
+    File? avatar,
+  ) async {
+    try {
+      var uri = Uri.parse("$baseUrl/register");
+      var request = http.MultipartRequest("POST", uri);
+
+      // ✅ Gửi từng trường dữ liệu riêng lẻ
+      request.fields['ten_khach_hang'] = tenKhachHang;
+      request.fields['email'] = email;
+      request.fields['password'] = password;
+      request.fields['phone'] = phone;
+      request.fields['address'] = address;
+
+      // ✅ Kiểm tra nếu có ảnh thì thêm vào request
+      if (avatar != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            "avatar",
+            avatar.path,
+            contentType: MediaType("image", "jpeg"), // 🔥 Định dạng ảnh
+          ),
+        );
+      }
+
+      // ✅ Thêm header (không cần Content-Type, vì MultipartRequest tự thêm)
+      request.headers.addAll({"Accept": "application/json"});
+
+      // Gửi request
+      var response = await request.send();
+      var responseData = await response.stream.bytesToString();
+      var responseJson = jsonDecode(responseData);
+
+      if (response.statusCode == 200) {
+         return {"success": true, "message": responseJson["message"]};
+      } else {
+        return {
+          "success": false,
+          "message": responseJson["message"] ?? "Đăng ký thất bại",
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Lỗi kết nối đến server"};
     }
   }
 }
