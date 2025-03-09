@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/routes/app_routes.dart';
 import 'package:frontend/service/api_service.dart';
-import 'package:frontend/views/book/book_page_admin.dart';
 import 'package:frontend/views/book/book_page_user.dart';
 import 'package:frontend/views/login/signin_page.dart';
 
@@ -29,10 +29,7 @@ class _LoginPageState extends State<LoginPage> {
     if (email == "admin123@gmail.com" && password == "admin123") {
       print("✅ Đăng nhập admin thành công!");
       _showMessage("Đăng nhập admin thành công!");
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const BookPageAdmin()),
-      );
+      Navigator.pushReplacementNamed(context, AppRoutes.bottomMenu);
       return;
     }
 
