@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/views/account/account_page.dart';
+import 'package:frontend/views/account/profile_admin_page.dart';
 import 'package:frontend/views/cart/order_page.dart';
 import 'package:frontend/views/search/search_page.dart';
 import 'package:frontend/views/login/login_page.dart';
@@ -18,7 +18,7 @@ class AppRoutes {
       bottomMenu: (context) => const BottomMenuPage(),
       cart: (context) => const OrderPage(),
       search: (context) => const SearchPage(),
-      profile: (context) => const AccountPage(),
+      profile: (context) => const ProfileAdminPage(),
     };
   }
 }

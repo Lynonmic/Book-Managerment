@@ -50,5 +50,5 @@ public class Book {
 
     @ManyToOne
     @JoinColumn(name = "ma_nha_xuat_ban", referencedColumnName = "maNhaXuatBan", foreignKey = @ForeignKey(name = "fk_sach_nxb"))
-    private NhaXuatBan nhaXuatBan;
+    private Publisher nhaXuatBan;
 }

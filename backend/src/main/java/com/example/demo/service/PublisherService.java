@@ -5,21 +5,21 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.example.demo.entity.NhaXuatBan;
-import com.example.demo.repository.NhaXuatBanRepository;
+import com.example.demo.entity.Publisher;
+import com.example.demo.repository.PublisherRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 
 @Service
-public class NhaXuatBanService {
+public class PublisherService {
     @Autowired
-    private NhaXuatBanRepository nhaXuatBanRepository;
+    private PublisherRepository nhaXuatBanRepository;
 
-    public List<NhaXuatBan> getAllNhaXuatBan() {
+    public List<Publisher> getAllNhaXuatBan() {
         return nhaXuatBanRepository.findAll();
     }
 
-    public NhaXuatBan addNhaXuatBan(NhaXuatBan nhaXuatBan) {
+    public Publisher addNhaXuatBan(Publisher nhaXuatBan) {
         return nhaXuatBanRepository.save(nhaXuatBan);
     }
 

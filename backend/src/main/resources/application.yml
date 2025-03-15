@@ -4,10 +4,23 @@ server:
     context-path: /quanly_sach
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/quanly_sach
+    url: jdbc:mysql://localhost:3306/quanly_sach?useUnicode=true&characterEncoding=UTF-8
     username: root
     password: ""
     driver-class-name: com.mysql.cj.jdbc.Driver
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    default-property-inclusion: non_null
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Ho_Chi_Minh
+
+  
+
 jpa:
   hibernate:
     ddl-auto: update
@@ -19,3 +32,6 @@ cloudinary:
   cloud-name: duthhwipq
   api-key: 735636338239818
   api-secret: ww3wSfsLqr047sgmPwShAii0iJ8
+
+
+ 

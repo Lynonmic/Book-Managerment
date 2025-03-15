@@ -12,22 +12,22 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.demo.entity.NhaXuatBan;
-import com.example.demo.service.NhaXuatBanService;
+import com.example.demo.entity.Publisher;
+import com.example.demo.service.PublisherService;
 
 @RestController
-@RequestMapping("/quanly_sach/nha-xuat-ban")
-public class NhaXuatBanController {
+@RequestMapping("/auth/nha-xuat-ban")
+public class PublisherController {
     @Autowired
-    private NhaXuatBanService nhaXuatBanService;
+    private PublisherService nhaXuatBanService;
 
-    @GetMapping
-    public List<NhaXuatBan> getAllNhaXuatBan() {
+    @GetMapping(produces = "application/json; charset=UTF-8")
+    public List<Publisher> getAllNhaXuatBan() {
         return nhaXuatBanService.getAllNhaXuatBan();
     }
 
     @PostMapping
-    public ResponseEntity<NhaXuatBan> createNhaXuatBan(@RequestBody NhaXuatBan nhaXuatBan) {
+    public ResponseEntity<Publisher> createNhaXuatBan(@RequestBody Publisher nhaXuatBan) {
         return ResponseEntity.ok(nhaXuatBanService.addNhaXuatBan(nhaXuatBan));
     }
 
