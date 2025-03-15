@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:frontend/models/PublisherModels.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
@@ -71,7 +72,7 @@ class ApiService {
       var responseJson = jsonDecode(responseData);
 
       if (response.statusCode == 200) {
-         return {"success": true, "message": responseJson["message"]};
+        return {"success": true, "message": responseJson["message"]};
       } else {
         return {
           "success": false,
@@ -80,6 +81,35 @@ class ApiService {
       }
     } catch (e) {
       return {"success": false, "message": "Lỗi kết nối đến server"};
+    }
+  }
+
+  static Future<Map<String, dynamic>> getAllPublisher() async {
+    try {
+      final response = await http.get(
+        Uri.parse("$baseUrl/nha-xuat-ban"),
+        headers: {"Content-Type": "application/json; charset=UTF-8"},
+      );
+
+      print("🔍 API Response Code: ${response.statusCode}");
+      print("📡 API Response Body: ${response.body}");
+      final responseJson = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        List<Publishermodels> publishers =
+            (responseJson as List)
+                .map((json) => Publishermodels.fromJson(json))
+                .toList();
+
+        return {"success": true, "data": publishers};
+      } else {
+        return {
+          "success": false,
+          "message": responseJson["message"] ?? "Lỗi lấy dữ liệu!",
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Lỗi kết nối đến server!"};
     }
   }
 }
