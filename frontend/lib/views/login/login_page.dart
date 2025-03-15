@@ -62,7 +62,7 @@ class _LoginPageState extends State<LoginPage> {
         222,
         217,
         217,
-      ), // Nền màu xám nhạt
+      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -70,7 +70,7 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Tiêu đề LOGIN
+            
               const Center(
                 child: Text(
                   "LOGIN",
@@ -84,13 +84,13 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 40),
               Text("User", style: TextStyle(color: Colors.white)),
-              // Ô nhập Email
+            
               TextField(
                 controller: _emailController,
 
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Colors.white, // Nền trắng
+                  fillColor: Colors.white,
                   hintText: "Nhập email...",
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(50),
@@ -101,13 +101,12 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 20),
               Text("Password", style: TextStyle(color: Colors.white)),
-              // Ô nhập Password
               TextField(
                 controller: _passwordController,
                 obscureText: !isPasswordVisible,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Colors.white, // Nền trắng
+                  fillColor: Colors.white,
                   hintText: "Nhập mật khẩu...",
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(50),
@@ -123,23 +122,23 @@ class _LoginPageState extends State<LoginPage> {
                     onPressed: () {
                       setState(() {
                         isPasswordVisible =
-                            !isPasswordVisible; // 🔄 Đảo trạng thái
+                            !isPasswordVisible; 
                       });
                     },
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              // Logo
+              
               Center(
                 child: Image.asset(
-                  'lib/assets/images/logo.png', // Đặt ảnh logo trong thư mục assets
+                  'lib/assets/images/logo.png', 
                   height: 300,
                 ),
               ),
 
               const SizedBox(height: 20),
-              // Nút Đăng nhập
+           
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -148,8 +147,8 @@ class _LoginPageState extends State<LoginPage> {
                   },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 15),
-                    backgroundColor: Colors.purpleAccent, // Màu trắng
-                    foregroundColor: Colors.white, // Màu chữ đen
+                    backgroundColor: Colors.purpleAccent, 
+                    foregroundColor: Colors.white, 
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(50),
                     ),
@@ -158,8 +157,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 10),
-
-              // Nút Đăng ký
               Center(
                 child: TextButton(
                   onPressed: () {

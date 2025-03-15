@@ -3,7 +3,7 @@ import 'package:frontend/views/account/profile_admin_page.dart';
 import 'package:frontend/views/cart/order_page.dart';
 import 'package:frontend/views/search/search_page.dart';
 import 'package:frontend/views/login/login_page.dart';
-import 'package:frontend/views/bottom_menu_page.dart';
+import 'package:frontend/widget/bottom_menu_page.dart';
 
 class AppRoutes {
   static const String home = '/';
