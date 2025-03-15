@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 
 
-class OrderPage extends StatefulWidget {
-  const OrderPage({super.key});
+class ProfileAdminPage extends StatefulWidget {
+  const ProfileAdminPage({super.key});
 
   @override
-  _OrderPageState createState() => _OrderPageState();
+  _ProfileAdminPageState createState() => _ProfileAdminPageState();
 }
 
-class _OrderPageState extends State<OrderPage>{
- @override
+class _ProfileAdminPageState extends State<ProfileAdminPage>{
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       // appBar: AppBar(
-      //   title: const Text("Trang order"),
+      //   title: const Text("Trang account"),
       //   backgroundColor: Colors.purpleAccent,
       // ),
       // body: const Center(
       //   child: Text(
-      //     "Chào mừng bạn đến với trang order!",
+      //     "Chào mừng bạn đến với trang Account!",
       //     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
       //   ),
       // ),
