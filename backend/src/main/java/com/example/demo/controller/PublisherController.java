@@ -64,15 +64,22 @@ public class PublisherController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String,Object>> updatePub(@PathVariable Integer id, @RequestBody Publisher updPublisher){
-        try{
-            Map<String,Object> result =nhaXuatBanService.update(id, updPublisher);
+    public ResponseEntity<Map<String, Object>> updatePub(@PathVariable Integer id,
+            @RequestBody Publisher updPublisher) {
+        try {
+            Map<String, Object> result = nhaXuatBanService.update(id, updPublisher);
             return ResponseEntity.ok(result);
-        }catch(EntityNotFoundException e){
-            Map<String,Object> response=new HashMap<>();
+        } catch (EntityNotFoundException e) {
+            Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Lỗi hệ thống, vui lòng thử lại.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 

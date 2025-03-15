@@ -113,18 +113,23 @@ class ApiService {
     }
   }
 
-  static Future<Map<String,dynamic>> createPublisher(String tenNhaXuatBan,String diaChi,String sdt, String email) async {
+  static Future<Map<String, dynamic>> createPublisher(
+    String tenNhaXuatBan,
+    String diaChi,
+    String sdt,
+    String email,
+  ) async {
     try {
       final response = await http.post(
-      Uri.parse("$baseUrl/nha-xuat-ban"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "ten_nha_xuat_ban": tenNhaXuatBan,
-        "dia_chi": diaChi, 
-        "so_dien_thoai": sdt, 
-        "email": email  
-      }),
-    );
+        Uri.parse("$baseUrl/nha-xuat-ban"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "ten_nha_xuat_ban": tenNhaXuatBan,
+          "dia_chi": diaChi,
+          "so_dien_thoai": sdt,
+          "email": email,
+        }),
+      );
 
       final responseJson = jsonDecode(response.body);
 
@@ -148,7 +153,7 @@ class ApiService {
         headers: {"Content-Type": "application/json"},
       );
 
-        print("Response: ${response.body}");
+      print("Response: ${response.body}");
 
       final responseJson = jsonDecode(response.body);
 
@@ -158,6 +163,40 @@ class ApiService {
         return {
           "success": false,
           "message": responseJson["message"] ?? "Lỗi xóa nhà xuất bản!",
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Lỗi kết nối đến server!"};
+    }
+  }
+
+  static Future<Map<String, dynamic>> update(
+    int manxb,
+    String name,
+    String address,
+    String phone,
+    String email,
+  ) async {
+    try {
+      final response = await http.put(
+        Uri.parse("$baseUrl/nha-xuat-ban/$manxb"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "ten_nha_xuat_ban": name,
+          "dia_chi": address,
+          "so_dien_thoai": phone,
+          "email": email,
+        }),
+      );
+
+      final responseJson = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {"success": true, "message": responseJson["message"]};
+      } else {
+        return {
+          "success": false,
+          "message": responseJson["message"] ?? "Lỗi cập nhật nhà xuất bản!",
         };
       }
     } catch (e) {

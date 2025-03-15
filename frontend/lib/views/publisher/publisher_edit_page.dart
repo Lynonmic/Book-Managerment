@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/controllers/publisher_controller.dart';
 import 'package:frontend/models/PublisherModels.dart';
+import 'package:frontend/views/publisher/publisher_list_page.dart';
 
 class PublisherEditPage extends StatefulWidget {
   final bool isEditing;
@@ -65,16 +66,10 @@ class _PublisherEditPageState extends State<PublisherEditPage> {
     ).showSnackBar(SnackBar(content: Text(response['message'])));
 
     if (response['success']) {
-      Navigator.pop(context, {
-        'isUpdated': true,
-        'publisher': Publishermodels(
-          maNhaXuatBan: response['id'], // ID từ API
-          tenNhaXuatBan: name,
-          diaChi: address,
-          soDienThoai: phone,
-          email: email,
-        ),
-      });
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const PublisherListPage()),
+      );
     }
   }
 
@@ -96,7 +91,7 @@ class _PublisherEditPageState extends State<PublisherEditPage> {
     Map<String, dynamic> response;
 
     if (widget.isEditing) {
-      response = await _publisherController.updatePublisher(
+      response = await _publisherController.update(
         widget.publisherData!['maNhaXuatBan'],
         name,
         address,
@@ -119,7 +114,10 @@ class _PublisherEditPageState extends State<PublisherEditPage> {
     ).showSnackBar(SnackBar(content: Text(response['message'])));
 
     if (response['success']) {
-      Navigator.pop(context, {'isUpdated': true});
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const PublisherListPage()),
+      );
     }
   }
 
@@ -200,8 +198,7 @@ class _PublisherEditPageState extends State<PublisherEditPage> {
                 const SizedBox(width: 20),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed:
-                        _isLoading ? null : _savePublisher,
+                    onPressed: _isLoading ? null : _savePublisher,
                     child:
                         _isLoading
                             ? CircularProgressIndicator(color: Colors.white)
