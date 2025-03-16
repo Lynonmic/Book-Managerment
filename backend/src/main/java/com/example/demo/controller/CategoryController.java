@@ -16,7 +16,7 @@ import com.example.demo.entity.Category;
 import com.example.demo.service.CategoryService;
 
 @RestController
-@RequestMapping("/quanly_sach/categories")
+@RequestMapping("/categories")
 public class CategoryController {
     @Autowired
     private CategoryService categoryService;
