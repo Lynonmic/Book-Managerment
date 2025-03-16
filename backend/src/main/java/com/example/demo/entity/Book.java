@@ -49,6 +49,6 @@ public class Book {
     private Category category;
 
     @ManyToOne
-    @JoinColumn(name = "ma_nha_xuat_ban", referencedColumnName = "maNhaXuatBan", foreignKey = @ForeignKey(name = "fk_sach_nxb"))
+    @JoinColumn(name = "ma_nha_xuat_ban", referencedColumnName = "ma_nha_xuat_ban", foreignKey = @ForeignKey(name = "fk_sach_nxb"))
     private Publisher nhaXuatBan;
 }

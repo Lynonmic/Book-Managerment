@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
 public class Publisher {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ma_nha_xuat_ban")
     private Integer maNhaXuatBan;
 
     @Column(name = "ten_nha_xuat_ban", unique = true, nullable = false)
