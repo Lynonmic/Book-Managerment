@@ -106,7 +106,12 @@
             <artifactId>cloudinary-http44</artifactId>
             <version>1.29.0</version>
         </dependency>
-
+<!-- Add your existing dependencies here -->
+<dependency>
+    <groupId>javax.persistence</groupId>
+    <artifactId>javax.persistence-api</artifactId>
+    <version>2.2</version>
+</dependency>
 
     </dependencies>
 

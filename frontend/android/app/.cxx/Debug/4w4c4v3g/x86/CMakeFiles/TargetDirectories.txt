@@ -1,0 +1,2 @@
+D:/Book-Managerment/Book-Managerment/frontend/android/app/.cxx/Debug/4w4c4v3g/x86/CMakeFiles/edit_cache.dir
+D:/Book-Managerment/Book-Managerment/frontend/android/app/.cxx/Debug/4w4c4v3g/x86/CMakeFiles/rebuild_cache.dir
