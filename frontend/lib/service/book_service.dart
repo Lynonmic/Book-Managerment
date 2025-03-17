@@ -72,7 +72,7 @@ class BookService {
       jsonResponse.forEach((key, value) {
         if (value is List) {
           result[key] =
-              (value as List)
+              (value)
                   .map((bookData) => BookModel.fromJson(bookData))
                   .toList();
         }
