@@ -65,10 +65,7 @@ class _PublisherEditPageState extends State<PublisherEditPage> {
     ).showSnackBar(SnackBar(content: Text(response['message'])));
 
     if (response['success']) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const PublisherListPage()),
-      );
+       Navigator.pop(context);
     }
   }
 
@@ -113,10 +110,7 @@ class _PublisherEditPageState extends State<PublisherEditPage> {
     ).showSnackBar(SnackBar(content: Text(response['message'])));
 
     if (response['success']) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const PublisherListPage()),
-      );
+       Navigator.pop(context);
     }
   }
 

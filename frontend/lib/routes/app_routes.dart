@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/views/account/profile_admin_page.dart';
-import 'package:frontend/views/cart/order_page.dart';
-import 'package:frontend/views/search/search_page.dart';
+
 import 'package:frontend/views/login/login_page.dart';
-import 'package:frontend/views/bottom_menu_page.dart';
 
 class AppRoutes {
   static const String home = '/';
@@ -13,12 +10,6 @@ class AppRoutes {
   static const String profile = '/profile';
 
   static Map<String, WidgetBuilder> getRoutes() {
-    return {
-      home: (context) => const LoginPage(),
-      bottomMenu: (context) => const BottomMenuPage(),
-      cart: (context) => const OrderPage(),
-      search: (context) => const SearchPage(),
-      profile: (context) => const ProfileAdminPage(),
-    };
+    return {home: (context) => const LoginPage()};
   }
 }

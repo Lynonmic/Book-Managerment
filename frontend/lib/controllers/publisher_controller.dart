@@ -1,8 +1,13 @@
+import 'package:frontend/model/PublisherModels.dart';
 import 'package:frontend/service/api_service.dart';
 
 class PublisherController {
-  Future<Map<String, dynamic>> fetchPublishers() async {
-    return await ApiService.getAllPublisher();
+  Future<List<Publishermodels>> fetchPublishers() async {
+    try {
+      return await ApiService.getAllPublisher();
+    } catch (e) {
+      throw Exception("Failed to load publishers: $e");
+    }
   }
 
   Future<Map<String, dynamic>> createPublisher(
@@ -25,6 +30,6 @@ class PublisherController {
     String phone,
     String email,
   ) async {
-    return await ApiService.update(manxb,name,address,phone,email);
+    return await ApiService.update(manxb, name, address, phone, email);
   }
 }
