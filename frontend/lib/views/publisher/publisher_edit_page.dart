@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/controllers/publisher_controller.dart';
-import 'package:frontend/views/publisher/publisher_list_page.dart';
 
 class PublisherEditPage extends StatefulWidget {
   final bool isEditing;
