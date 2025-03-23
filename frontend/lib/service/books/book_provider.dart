@@ -16,12 +16,16 @@ class BookProvider with ChangeNotifier {
 
   // Fetch books from API
   Future<void> fetchBooks() async {
+    print("===== _fetchUsers() is called =====");
+
     _isLoading = true;
     _error = '';
     notifyListeners();
 
     try {
       _books = await _bookService.fetchBooks();
+      print("===== _fetchUsers() got ${_books.length} users =====");
+      _books.forEach((book) => print(book.title));
     } catch (e) {
       _error = e.toString();
     } finally {

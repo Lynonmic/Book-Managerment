@@ -8,7 +8,6 @@ class BottomMenu extends StatefulWidget {
     Key? key,
     this.initialIndex = 0,
     required this.onIndexChanged,
-    int? currentIndex, // Make this optional and ignore it
   }) : super(key: key);
 
   @override

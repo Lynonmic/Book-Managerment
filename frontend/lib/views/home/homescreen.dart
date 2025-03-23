@@ -25,9 +25,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreen extends State<HomeScreen> {
   int _currentIndex = 0;
   String _currentItemType = 'books';
-  List<Book> _books = [];
-  bool _isLoading = false;
-  String? _errorMessage;
+
   // User-related variables
   List<UserModels> _users = [];
   bool _isloadUsers = false;
@@ -45,42 +43,18 @@ class _HomeScreen extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchBooks();
+    _usersController = UsersController(); // Initialize UsersController
+    _controller = PublisherController(); // Initialize PublisherController
     _fetchUsers();
     _fetchPublishers();
     // Initialize other necessary elements
-  }
-
-  // Fetch books from API
-  Future<void> _fetchBooks() async {
-    print("===== _fetchBooks() is called =====");
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final books = await _bookService.fetchBooks();
-      setState(() {
-        _books = books;
-        _isLoading = false;
-      });
-      print("===== _fetchBooks() got ${books.length} books =====");
-    } catch (e) {
-      print("Fetch Users Error: $e");
-      setState(() {
-        _errorMessage = 'Failed to load books: $e';
-        _isLoading = false;
-      });
-    }
   }
 
   // Rate a book
   Future<void> _rateBook(int bookId, double rating) async {
     try {
       await _bookService.rateBook(bookId, rating);
-      // Refresh the book list after rating
-      _fetchBooks();
+      Provider.of<BookProvider>(context, listen: false).fetchBooks();
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -154,8 +128,8 @@ class _HomeScreen extends State<HomeScreen> {
       _currentItemType = value;
       _currentIndex = 0;
       if (value == 'books') {
-        // Fetch users list
-        _fetchBooks();
+        // Fetch books list
+        Provider.of<BookProvider>(context, listen: false).fetchBooks();
       }
       if (value == 'users') {
         // Fetch users list
