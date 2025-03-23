@@ -48,12 +48,12 @@ class OptionMenu extends StatelessWidget {
               ),
             ),
             const PopupMenuItem<String>(
-              value: 'authors',
+              value: 'publisher',
               child: Row(
                 children: [
                   Icon(Icons.person),
                   SizedBox(width: 8),
-                  Text('Author List'),
+                  Text('Publisher List'),
                 ],
               ),
             ),
