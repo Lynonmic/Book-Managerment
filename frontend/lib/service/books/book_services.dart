@@ -4,7 +4,7 @@ import 'package:frontend/model/book_model.dart';
 
 class BookService {
   // Replace with your actual API URL
-  static const String baseUrl = 'http://10.0.2.2:9090/api';
+  static const String baseUrl = 'http://10.0.2.2:3000/api';
 
   // Fetch all books
   Future<List<Book>> fetchBooks() async {

@@ -25,7 +25,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreen extends State<HomeScreen> {
   int _currentIndex = 0;
   String _currentItemType = 'books';
-
+  List<Book> _books = [];
+  bool _isLoading = false;
+  String? _errorMessage;
   // User-related variables
   List<UserModels> _users = [];
   bool _isloadUsers = false;
@@ -40,15 +42,50 @@ class _HomeScreen extends State<HomeScreen> {
 
   final BookService _bookService = BookService();
 
-  // Book-related variables
-  List<Book> _books = [];
-
   @override
   void initState() {
     super.initState();
+    _fetchBooks();
     _fetchUsers();
     _fetchPublishers();
     // Initialize other necessary elements
+  }
+
+  // Fetch books from API
+  Future<void> _fetchBooks() async {
+    print("===== _fetchBooks() is called =====");
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final books = await _bookService.fetchBooks();
+      setState(() {
+        _books = books;
+        _isLoading = false;
+      });
+      print("===== _fetchBooks() got ${books.length} books =====");
+    } catch (e) {
+      print("Fetch Users Error: $e");
+      setState(() {
+        _errorMessage = 'Failed to load books: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  // Rate a book
+  Future<void> _rateBook(int bookId, double rating) async {
+    try {
+      await _bookService.rateBook(bookId, rating);
+      // Refresh the book list after rating
+      _fetchBooks();
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to rate book: $e')));
+    }
   }
 
   Future<void> _fetchUsers() async {
@@ -94,7 +131,6 @@ class _HomeScreen extends State<HomeScreen> {
     }
   }
 
-  // Handle rating changes by ensuring double conversion
   void _handleRatingChanged(int bookId, int rating) async {
     try {
       // Convert the integer rating to a double explicitly
@@ -113,18 +149,21 @@ class _HomeScreen extends State<HomeScreen> {
     }
   }
 
-  // Handle option menu selection with updated book provider
   void _handleOptionSelected(String value) {
     setState(() {
       _currentItemType = value;
       _currentIndex = 0;
+      if (value == 'books') {
+        // Fetch users list
+        _fetchBooks();
+      }
       if (value == 'users') {
         // Fetch users list
         _fetchUsers();
       }
       if (value == 'publisher') {
-        // Fetch publishers list
         _fetchPublishers();
+        // Fetch publishers list
       }
       if (value == 'ratings') {
         final bookProvider = Provider.of<BookProvider>(context, listen: false);
@@ -157,7 +196,129 @@ class _HomeScreen extends State<HomeScreen> {
     });
   }
 
-  // Build user list
+  Widget _buildBookList() {
+    return Consumer<BookProvider>(
+      builder: (context, bookProvider, child) {
+        if (bookProvider.isLoading) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        if (bookProvider.error.isNotEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(bookProvider.error, style: TextStyle(color: Colors.red)),
+                SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => bookProvider.fetchBooks(),
+                  child: Text('Try Again'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        if (bookProvider.books.isEmpty) {
+          return Center(child: Text('No books found'));
+        }
+
+        return RefreshIndicator(
+          onRefresh: () => bookProvider.refreshBooks(),
+          child: ListView.builder(
+            itemCount: bookProvider.books.length,
+            itemBuilder: (context, index) {
+              final book = bookProvider.books[index];
+              return BookItem(
+                title: book.title,
+                description: book.description ?? 'No description available',
+                rating:
+                    book.rating?.round() ??
+                    0, // This is correct, but ensure BookItem accepts this as int
+                onTap: () {
+                  // Show book details with rating option
+                  showDialog(
+                    context: context,
+                    builder:
+                        (context) => AlertDialog(
+                          title: Text(book.title),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (book.imageUrl != null)
+                                Image.network(
+                                  book.imageUrl!,
+                                  height: 150,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder:
+                                      (ctx, error, _) => Container(
+                                        height: 150,
+                                        color: Colors.grey.shade300,
+                                        child: Icon(Icons.image, size: 50),
+                                      ),
+                                ),
+                              SizedBox(height: 16),
+                              Text('Author: ${book.author}'),
+                              SizedBox(height: 8),
+                              Text(
+                                'Rating: ${book.rating?.toStringAsFixed(1) ?? 'Not rated'} (${book.ratingCount ?? 0} reviews)',
+                              ),
+                              SizedBox(height: 16),
+                              Text('Rate this book:'),
+                              SizedBox(height: 8),
+                              InteractiveStarRating(
+                                onRatingChanged: (rating) async {
+                                  Navigator.pop(context);
+                                  try {
+                                    if (book.id != null) {
+                                      // Ensure conversion to double
+                                      await Provider.of<BookProvider>(
+                                        context,
+                                        listen: false,
+                                      ).rateBook(book.id!, rating.toDouble());
+
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Rating submitted: $rating stars',
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Failed to rate book: $e',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: Text('Close'),
+                            ),
+                          ],
+                        ),
+                  );
+                },
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildUserList() {
     if (_isloadUsers) {
       return Center(child: CircularProgressIndicator());
@@ -611,24 +772,6 @@ class _HomeScreen extends State<HomeScreen> {
     }
   }
 
-  // Rate a book - now uses the provider
-  Future<void> _rateBook(int bookId, double rating) async {
-    try {
-      await Provider.of<BookProvider>(
-        context,
-        listen: false,
-      ).rateBook(bookId, rating);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Rating submitted: $rating stars')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to rate book: $e')));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -642,12 +785,7 @@ class _HomeScreen extends State<HomeScreen> {
       body:
           _currentIndex == 0
               ? _currentItemType == 'books'
-                  ? Consumer<BookProvider>(
-                    builder: (context, bookProvider, child) {
-                      // Book list display logic
-                      return Container(); // Replace with actual implementation
-                    },
-                  )
+                  ? _buildBookList()
                   : _currentItemType == 'users'
                   ? _buildUserList()
                   : _buildPublisherList()
@@ -659,7 +797,6 @@ class _HomeScreen extends State<HomeScreen> {
             _currentIndex = index;
           });
         },
-        currentIndex: _currentIndex,
       ),
     );
   }
