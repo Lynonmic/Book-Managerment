@@ -14,7 +14,7 @@ public class UserRequest {
     @NotNull
     private String email;
     @NumberFormat
-    private String so_dien_thoai;
+    private String soDienThoai;
     private String dia_chi;
     private String url_avata;
 }

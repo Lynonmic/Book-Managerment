@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:frontend/controllers/users_controller.dart';
-import 'package:frontend/service/token_service.dart';
+import 'package:frontend/service/api_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 
@@ -49,44 +49,30 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
-  Future<void> _updateProfile() async {
-    setState(() {
-      _isLoading = true;
-    });
+ void _updateProfile() async {
+  var response = await ApiService.updateUser(
+    userId: widget.userData?['id'],
+    tenKhachHang: _nameController.text,
+    soDienThoai: _phoneController.text,
+    diaChi: _addressController.text,
+    email: _emailController.text,
+    avatar: _selectedImage,
+  );
 
-    int? userId = widget.userData?['id'];
-    if (userId == null) {
-      print("❌ userId is null");
-      setState(() {
-        _isLoading = false;
-      });
-      return;
-    }
+  if (response != null) {
+    bool success = response["success"] ?? false;
+    String message = response["message"] ?? "Lỗi không xác định!";
 
-    String? token = await TokenService.getToken(); // Lấy token thực tế
-    if (token == null) {
-      print("❌ Token is null, user not authenticated!");
-      setState(() {
-        _isLoading = false;
-      });
-      return;
-    }
-
-    await _usersController.updateUserProfile(
-      userId: userId,
-      name: _nameController.text.trim(),
-      phone: _phoneController.text.trim(),
-      address: _addressController.text.trim(),
-      email: _emailController.text.trim(),
-      avatarFile: _selectedImage,
-      adminToken: token,
-      context: context,
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: success ? Colors.green : Colors.red),
     );
 
-    setState(() {
-      _isLoading = false;
-    });
+    if (success) {
+      Navigator.pop(context); // Đóng màn hình nếu cập nhật thành công
+    }
   }
+}
+
 
   @override
   Widget build(BuildContext context) {

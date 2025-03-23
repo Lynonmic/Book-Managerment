@@ -16,12 +16,15 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.demo.dto.UserRequest;
 import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -50,19 +53,17 @@ public class UserController {
             @RequestParam(required = false) String soDienThoai,
             @RequestParam(required = false) String diaChi,
             @RequestParam(required = false) String email,
-            @RequestParam(required = false) MultipartFile avatarFile,
-            @RequestHeader("Authorization") String token) { 
+            @RequestPart(value = "avatar", required = false) MultipartFile avatarFile) {
 
-        if (!userService.validateToken(token)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token không hợp lệ!");
-        }
-
-        String adminEmail = userService.extractEmail(token);
-
-        Optional<User> adminOpt = userRepository.getUserByEmail(adminEmail);
-        if (adminOpt.isEmpty() || adminOpt.get().getRoles() != 0) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Bạn không có quyền chỉnh sửa user!");
-        }
+        // In dữ liệu nhận được để debug
+        System.out.println("📥 Nhận dữ liệu từ request:");
+        System.out.println("📌 userId = " + userId);
+        System.out.println("📌 tenKhachHang = " + tenKhachHang);
+        System.out.println("📌 soDienThoai = " + soDienThoai);
+        System.out.println("📌 diaChi = " + diaChi);
+        System.out.println("📌 email = " + email);
+        System.out.println(
+                "📌 avatarFile = " + (avatarFile != null ? avatarFile.getOriginalFilename() : "Không có file"));
 
         return userService.updateUserProfile(userId, tenKhachHang, soDienThoai, diaChi, email, avatarFile);
     }
@@ -79,25 +80,24 @@ public class UserController {
         return userService.themselfUpdate(userId, tenKhachHang, soDienThoai, diaChi, email, password, avatarFile);
     }
 
-
     @DeleteMapping("/{userId}")
-public ResponseEntity<Map<String, Object>> deleteUser(@PathVariable Integer userId) {
-    Map<String, Object> response = new HashMap<>();
+    public ResponseEntity<Map<String, Object>> deleteUser(@PathVariable Integer userId) {
+        Map<String, Object> response = new HashMap<>();
 
-    try {
-        userService.deleteUser(userId);
-        response.put("success", true);
-        response.put("message", "User đã được xóa thành công.");
-        return ResponseEntity.ok(response);
-    } catch (EntityNotFoundException e) {
-        response.put("success", false);
-        response.put("message", "Không tìm thấy user!");
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-    } catch (Exception e) {
-        response.put("success", false);
-        response.put("message", "Lỗi hệ thống, vui lòng thử lại.");
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        try {
+            userService.deleteUser(userId);
+            response.put("success", true);
+            response.put("message", "User đã được xóa thành công.");
+            return ResponseEntity.ok(response);
+        } catch (EntityNotFoundException e) {
+            response.put("success", false);
+            response.put("message", "Không tìm thấy user!");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Lỗi hệ thống, vui lòng thử lại.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
-}
-    
+
 }
