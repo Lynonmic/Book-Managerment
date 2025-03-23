@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 class BookItem extends StatelessWidget {
   final String title;
   final String description;
-  final int rating;
+  final int rating; // This is correct as int for UI display
   final VoidCallback? onTap;
+  final Widget? trailing;
 
   const BookItem({
     Key? key,
@@ -12,6 +13,7 @@ class BookItem extends StatelessWidget {
     required this.description,
     required this.rating,
     this.onTap,
+    this.trailing,
   }) : super(key: key);
 
   @override

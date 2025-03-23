@@ -1,48 +1,36 @@
-class BookModel {
+import 'dart:convert';
+
+class Book {
   final int? id;
   final String title;
   final String author;
   final String? description;
   final String? imageUrl;
-  final double? price;
-  final String? publisher;
-  final int? pageCount;
-  final String? isbn;
-  final String? createdAt;
-  final String? updatedAt;
-  final double? rating;
+  final double? rating; // Ensure this is a double
   final int? ratingCount;
 
-  BookModel({
+  Book({
     this.id,
     required this.title,
     required this.author,
     this.description,
     this.imageUrl,
-    this.price,
-    this.publisher,
-    this.pageCount,
-    this.isbn,
-    this.createdAt,
-    this.updatedAt,
     this.rating,
     this.ratingCount,
   });
 
-  factory BookModel.fromJson(Map<String, dynamic> json) {
-    return BookModel(
+  factory Book.fromJson(Map<String, dynamic> json) {
+    return Book(
       id: json['id'],
       title: json['title'],
       author: json['author'],
       description: json['description'],
       imageUrl: json['imageUrl'],
-      price: json['price'],
-      publisher: json['publisher'],
-      pageCount: json['pageCount'],
-      isbn: json['isbn'],
-      createdAt: json['createdAt'],
-      updatedAt: json['updatedAt'],
-      rating: json['rating']?.toDouble(),
+      // Convert the rating to double explicitly
+      rating:
+          json['rating'] != null
+              ? double.parse(json['rating'].toString())
+              : null,
       ratingCount: json['ratingCount'],
     );
   }
@@ -54,12 +42,29 @@ class BookModel {
       'author': author,
       'description': description,
       'imageUrl': imageUrl,
-      'price': price,
-      'publisher': publisher,
-      'pageCount': pageCount,
-      'isbn': isbn,
       'rating': rating,
       'ratingCount': ratingCount,
     };
+  }
+
+  // Create a copy with updated fields
+  Book copyWith({
+    int? id,
+    String? title,
+    String? author,
+    String? description,
+    String? imageUrl,
+    double? rating,
+    int? ratingCount,
+  }) {
+    return Book(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      author: author ?? this.author,
+      description: description ?? this.description,
+      imageUrl: imageUrl ?? this.imageUrl,
+      rating: rating ?? this.rating,
+      ratingCount: ratingCount ?? this.ratingCount,
+    );
   }
 }
