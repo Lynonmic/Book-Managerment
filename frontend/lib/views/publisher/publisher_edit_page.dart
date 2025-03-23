@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/controllers/publisher_controller.dart';
-import 'package:frontend/views/publisher/publisher_list_page.dart';
 
 class PublisherEditPage extends StatefulWidget {
   final bool isEditing;
@@ -65,10 +64,7 @@ class _PublisherEditPageState extends State<PublisherEditPage> {
     ).showSnackBar(SnackBar(content: Text(response['message'])));
 
     if (response['success']) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const PublisherListPage()),
-      );
+       Navigator.pop(context);
     }
   }
 
@@ -113,10 +109,7 @@ class _PublisherEditPageState extends State<PublisherEditPage> {
     ).showSnackBar(SnackBar(content: Text(response['message'])));
 
     if (response['success']) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const PublisherListPage()),
-      );
+       Navigator.pop(context);
     }
   }
 
@@ -198,6 +191,9 @@ class _PublisherEditPageState extends State<PublisherEditPage> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _savePublisher,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurpleAccent,
+                    ),
                     child:
                         _isLoading
                             ? CircularProgressIndicator(color: Colors.white)
@@ -205,9 +201,6 @@ class _PublisherEditPageState extends State<PublisherEditPage> {
                               "Save",
                               style: TextStyle(color: Colors.white),
                             ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurpleAccent,
-                    ),
                   ),
                 ),
               ],

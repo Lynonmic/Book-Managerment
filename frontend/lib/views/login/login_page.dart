@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/routes/app_routes.dart';
 import 'package:frontend/service/api_service.dart';
-import 'package:frontend/views/book/book_page_user.dart';
 import 'package:frontend/views/login/signin_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -18,35 +17,38 @@ class _LoginPageState extends State<LoginPage> {
   bool isPasswordVisible = false;
 
   Future<void> _login() async {
-    String email = _emailController.text.trim();
-    String password = _passwordController.text.trim();
+  String email = _emailController.text.trim();
+  String password = _passwordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
-      _showMessage("Email và mật khẩu không được để trống!");
-      return;
-    }
-
-    if (email == "admin123@gmail.com" && password == "admin123") {
-      print("✅ Đăng nhập admin thành công!");
-      _showMessage("Đăng nhập admin thành công!");
-      Navigator.pushReplacementNamed(context, AppRoutes.bottomMenu);
-      return;
-    }
-
-    var response = await ApiService.loginUser(email, password);
-
-    if (response["success"]) {
-      String token = response["token"];
-      print("✅ Đăng nhập thành công, Token: $token");
-      _showMessage("Đăng nhập thành công!");
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const BookPage()),
-      );
-    } else {
-      _showMessage("❌ ${response["message"]}");
-    }
+  if (email.isEmpty || password.isEmpty) {
+    _showMessage("Email và mật khẩu không được để trống!");
+    return;
   }
+
+  // Gọi API đăng nhập
+  var response = await ApiService.loginUser(email, password);
+  print("📌 API Response: $response");
+
+  if (response["success"]) {
+    String token = response["token"];
+    int role = response["role"]; // Lấy role từ API
+
+    print("✅ Đăng nhập thành công! Token: $token, Role: $role");
+    _showMessage("Đăng nhập thành công!");
+
+    // Điều hướng theo role
+    if (role == 0) {
+      // Admin
+      Navigator.pushReplacementNamed(context, AppRoutes.bottomMenu);
+    } else {
+      // User
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
+    }
+  } else {
+    _showMessage("❌ ${response["message"]}");
+  }
+}
+
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(

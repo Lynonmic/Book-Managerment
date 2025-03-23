@@ -31,9 +31,6 @@ public class AuthController {
         this.userService = userService;
     }
 
-
-
-
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> register(
             @RequestParam("ten_khach_hang") String tenKhachHang,
@@ -48,7 +45,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Không được để trống!"));
         }
         // Gọi service để xử lý đăng ký
-        String result = userService.registerUser(tenKhachHang, email, password, phone, address, avatarFile);
+        String result = userService.registerUser(tenKhachHang, email, password, phone, address, avatarFile, 1);
 
         if (result.contains("Lỗi")) {
             return ResponseEntity.status(500).body(result);
@@ -61,22 +58,19 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("success", true, "message", "Đăng ký thành công!"));
     }
 
-
-
-
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody LoginRequest request) {
-        Optional<String> loginResult = userService.loginUser(request);
+        Optional<Map<String, Object>> loginResult = userService.loginUser(request);
 
         if (loginResult.isEmpty()) {
             return ResponseEntity.status(401)
                     .body(Map.of("success", false, "message", "Email hoặc mật khẩu không đúng!"));
         }
 
-        return ResponseEntity.ok(Map.of("success", true, "token", loginResult.get()));
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "token", loginResult.get().get("token"),
+                "role", loginResult.get().get("role")));
     }
 
-
-
-    
 }
