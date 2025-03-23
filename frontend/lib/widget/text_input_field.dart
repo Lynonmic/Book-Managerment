@@ -8,13 +8,13 @@ class TextInputField extends StatelessWidget {
   final int maxLines;
 
   const TextInputField({
-    Key? key,
+    super.key,
     required this.label,
     required this.value,
     required this.onChanged,
     this.maxLines = 1,
     required bool isRequired,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

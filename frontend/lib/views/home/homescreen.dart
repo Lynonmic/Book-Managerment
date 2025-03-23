@@ -16,7 +16,7 @@ import 'package:frontend/widget/rating_star.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreen();
@@ -30,13 +30,13 @@ class _HomeScreen extends State<HomeScreen> {
   List<UserModels> _users = [];
   bool _isloadUsers = false;
   String? _errorUsers;
-  late UsersController _usersController;
+  UsersController _usersController = UsersController();
 
   // Publisher-related variables
   List<Publishermodels> _publishers = [];
   bool _isLoadingPublishers = false;
   String? _errorPublisher;
-  late PublisherController _controller;
+  PublisherController _controller = PublisherController();
 
   final BookService _bookService = BookService();
 
@@ -684,6 +684,7 @@ class _HomeScreen extends State<HomeScreen> {
         ),
       );
     }
+    _fetchUsers();
   }
 
   void _deletePublisher(int maNhaXuatBan) async {
@@ -699,6 +700,7 @@ class _HomeScreen extends State<HomeScreen> {
         ),
       );
     }
+    _fetchPublishers();
   }
 
   void _edit(Publishermodels publisher) async {
@@ -740,10 +742,7 @@ class _HomeScreen extends State<HomeScreen> {
             ),
       ),
     );
-
-    if (result == true) {
-      _fetchUsers();
-    }
+    _fetchUsers();
   }
 
   @override

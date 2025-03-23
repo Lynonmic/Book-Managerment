@@ -1,6 +1,5 @@
 // lib/screens/book_form_screen.dart
 import 'package:flutter/material.dart';
-import 'package:frontend/model/book_model.dart';
 import 'package:frontend/widget/dropdown_field.dart';
 import 'package:frontend/widget/image_placeholder.dart';
 import 'package:frontend/widget/number_input_field.dart';
@@ -10,8 +9,7 @@ class BookFormScreen extends StatefulWidget {
   final Book? book;
   final Function(Book) onSave;
 
-  const BookFormScreen({Key? key, this.book, required this.onSave})
-    : super(key: key);
+  const BookFormScreen({super.key, this.book, required this.onSave});
 
   @override
   State<BookFormScreen> createState() => _BookFormScreenState();

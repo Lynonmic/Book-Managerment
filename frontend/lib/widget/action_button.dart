@@ -22,10 +22,10 @@ class CategoryActions extends StatelessWidget {
   final List<ActionButton> actions;
 
   const CategoryActions({
-    Key? key,
+    super.key,
     required this.categoryTitle,
     required this.actions,
-  }) : super(key: key);
+  });
 
   void _showOptionsDialog(BuildContext context, List<ActionButton> actions) {
     showModalBottomSheet(
@@ -82,7 +82,7 @@ class CategoryActions extends StatelessWidget {
                     option.onTap();
                   },
                 );
-              }).toList(),
+              }),
             ],
           ),
         );
@@ -112,8 +112,7 @@ class CategoryActions extends StatelessWidget {
 class ScrollableCategoryList extends StatelessWidget {
   final List<Map<String, dynamic>> categories;
 
-  const ScrollableCategoryList({Key? key, required this.categories})
-    : super(key: key);
+  const ScrollableCategoryList({super.key, required this.categories});
 
   @override
   Widget build(BuildContext context) {

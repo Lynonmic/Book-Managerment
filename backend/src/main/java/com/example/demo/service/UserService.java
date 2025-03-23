@@ -131,7 +131,7 @@ public class UserService {
         if (userRepository.getUserByEmail(email).isPresent()) {
             return "Email đã tồn tại!";
         }
-        if (userRepository.getUserBySoDienThoai(so_dien_thoai).isPresent()) {
+        if (userRepository.findBySoDienThoai(so_dien_thoai).isPresent()) {
             return "Số điện thoại đã tồn tại!";
         }
 
@@ -205,7 +205,7 @@ public class UserService {
         }
 
         if (soDienThoai != null && !soDienThoai.isBlank()) {
-            Optional<User> existingUserWithPhone = userRepository.getUserBySoDienThoai(soDienThoai);
+            Optional<User> existingUserWithPhone = userRepository.findBySoDienThoai(soDienThoai);
             if (existingUserWithPhone.isPresent() && !existingUserWithPhone.get().getMa_khach_hang().equals(userId)) {
                 return ResponseEntity.status(400)
                         .body(Map.of("success", false, "message", "Số điện thoại đã được sử dụng!"));
@@ -269,7 +269,7 @@ public class UserService {
         }
 
         if (soDienThoai != null && !soDienThoai.isBlank()) {
-            Optional<User> existingUserWithPhone = userRepository.getUserBySoDienThoai(soDienThoai);
+            Optional<User> existingUserWithPhone = userRepository.findBySoDienThoai(soDienThoai);
             if (existingUserWithPhone.isPresent() && !existingUserWithPhone.get().getMa_khach_hang().equals(userId)) {
                 return ResponseEntity.status(400)
                         .body(Map.of("success", false, "message", "Số điện thoại đã được sử dụng!"));

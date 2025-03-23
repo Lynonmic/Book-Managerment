@@ -8,12 +8,12 @@ class DropdownField extends StatefulWidget {
   final Function(String) onChanged;
 
   const DropdownField({
-    Key? key,
+    super.key,
     required this.label,
     required this.value,
     required this.options,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   State<DropdownField> createState() => _DropdownFieldState();

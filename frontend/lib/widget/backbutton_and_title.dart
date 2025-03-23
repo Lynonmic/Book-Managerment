@@ -4,8 +4,7 @@ class AppHeader extends StatelessWidget {
   final String title;
   final String? subtitle;
 
-  const AppHeader({Key? key, required this.title, this.subtitle})
-    : super(key: key);
+  const AppHeader({super.key, required this.title, this.subtitle});
 
   @override
   Widget build(BuildContext context) {

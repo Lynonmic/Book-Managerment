@@ -14,7 +14,7 @@ class NumberInputField extends StatelessWidget {
   final bool isRequired;
 
   const NumberInputField({
-    Key? key,
+    super.key,
     required this.label,
     required this.value,
     required this.onChanged,
@@ -24,7 +24,7 @@ class NumberInputField extends StatelessWidget {
     this.prefix,
     this.suffix,
     this.isRequired = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

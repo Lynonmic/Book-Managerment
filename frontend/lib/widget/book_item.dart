@@ -8,13 +8,13 @@ class BookItem extends StatelessWidget {
   final Widget? trailing;
 
   const BookItem({
-    Key? key,
+    super.key,
     required this.title,
     required this.description,
     required this.rating,
     this.onTap,
     this.trailing,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -80,7 +80,7 @@ class BookProvider with ChangeNotifier {
     } catch (e) {
       _error = e.toString();
       notifyListeners();
-      throw e; // Re-throw so UI can show error
+      rethrow; // Re-throw so UI can show error
     }
   }
 }
