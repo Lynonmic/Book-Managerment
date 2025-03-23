@@ -100,7 +100,7 @@ public class UserService {
         return extractClaims(token).getSubject();
     }
 
-    // 🟢 Lấy toàn bộ Claims từ token
+
     private Claims extractClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(secretKey)

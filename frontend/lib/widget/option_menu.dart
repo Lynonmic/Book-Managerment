@@ -6,35 +6,68 @@ class OptionMenu extends StatelessWidget {
   /// Callback for when an option is selected
   final Function(String) onOptionSelected;
 
+  /// Optional icon to display for the menu button
+  final IconData? icon;
+
   /// Optional tooltip text for the menu button
-  final String tooltip;
+  final String? tooltip;
 
   const OptionMenu({
-    super.key,
+    Key? key,
     required this.onOptionSelected,
-    required this.tooltip,
-  });
+    this.icon = Icons.more_vert,
+    this.tooltip,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
+      icon: Icon(icon),
       tooltip: tooltip,
-      icon: const Icon(Icons.more_vert),
       onSelected: onOptionSelected,
-      itemBuilder: (BuildContext context) => [
-        const PopupMenuItem<String>(
-          value: 'books',
-          child: Text('Books'),
-        ),
-        const PopupMenuItem<String>(
-          value: 'users',
-          child: Text('Users'),
-        ),
-        const PopupMenuItem<String>(
-          value: 'publisher',
-          child: Text('Publisher'),
-        ),
-      ],
+      itemBuilder:
+          (BuildContext context) => [
+            const PopupMenuItem<String>(
+              value: 'books',
+              child: Row(
+                children: [
+                  Icon(Icons.book),
+                  SizedBox(width: 8),
+                  Text('Book List'),
+                ],
+              ),
+            ),
+            const PopupMenuItem<String>(
+              value: 'users',
+              child: Row(
+                children: [
+                  Icon(Icons.people),
+                  SizedBox(width: 8),
+                  Text('User List'),
+                ],
+              ),
+            ),
+            const PopupMenuItem<String>(
+              value: 'authors',
+              child: Row(
+                children: [
+                  Icon(Icons.person),
+                  SizedBox(width: 8),
+                  Text('Author List'),
+                ],
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: 'ratings',
+              child: Row(
+                children: [
+                  Icon(Icons.star),
+                  SizedBox(width: 8),
+                  Text('Rate Book'),
+                ],
+              ),
+            ),
+          ],
     );
   }
 }

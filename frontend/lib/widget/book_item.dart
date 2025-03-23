@@ -1,82 +1,73 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/widget/rating_star.dart'; // Ensure this path is correct
-
-// If RatingStar is not defined, define it here or import the correct file
-class RatingStar extends StatelessWidget {
-  final int rating;
-
-  const RatingStar({super.key, required this.rating});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: List.generate(5, (index) {
-        return Icon(
-          index < rating ? Icons.star : Icons.star_border,
-        );
-      }),
-    );
-  }
-}
 
 class BookItem extends StatelessWidget {
   final String title;
   final String description;
-  final int rating;
-  final VoidCallback onTap;
+  final int rating; // This is correct as int for UI display
+  final VoidCallback? onTap;
+  final Widget? trailing;
 
   const BookItem({
-    super.key,
+    Key? key,
     required this.title,
     required this.description,
     required this.rating,
-    required this.onTap,
-  });
+    this.onTap,
+    this.trailing,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.grey,
+                shape: BoxShape.circle,
               ),
-              const SizedBox(height: 8),
-              Text(
-                description,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  RatingStar(rating: rating),
-                  const SizedBox(width: 8),
                   Text(
-                    '($rating)',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
+                    title,
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                  SizedBox(height: 8),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    color: Colors.grey.shade300,
+                    child: Icon(Icons.image, color: Colors.grey),
+                  ),
+                  SizedBox(height: 8),
+                  Row(
+                    children: List.generate(5, (index) {
+                      return Icon(
+                        index < rating ? Icons.star : Icons.star_border,
+                        size: 16,
+                        color: Colors.black,
+                      );
+                    }),
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

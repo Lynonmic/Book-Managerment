@@ -1,59 +1,70 @@
-class BookModel {
+import 'dart:convert';
+
+class Book {
   final int? id;
   final String title;
-  final String? author;
+  final String author;
   final String? description;
   final String? imageUrl;
-  final double? rating;
+  final double? rating; // Ensure this is a double
   final int? ratingCount;
-  final double price;
-  final int quantity;
-  final int? categoryId;
-  final int? publisherId;
 
-  BookModel({
+  Book({
     this.id,
     required this.title,
-    this.author,
+    required this.author,
     this.description,
     this.imageUrl,
     this.rating,
     this.ratingCount,
-    required this.price,
-    required this.quantity,
-    this.categoryId,
-    this.publisherId,
   });
 
-  factory BookModel.fromJson(Map<String, dynamic> json) {
-    return BookModel(
-      id: json['ma_sach'],
-      title: json['ten_sach'],
-      author: json['tac_gia'],
-      description: json['mo_ta'],
-      imageUrl: json['url_anh'],
-      rating: json['danh_gia']?.toDouble(),
-      ratingCount: json['so_luong_danh_gia'],
-      price: json['gia'].toDouble(),
-      quantity: json['so_luong'],
-      categoryId: json['ma_danh_muc'],
-      publisherId: json['ma_nha_xuat_ban'],
+  factory Book.fromJson(Map<String, dynamic> json) {
+    return Book(
+      id: json['id'],
+      title: json['title'],
+      author: json['author'],
+      description: json['description'],
+      imageUrl: json['imageUrl'],
+      // Convert the rating to double explicitly
+      rating:
+          json['rating'] != null
+              ? double.parse(json['rating'].toString())
+              : null,
+      ratingCount: json['ratingCount'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'ma_sach': id,
-      'ten_sach': title,
-      'tac_gia': author,
-      'mo_ta': description,
-      'url_anh': imageUrl,
-      'danh_gia': rating,
-      'so_luong_danh_gia': ratingCount,
-      'gia': price,
-      'so_luong': quantity,
-      'ma_danh_muc': categoryId,
-      'ma_nha_xuat_ban': publisherId,
+      'id': id,
+      'title': title,
+      'author': author,
+      'description': description,
+      'imageUrl': imageUrl,
+      'rating': rating,
+      'ratingCount': ratingCount,
     };
+  }
+
+  // Create a copy with updated fields
+  Book copyWith({
+    int? id,
+    String? title,
+    String? author,
+    String? description,
+    String? imageUrl,
+    double? rating,
+    int? ratingCount,
+  }) {
+    return Book(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      author: author ?? this.author,
+      description: description ?? this.description,
+      imageUrl: imageUrl ?? this.imageUrl,
+      rating: rating ?? this.rating,
+      ratingCount: ratingCount ?? this.ratingCount,
+    );
   }
 }
