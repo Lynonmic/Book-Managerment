@@ -1,57 +1,42 @@
 import 'package:flutter/material.dart';
 
-class RatingStar extends StatelessWidget {
-  final int rating;
-
-  const RatingStar({
-    super.key,
-    required this.rating,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: List.generate(5, (index) {
-        return Icon(
-          index < rating ? Icons.star : Icons.star_border,
-          size: 16,
-          color: Colors.amber,
-        );
-      }),
-    );
-  }
-}
-
 class InteractiveStarRating extends StatefulWidget {
-  final Function(double) onRatingChanged;
+  final int maxRating;
+  final Color color;
+  final double size;
+  final Function(int rating) onRatingChanged;
 
   const InteractiveStarRating({
     super.key,
+    this.maxRating = 5,
+    this.color = Colors.black,
+    this.size = 30,
     required this.onRatingChanged,
   });
 
   @override
-  State<InteractiveStarRating> createState() => _InteractiveStarRatingState();
+  _InteractiveStarRatingState createState() => _InteractiveStarRatingState();
 }
 
 class _InteractiveStarRatingState extends State<InteractiveStarRating> {
-  double _rating = 0;
+  int _currentRating = 0;
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      children: List.generate(5, (index) {
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(widget.maxRating, (index) {
         return GestureDetector(
           onTap: () {
             setState(() {
-              _rating = index + 1;
+              _currentRating = index + 1;
             });
-            widget.onRatingChanged(_rating);
+            widget.onRatingChanged(_currentRating);
           },
           child: Icon(
-            index < _rating ? Icons.star : Icons.star_border,
-            size: 32,
-            color: Colors.amber,
+            index < _currentRating ? Icons.star : Icons.star_border,
+            color: widget.color,
+            size: widget.size,
           ),
         );
       }),

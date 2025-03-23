@@ -4,8 +4,6 @@ import 'package:frontend/controllers/users_controller.dart';
 import 'package:frontend/model/PublisherModels.dart';
 import 'package:frontend/model/UserModels.dart';
 import 'package:frontend/model/book_model.dart';
-import 'package:frontend/service/book_service.dart';
-import 'package:frontend/views/book/user_book_page.dart';
 import 'package:frontend/views/profile/edit_profile_page.dart';
 import 'package:frontend/views/publisher/publisher_edit_page.dart';
 import 'package:frontend/widget/book_item.dart';

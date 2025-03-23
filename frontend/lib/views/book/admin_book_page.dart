@@ -1,374 +1,296 @@
+// lib/screens/book_form_screen.dart
 import 'package:flutter/material.dart';
-import 'package:frontend/controllers/book_functions.dart';
 import 'package:frontend/model/book_model.dart';
-import 'package:frontend/service/book_service.dart';
-import 'package:frontend/views/book/user_book_page.dart';
-import 'package:frontend/widget/book_item.dart';
-import 'package:frontend/widget/bottom_menu.dart';
-import 'package:frontend/widget/option_menu.dart';
-import 'package:frontend/widget/rating_star.dart';
+import 'package:frontend/widget/dropdown_field.dart';
+import 'package:frontend/widget/image_placeholder.dart';
+import 'package:frontend/widget/number_input_field.dart';
+import 'package:frontend/widget/text_input_field.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+class BookFormScreen extends StatefulWidget {
+  final Book? book;
+  final Function(Book) onSave;
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const BookFormScreen({Key? key, this.book, required this.onSave})
+    : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.purple,
-        scaffoldBackgroundColor: Colors.white,
-      ),
-      home: const HomeScreen(),
-      routes: {
-        '/user_book_page': (context) => Scaffold(
-              appBar: AppBar(title: Text('User Book Page')),
-              body: const BookPageUser(),
-            ),
-      },
-    );
-  }
+  State<BookFormScreen> createState() => _BookFormScreenState();
 }
 
-// Example screen that uses the BottomMenu
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class _BookFormScreenState extends State<BookFormScreen> {
+  late String _title;
+  late String _author;
+  String? _description;
+  String? _imageUrl;
+  double? _price;
+  String? _publisher;
+  int? _pageCount;
+  String? _isbn;
+  double? _rating;
+  int? _ratingCount;
 
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
-  // Track currently displayed item type
-  String _currentItemType = 'books'; // Default to books
-
-  // Service for API calls
-  final BookService _bookService = BookService();
-
-  // State variables to hold API data
-  List<BookModel> _books = [];
-  bool _isLoading = false;
-  String? _errorMessage;
+  final List<String> _publishers = [
+    'Penguin Random House',
+    'HarperCollins',
+    'Simon & Schuster',
+    'Macmillan Publishers',
+    'Hachette Book Group',
+    'Other',
+  ];
 
   @override
   void initState() {
     super.initState();
-    _fetchBooks();
+    _title = widget.book?.title ?? '';
+    _author = widget.book?.author ?? '';
+    _description = widget.book?.description;
+    _imageUrl = widget.book?.imageUrl;
+    _price = widget.book?.price;
+    _publisher = widget.book?.publisher;
+    _pageCount = widget.book?.pageCount;
+    _isbn = widget.book?.isbn;
+    _rating = widget.book?.rating;
+    _ratingCount = widget.book?.ratingCount;
   }
 
-  // Fetch books from API
-  Future<void> _fetchBooks() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final books = await _bookService.getAllBooks();
-      setState(() {
-        _books = books;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Failed to load books: $e';
-        _isLoading = false;
-      });
-    }
+  void _saveBook() {
+    final book = Book(
+      id: widget.book?.id ?? '',
+      title: _title,
+      author: _author,
+      description: _description,
+      imageUrl: _imageUrl,
+      price: _price,
+      publisher: _publisher,
+      pageCount: _pageCount,
+      isbn: _isbn,
+      createdAt: widget.book?.createdAt,
+      updatedAt: DateTime.now().toIso8601String(),
+      rating: _rating,
+      ratingCount: _ratingCount,
+    );
+    widget.onSave(book);
   }
-
-  // Rate a book
-  Future<void> _rateBook(int bookId, double rating) async {
-    try {
-      await _bookService.rateBook(bookId, rating);
-      // Refresh the book list after rating
-      _fetchBooks();
-    } catch (e) {
-      if (mounted) {
-        NotificationService.showError(context,
-            message: 'Failed to rate book: $e');
-      }
-    }
-  }
-
-  final List<Widget> _pages = [
-    const Center(child: Text('Home Page')),
-    const Center(child: Text('Cart Page')),
-    const Center(child: Text('Cart Page')),
-    const Center(child: Text('Search Page')),
-    const Center(child: Text('Profile Page')),
-  ];
 
   @override
   Widget build(BuildContext context) {
-    // Determine which content to show based on navigation index
-    Widget mainContent;
-
-    if (_currentIndex == 0) {
-      // Show items based on selection when on the home tab
-      mainContent = _buildItemList();
-    } else {
-      // Use the existing pages for other tabs
-      mainContent = _pages[_currentIndex];
-    }
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(_getTitle()),
-        actions: [
-          OptionMenu(
-            onOptionSelected: (value) {
-              _handleOptionSelected(context, value);
-            },
-            tooltip: 'More options',
-          ),
-        ],
+        title: Text(widget.book == null ? 'Add Book' : 'Edit Book'),
+        backgroundColor: Colors.grey.shade800,
+        foregroundColor: Colors.white,
       ),
-      body: mainContent,
-      bottomNavigationBar: BottomMenu(
-        initialIndex: _currentIndex,
-        onIndexChanged: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-      ),
-    );
-  }
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              BookImagePicker(
+                imageUrl: _imageUrl,
+                onImageSelected: (url) {
+                  setState(() {
+                    _imageUrl = url;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
 
-  // Build the appropriate item list based on current selection
-  Widget _buildItemList() {
-    switch (_currentItemType) {
-      case 'books':
-        return _buildBookList();
-      case 'users':
-        return _buildUserList();
-      case 'authors':
-        return _buildAuthorList();
-      default:
-        return _buildBookList();
-    }
-  }
+              TextInputField(
+                label: 'Title',
+                value: _title,
+                onChanged: (value) {
+                  setState(() {
+                    _title = value;
+                  });
+                },
+                isRequired: true,
+              ),
 
-  // Build book list
-  Widget _buildBookList() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+              TextInputField(
+                label: 'Author',
+                value: _author,
+                onChanged: (value) {
+                  setState(() {
+                    _author = value;
+                  });
+                },
+                isRequired: true,
+              ),
 
-    if (_errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _fetchBooks,
-              child: const Text('Try Again'),
-            ),
-          ],
-        ),
-      );
-    }
+              DropdownField(
+                label: 'Publisher',
+                value: _publisher ?? '',
+                options: _publishers,
+                onChanged: (value) {
+                  setState(() {
+                    _publisher = value;
+                  });
+                },
+              ),
 
-    if (_books.isEmpty) {
-      return const Center(child: Text('No books found'));
-    }
+              TextInputField(
+                label: 'Description',
+                value: _description ?? '',
+                onChanged: (value) {
+                  setState(() {
+                    _description = value;
+                  });
+                },
+                maxLines: 5,
+                isRequired: false,
+              ),
 
-    return RefreshIndicator(
-      onRefresh: _fetchBooks,
-      child: ListView.builder(
-        itemCount: _books.length,
-        itemBuilder: (context, index) {
-          final book = _books[index];
-          return BookItem(
-            title: book.title,
-            description: book.description ?? 'No description available',
-            rating: book.rating?.round() ?? 0,
-            onTap: () {
-              // Show book details with rating option
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: Text(book.title),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (book.imageUrl != null)
-                        Image.network(
-                          book.imageUrl!,
-                          height: 150,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (ctx, error, _) => Container(
-                            height: 150,
-                            color: Colors.grey.shade300,
-                            child: const Icon(Icons.image, size: 50),
-                          ),
-                        ),
-                      const SizedBox(height: 16),
-                      Text('Author: ${book.author ?? 'Unknown'}'),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Rating: ${book.rating?.toStringAsFixed(1) ?? 'Not rated'} (${book.ratingCount ?? 0} reviews)',
-                      ),
-                      const SizedBox(height: 16),
-                      const Text('Rate this book:'),
-                      const SizedBox(height: 8),
-                      InteractiveStarRating(
-                        onRatingChanged: (rating) {
-                          Navigator.pop(context);
-                          if (book.id != null) {
-                            _rateBook(book.id!, rating.toDouble());
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Cannot rate this book: ID is missing',
-                                ),
-                              ),
-                            );
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Close'),
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
+              NumberInputField(
+                label: 'Price',
+                value: _price,
+                onChanged: (value) {
+                  setState(() {
+                    _price = value;
+                  });
+                },
+                isDecimal: true,
+                prefix: '\$',
+              ),
 
-  // Build user list - placeholder since we're focusing on books
-  Widget _buildUserList() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text('User data would be fetched from API'),
-          ElevatedButton(
-            onPressed: () {
-              // Placeholder for user API functionality
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('User API integration not implemented yet'),
-                ),
-              );
-            },
-            child: Text('Load Users'),
-          ),
-        ],
-      ),
-    );
-  }
+              NumberInputField(
+                label: 'Page Count',
+                value: _pageCount?.toDouble(),
+                onChanged: (value) {
+                  setState(() {
+                    _pageCount = value?.toInt();
+                  });
+                },
+              ),
 
-  // Build author list - placeholder since we're focusing on books
-  Widget _buildAuthorList() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text('Author data would be fetched from API'),
-          ElevatedButton(
-            onPressed: () {
-              // Placeholder for author API functionality
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Author API integration not implemented yet'),
-                ),
-              );
-            },
-            child: Text('Load Authors'),
-          ),
-        ],
-      ),
-    );
-  }
+              TextInputField(
+                label: 'ISBN',
+                value: _isbn ?? '',
+                onChanged: (value) {
+                  setState(() {
+                    _isbn = value;
+                  });
+                },
+                isRequired: false,
+              ),
 
-  // Update the title based on current index and item type
-  String _getTitle() {
-    if (_currentIndex == 0) {
-      switch (_currentItemType) {
-        case 'books':
-          return 'Book List';
-        case 'users':
-          return 'User List';
-        case 'publisher':
-          return 'Publisher List';
-        default:
-          return 'Book List';
-      }
-    } else {
-      // Existing titles for other tabs
-      switch (_currentIndex) {
-        case 1:
-          return 'Cart Page';
-        case 2:
-          return 'Search Page';
-        case 3:
-          return 'Profile Page';
-        default:
-          return 'Home';
-      }
-    }
-  }
+              NumberInputField(
+                label: 'Rating',
+                value: _rating,
+                onChanged: (value) {
+                  setState(() {
+                    _rating = value;
+                  });
+                },
+                isDecimal: true,
+                min: 0,
+                max: 5,
+                suffix: '/ 5',
+              ),
 
-  // Handle option menu selection
-  void _handleOptionSelected(BuildContext context, String value) {
-    // Update the current item type
-    setState(() {
-      _currentItemType = value;
-      // Make sure we're on the first tab to see the items
-      _currentIndex = 0;
-
-      // If selecting ratings, show a dialog to rate a book
-      if (value == 'ratings' && _books.isNotEmpty) {
-        final book =
-            _books.first; // Just an example, could show a list to select from
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text('Rate Book: ${book.title}'),
-            content: InteractiveStarRating(
-              onRatingChanged: (rating) {
-                Navigator.pop(context);
-                if (book.id != null) {
-                  _rateBook(book.id!, rating.toDouble());
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Cannot rate this book: ID is missing'),
-                    ),
-                  );
-                }
-              },
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+              NumberInputField(
+                label: 'Rating Count',
+                value: _ratingCount?.toDouble(),
+                onChanged: (value) {
+                  setState(() {
+                    _ratingCount = value?.toInt();
+                  });
+                },
               ),
             ],
           ),
-        );
-        _currentItemType = 'books'; // Reset to books view after rating
-      }
-    });
+        ),
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 3,
+              offset: const Offset(0, -1),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text('Cancel'),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextButton(
+                onPressed: () {
+                  if (_title.isEmpty || _author.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Title and Author are required'),
+                      ),
+                    );
+                    return;
+                  }
+                  _saveBook();
+                  Navigator.of(context).pop();
+                },
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.purple,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text('Save'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
+}
+
+class Book {
+  final String id;
+  final String title;
+  final String author;
+  final String? description;
+  final String? imageUrl;
+  final double? price;
+  final String? publisher;
+  final int? pageCount;
+  final String? isbn;
+  final String? createdAt;
+  final String? updatedAt;
+  final double? rating;
+  final int? ratingCount;
+
+  Book({
+    required this.id,
+    required this.title,
+    required this.author,
+    this.description,
+    this.imageUrl,
+    this.price,
+    this.publisher,
+    this.pageCount,
+    this.isbn,
+    this.createdAt,
+    this.updatedAt,
+    this.rating,
+    this.ratingCount,
+  });
 }
