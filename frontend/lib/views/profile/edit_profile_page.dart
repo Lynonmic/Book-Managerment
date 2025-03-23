@@ -9,8 +9,7 @@ class EditProfilePage extends StatefulWidget {
   final bool isEditing;
   final Map<String, dynamic>? userData;
 
-  const EditProfilePage({Key? key, required this.isEditing, this.userData})
-    : super(key: key);
+  const EditProfilePage({super.key, required this.isEditing, this.userData});
 
   @override
   _EditProfilePageState createState() => _EditProfilePageState();

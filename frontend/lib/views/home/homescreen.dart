@@ -15,7 +15,7 @@ import 'package:frontend/widget/rating_star.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -850,7 +850,8 @@ class _HomeScreenState extends State<HomeScreen> {
   // Handle option menu selection
  
     // Update the current item type
-    setState() {
+    @override
+  setState() {
       _currentItemType = value;
       // Make sure we're on the first tab to see the items
       _currentIndex = 0;

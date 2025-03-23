@@ -9,13 +9,13 @@ class ContentSection extends StatelessWidget {
   final Function(int)? onRatingChanged;
 
   const ContentSection({
-    Key? key,
+    super.key,
     this.title,
     required this.body,
     this.showRating = false,
     this.rating = 4,
     this.onRatingChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

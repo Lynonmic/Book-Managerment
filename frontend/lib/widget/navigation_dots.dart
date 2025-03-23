@@ -6,11 +6,11 @@ class NavigationDots extends StatelessWidget {
   final Function(int)? onPageSelected;
 
   const NavigationDots({
-    Key? key,
+    super.key,
     required this.currentPage,
     this.totalPages = 3,
     this.onPageSelected,
-  }) : super(key: key);
+  });
 
   void _showOptionsDialog(BuildContext context, int pageIndex) {
     showDialog(

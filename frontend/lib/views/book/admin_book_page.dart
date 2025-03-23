@@ -10,8 +10,7 @@ class BookFormScreen extends StatefulWidget {
   final Book? book;
   final Function(Book) onSave;
 
-  const BookFormScreen({Key? key, this.book, required this.onSave})
-    : super(key: key);
+  const BookFormScreen({super.key, this.book, required this.onSave});
 
   @override
   State<BookFormScreen> createState() => _BookFormScreenState();

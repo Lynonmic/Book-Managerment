@@ -12,7 +12,7 @@ class BookDetailScreen extends StatefulWidget {
   final Map<String, dynamic>? book;
   final VoidCallback? onBack;
 
-  const BookDetailScreen({Key? key, this.book, this.onBack}) : super(key: key);
+  const BookDetailScreen({super.key, this.book, this.onBack});
 
   @override
   _BookDetailScreenState createState() => _BookDetailScreenState();
@@ -67,8 +67,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                   context,
                 ).showSnackBar(const SnackBar(content: Text("Book deleted")));
               },
-              child: const Text("Delete"),
               style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text("Delete"),
             ),
           ],
         );
@@ -282,8 +282,7 @@ class CategoryPill extends StatelessWidget {
   final String label;
   final bool isActive;
 
-  const CategoryPill({Key? key, required this.label, this.isActive = false})
-    : super(key: key);
+  const CategoryPill({super.key, required this.label, this.isActive = false});
 
   @override
   Widget build(BuildContext context) {

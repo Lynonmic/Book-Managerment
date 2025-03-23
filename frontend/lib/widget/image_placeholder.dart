@@ -8,10 +8,10 @@ class BookImagePicker extends StatefulWidget {
   final Function(String?) onImageSelected;
 
   const BookImagePicker({
-    Key? key,
+    super.key,
     this.imageUrl,
     required this.onImageSelected,
-  }) : super(key: key);
+  });
 
   @override
   State<BookImagePicker> createState() => _BookImagePickerState();
