@@ -1,9 +1,6 @@
 // book_detail_screen.dart
 import 'package:flutter/material.dart';
-import 'package:frontend/widget/action_button.dart';
 import 'package:frontend/widget/backbutton_and_title.dart';
-import 'package:frontend/widget/category_pills.dart';
-import 'package:frontend/widget/content_section.dart';
 import 'package:frontend/widget/image_placeholder.dart';
 import 'package:frontend/widget/primary_button.dart';
 import 'package:frontend/widget/rating_star.dart';
@@ -20,25 +17,6 @@ class BookDetailScreen extends StatefulWidget {
 
 class _BookDetailScreenState extends State<BookDetailScreen> {
   String? _imageUrl;
-
-  // Sample page content for demonstration
-  final List<Map<String, dynamic>> _pageContent = [
-    {
-      'title': 'Header',
-      'body':
-          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    },
-    {
-      'title': 'Page 2',
-      'body':
-          'This is the content for page 2. You can add more details about the book here.',
-    },
-    {
-      'title': 'Page 3',
-      'body':
-          'This is the content for page 3. You can include reviews, additional details, or related books here.',
-    },
-  ];
 
   final PageController _pageController = PageController();
 
@@ -234,20 +212,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                               },
                             ),
                             const SizedBox(height: 16),
+
                             // Page content with horizontal scrolling
-                            SizedBox(
-                              height: 200, // Set appropriate height
-                              child: PageView.builder(
-                                controller: _pageController,
-                                itemCount: _pageContent.length,
-                                itemBuilder: (context, index) {
-                                  return ContentSection(
-                                    title: _pageContent[index]['title'],
-                                    body: _pageContent[index]['body'],
-                                  );
-                                },
-                              ),
-                            ),
                           ],
                         ),
                       ),

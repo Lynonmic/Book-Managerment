@@ -8,7 +8,7 @@ class BottomMenu extends StatefulWidget {
     super.key,
     this.initialIndex = 0,
     required this.onIndexChanged,
-    required int currentIndex,
+    int? currentIndex, // Make this optional and ignore it
   });
 
   @override
@@ -22,6 +22,17 @@ class _BottomMenuState extends State<BottomMenu> {
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
+  }
+
+  @override
+  void didUpdateWidget(BottomMenu oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update selected index if the initialIndex changes
+    if (widget.initialIndex != oldWidget.initialIndex) {
+      setState(() {
+        _selectedIndex = widget.initialIndex;
+      });
+    }
   }
 
   @override

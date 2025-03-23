@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/service/books/book_provider.dart';
 import 'package:frontend/views/login/login_page.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => BookProvider()),
+        // Other providers if any
+      ],
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

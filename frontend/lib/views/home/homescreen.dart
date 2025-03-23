@@ -5,6 +5,7 @@ import 'package:frontend/model/PublisherModels.dart';
 import 'package:frontend/model/UserModels.dart';
 import 'package:frontend/model/book_model.dart';
 import 'package:frontend/service/books/book_provider.dart';
+import 'package:frontend/service/books/book_services.dart';
 import 'package:frontend/views/profile/edit_profile_page.dart';
 import 'package:frontend/views/publisher/publisher_edit_page.dart';
 import 'package:frontend/widget/book_item.dart';
@@ -18,45 +19,55 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreen();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreen extends State<HomeScreen> {
   int _currentIndex = 0;
-  // Track currently displayed item type
-  String _currentItemType = 'books'; // Default to books
-
-  // Service for API calls
-  final BookService _bookService = BookService();
-  final PublisherController _controller = PublisherController();
-  final UsersController _usersController = UsersController();
-
-  // State variables to hold API data
-  List<BookModel> _books = [];
+  String _currentItemType = 'books';
+  List<Book> _books = [];
   bool _isLoading = false;
   String? _errorMessage;
+  // User-related variables
+  List<UserModels> _users = [];
+  bool _isloadUsers = false;
+  String? _errorUsers;
+  late UsersController _usersController;
+
+  // Publisher-related variables
+  List<Publishermodels> _publishers = [];
+  bool _isLoadingPublishers = false;
+  String? _errorPublisher;
+  late PublisherController _controller;
+
+  final BookService _bookService = BookService();
 
   @override
   void initState() {
     super.initState();
     _fetchBooks();
     _fetchUsers();
+    _fetchPublishers();
+    // Initialize other necessary elements
   }
 
   // Fetch books from API
   Future<void> _fetchBooks() async {
+    print("===== _fetchBooks() is called =====");
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      final books = await _bookService.getAllBooks();
+      final books = await _bookService.fetchBooks();
       setState(() {
         _books = books;
         _isLoading = false;
       });
+      print("===== _fetchBooks() got ${books.length} books =====");
     } catch (e) {
+      print("Fetch Users Error: $e");
       setState(() {
         _errorMessage = 'Failed to load books: $e';
         _isLoading = false;
@@ -77,9 +88,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  List<UserModels> _users = [];
-  bool _isloadUsers = false;
-  String? _errorUsers;
   Future<void> _fetchUsers() async {
     print("===== _fetchUsers() is called =====");
     setState(() {
@@ -103,10 +111,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  List<Publishermodels> _publishers = [];
-  bool _isLoadingPublishers = false;
-  String? _errorPublisher;
-
   Future<void> _fetchPublishers() async {
     setState(() {
       _isLoadingPublishers = true;
@@ -127,65 +131,71 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  final List<Widget> _pages = [
-    const Center(child: Text('Cart Page')),
-    const Center(child: Text('Cart Page')),
-    const Center(child: Text('Search Page')),
-    const Center(child: Text('Profile Page')),
-  ];
+  void _handleRatingChanged(int bookId, int rating) async {
+    try {
+      // Convert the integer rating to a double explicitly
+      await Provider.of<BookProvider>(
+        context,
+        listen: false,
+      ).rateBook(bookId, rating.toDouble());
 
-  @override
-  Widget build(BuildContext context) {
-    // Determine which content to show based on navigation index
-    Widget mainContent;
-
-    if (_currentIndex == 0) {
-      // Show items based on selection when on the home tab
-      mainContent = _buildItemList();
-    } else {
-      // Use the existing pages for other tabs
-      mainContent = _pages[_currentIndex];
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_getTitle()),
-        actions: [
-          OptionMenu(
-            onOptionSelected: (value) {
-              _handleOptionSelected(context, value);
-            },
-            tooltip: 'More options',
-          ),
-        ],
-      ),
-      body: mainContent,
-      bottomNavigationBar: BottomMenu(
-        initialIndex: _currentIndex,
-        onIndexChanged: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-      ),
-    );
-  }
-
-  // Build the appropriate item list based on current selection
-  Widget _buildItemList() {
-    switch (_currentItemType) {
-      case 'books':
-        return _buildBookList();
-      case 'users':
-        return _buildUserList();
-      case 'publisher':
-        return _buildPublisherList();
-      default:
-        return _buildBookList();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Rating submitted: $rating stars')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to rate book: $e')));
     }
   }
 
-  // Build book list
+  void _handleOptionSelected(String value) {
+    setState(() {
+      _currentItemType = value;
+      _currentIndex = 0;
+      if (value == 'books') {
+        // Fetch users list
+        _fetchBooks();
+      }
+      if (value == 'users') {
+        // Fetch users list
+        _fetchUsers();
+      }
+      if (value == 'publisher') {
+        _fetchPublishers();
+        // Fetch publishers list
+      }
+      if (value == 'ratings') {
+        final bookProvider = Provider.of<BookProvider>(context, listen: false);
+        if (bookProvider.books.isNotEmpty) {
+          final book = bookProvider.books.first;
+          showDialog(
+            context: context,
+            builder:
+                (context) => AlertDialog(
+                  title: Text('Rate Book: ${book.title}'),
+                  content: InteractiveStarRating(
+                    onRatingChanged: (rating) {
+                      Navigator.pop(context);
+                      if (book.id != null) {
+                        _rateBook(book.id!, rating.toDouble());
+                      }
+                    },
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text('Cancel'),
+                    ),
+                  ],
+                ),
+          );
+          _currentItemType = 'books';
+        }
+      }
+    });
+  }
+
   Widget _buildBookList() {
     return Consumer<BookProvider>(
       builder: (context, bookProvider, child) {
@@ -309,86 +319,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Handle rating changes by ensuring double conversion
-  void _handleRatingChanged(int bookId, int rating) async {
-    try {
-      // Convert the integer rating to a double explicitly
-      await Provider.of<BookProvider>(
-        context,
-        listen: false,
-      ).rateBook(bookId, rating.toDouble());
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Rating submitted: $rating stars')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to rate book: $e')));
-    }
-  }
-
-  // Rate a book - now uses the provider
-  Future<void> _rateBook(int bookId, double rating) async {
-    try {
-      await Provider.of<BookProvider>(
-        context,
-        listen: false,
-      ).rateBook(bookId, rating);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Rating submitted: $rating stars')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to rate book: $e')));
-    }
-  }
-
-  // Handle option menu selection with updated book provider
-  void _handleOptionSelected(String value) {
-    setState(() {
-      _currentItemType = value;
-      _currentIndex = 0;
-      if (value == 'users') {
-        _fetchUsers(); // Gọi API lấy danh sách publisher
-      }
-      if (value == 'publisher') {
-        _fetchPublishers(); // Gọi API lấy danh sách publisher
-      }
-      if (value == 'ratings') {
-        final bookProvider = Provider.of<BookProvider>(context, listen: false);
-        if (bookProvider.books.isNotEmpty) {
-          final book = bookProvider.books.first;
-          showDialog(
-            context: context,
-            builder:
-                (context) => AlertDialog(
-                  title: Text('Rate Book: ${book.title}'),
-                  content: InteractiveStarRating(
-                    onRatingChanged: (rating) {
-                      Navigator.pop(context);
-                      if (book.id != null) {
-                        _rateBook(book.id!, rating.toDouble());
-                      }
-                    },
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text('Cancel'),
-                    ),
-                  ],
-                ),
-          );
-          _currentItemType = 'books';
-        }
-      }
-    });
-  }
-
-  // Build user list - placeholder since we're focusing on books
   Widget _buildUserList() {
     if (_isloadUsers) {
       return Center(child: CircularProgressIndicator());
@@ -764,9 +694,7 @@ class _HomeScreenState extends State<HomeScreen> {
     bool success = await _usersController.deleteUser(userId);
 
     if (success) {
-      setState(() {
-        _users.removeWhere((user) => user.maKhachHang == userId);
-      });
+      _users.removeWhere((user) => user.maKhachHang == userId);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -789,9 +717,6 @@ class _HomeScreenState extends State<HomeScreen> {
     bool success = response['success'] ?? false;
 
     if (success) {
-      setState(() {
-        _publishers.removeWhere((p) => p.maNhaXuatBan == maNhaXuatBan);
-      });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -847,47 +772,32 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Handle option menu selection
- 
-    // Update the current item type
-    @override
-  setState() {
-      _currentItemType = value;
-      // Make sure we're on the first tab to see the items
-      _currentIndex = 0;
-      if (value == 'users') {
-        _fetchUsers(); // Gọi API lấy danh sách publisher
-      }
-      if (value == 'publisher') {
-        _fetchPublishers(); // Gọi API lấy danh sách publisher
-      }
-      // If selecting ratings, show a dialog to rate a book
-      if (value == 'ratings' && _books.isNotEmpty) {
-        final book =
-            _books.first; // Just an example, could show a list to select from
-        showDialog(
-          context: context,
-          builder:
-              (context) => AlertDialog(
-                title: Text('Rate Book: ${book.title}'),
-                content: InteractiveStarRating(
-                  onRatingChanged: (rating) {
-                    Navigator.pop(context);
-                    if (book.id != null) {
-                      _rateBook(book.id!, rating.toDouble());
-                    }
-                  },
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text('Cancel'),
-                  ),
-                ],
-              ),
-        );
-        _currentItemType = 'books'; // Reset to books view after rating
-      }
-    });
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_getTitle()),
+        actions: [
+          if (_currentIndex == 0)
+            OptionMenu(onOptionSelected: _handleOptionSelected),
+        ],
+      ),
+      body:
+          _currentIndex == 0
+              ? _currentItemType == 'books'
+                  ? _buildBookList()
+                  : _currentItemType == 'users'
+                  ? _buildUserList()
+                  : _buildPublisherList()
+              : Container(), // Other tabs implementation
+      bottomNavigationBar: BottomMenu(
+        initialIndex: _currentIndex,
+        onIndexChanged: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+      ),
+    );
   }
-
+}

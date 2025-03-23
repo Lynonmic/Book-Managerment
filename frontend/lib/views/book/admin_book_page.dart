@@ -1,6 +1,5 @@
 // lib/screens/book_form_screen.dart
 import 'package:flutter/material.dart';
-import 'package:frontend/model/book_model.dart';
 import 'package:frontend/widget/dropdown_field.dart';
 import 'package:frontend/widget/image_placeholder.dart';
 import 'package:frontend/widget/number_input_field.dart';
