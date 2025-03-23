@@ -5,7 +5,7 @@ import 'package:frontend/widget/rating_star.dart'; // Ensure this path is correc
 class RatingStar extends StatelessWidget {
   final int rating;
 
-  const RatingStar({Key? key, required this.rating}) : super(key: key);
+  const RatingStar({super.key, required this.rating});
 
   @override
   Widget build(BuildContext context) {
@@ -26,12 +26,12 @@ class BookItem extends StatelessWidget {
   final VoidCallback onTap;
 
   const BookItem({
-    Key? key,
+    super.key,
     required this.title,
     required this.description,
     required this.rating,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

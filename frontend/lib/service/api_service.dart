@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:frontend/model/PublisherModels.dart';
+import 'package:frontend/model/UserModels.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 
 class ApiService {
   static const String baseUrl = "http://10.0.2.2:9090/book_management/auth";
@@ -13,15 +15,22 @@ class ApiService {
   ) async {
     try {
       final response = await http.post(
-        Uri.parse("$baseUrl/login"),
+        Uri.parse("$baseUrl/login"), // Đảm bảo endpoint chính xác
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"email": email, "password": password}),
       );
 
+      print("📌 Response status: ${response.statusCode}");
+      print("📌 Response body: ${response.body}");
+
       final responseJson = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        return {"success": true, "token": responseJson["token"]};
+        return {
+          "success": true,
+          "token": responseJson["token"],
+          "role": responseJson["role"], // Lấy role từ API
+        };
       } else {
         return {
           "success": false,
@@ -29,6 +38,7 @@ class ApiService {
         };
       }
     } catch (e) {
+      print("❌ Lỗi kết nối đến server: $e");
       return {"success": false, "message": "Lỗi kết nối đến server!"};
     }
   }
@@ -85,26 +95,25 @@ class ApiService {
   }
 
   static Future<List<Publishermodels>> getAllPublisher() async {
-  try {
-    final response = await http.get(
-      Uri.parse("$baseUrl/nha-xuat-ban"),
-      headers: {"Content-Type": "application/json; charset=UTF-8"},
-    );
+    try {
+      final response = await http.get(
+        Uri.parse("$baseUrl/nha-xuat-ban"),
+        headers: {"Content-Type": "application/json; charset=UTF-8"},
+      );
 
-    print("🔍 API Response Code: ${response.statusCode}");
-    print("📡 API Response Body: ${response.body}");
+      print("🔍 API Response Code: ${response.statusCode}");
+      print("📡 API Response Body: ${response.body}");
 
-    if (response.statusCode == 200) {
-      List<dynamic> jsonList = jsonDecode(response.body);
-      return jsonList.map((json) => Publishermodels.fromJson(json)).toList();
-    } else {
-      throw Exception("Lỗi lấy dữ liệu từ server!");
+      if (response.statusCode == 200) {
+        List<dynamic> jsonList = jsonDecode(response.body);
+        return jsonList.map((json) => Publishermodels.fromJson(json)).toList();
+      } else {
+        throw Exception("Lỗi lấy dữ liệu từ server!");
+      }
+    } catch (e) {
+      throw Exception("Lỗi kết nối đến server: $e");
     }
-  } catch (e) {
-    throw Exception("Lỗi kết nối đến server: $e");
   }
-}
-
 
   static Future<Map<String, dynamic>> createPublisher(
     String tenNhaXuatBan,
@@ -196,4 +205,130 @@ class ApiService {
       return {"success": false, "message": "Lỗi kết nối đến server!"};
     }
   }
+
+  static Future<List<UserModels>> getAllUser() async {
+    try {
+      print("===== CALLING API: $baseUrl/users =====");
+      final response = await http.get(
+        Uri.parse("$baseUrl/users"),
+        headers: {"Content-Type": "application/json; charset=UTF-8"},
+      );
+      print("Response Status: ${response.statusCode}");
+      print("Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        List<dynamic> jsonList = jsonDecode(response.body);
+        return jsonList.map((json) => UserModels.fromJson(json)).toList();
+      } else {
+        throw Exception("Lỗi lấy dữ liệu từ server!");
+      }
+    } catch (e) {
+      print("API Error: $e");
+      throw Exception("Lỗi kết nối đến server: $e");
+    }
+  }
+
+  static Future<Map<String, dynamic>> getUserProfile(String token) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$baseUrl/users/profile"),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      final responseJson = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return {"success": true, "user": responseJson};
+      } else {
+        return {
+          "success": false,
+          "message": responseJson["message"] ?? "Lỗi khi lấy thông tin!",
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Lỗi kết nối đến server!"};
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateUser({
+    required int userId,
+    String? tenKhachHang,
+    String? soDienThoai,
+    String? diaChi,
+    String? email,
+    File? avatar,
+    required String token,
+  }) async {
+    try {
+      var request = http.MultipartRequest(
+        "PUT",
+        Uri.parse("$baseUrl/users/update/$userId"),
+      );
+
+      request.headers["Authorization"] = "Bearer $token";
+      request.headers["Accept"] = "application/json";
+
+      if (tenKhachHang != null) request.fields["ten_khach_hang"] = tenKhachHang;
+      if (soDienThoai != null) request.fields["so_dien_thoai"] = soDienThoai;
+      if (diaChi != null) request.fields["dia_chi"] = diaChi;
+      if (email != null) request.fields["email"] = email;
+
+      // Thêm avatar nếu có
+      if (avatar != null) {
+        String? mimeType = lookupMimeType(avatar.path);
+        var multipartFile = await http.MultipartFile.fromPath(
+          'avatar',
+          avatar.path,
+          contentType: mimeType != null ? MediaType.parse(mimeType) : null,
+        );
+        request.files.add(multipartFile);
+      }
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+      var responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          "success": true,
+          "message": responseData["message"] ?? "Cập nhật thành công",
+          "data": responseData["data"] ?? {},
+        };
+      } else {
+        return {
+          "success": false,
+          "message": responseData["message"] ?? "Lỗi khi cập nhật thông tin",
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Lỗi kết nối đến server!"};
+    }
+  }
+
+static Future<Map<String, dynamic>> deleteUser(int userId) async {
+    final url = Uri.parse("$baseUrl/users/$userId");
+
+    try {
+      final response = await http.delete(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {
+          "success": false,
+          "message": jsonDecode(response.body)["message"] ?? "Lỗi không xác định"
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Lỗi kết nối"};
+    }
+  }
 }
+

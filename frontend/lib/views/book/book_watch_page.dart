@@ -9,10 +9,10 @@ class BookWatchPage extends StatefulWidget {
   final BookModel? initialData; // Optional initial data to show while loading
 
   const BookWatchPage({
-    Key? key,
+    super.key,
     required this.bookId,
     this.initialData,
-  }) : super(key: key);
+  });
 
   @override
   State<BookWatchPage> createState() => _BookWatchPageState();

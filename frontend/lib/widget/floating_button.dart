@@ -7,12 +7,12 @@ class FloatingButton extends StatelessWidget {
   final IconData icon;
 
   const FloatingButton({
-    Key? key,
+    super.key,
     required this.onPressed,
     this.tooltip = 'Add',
     this.backgroundColor,
     this.icon = Icons.add,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -33,13 +33,13 @@ class FloatingButtonExtended extends StatelessWidget {
   final IconData icon;
 
   const FloatingButtonExtended({
-    Key? key,
+    super.key,
     required this.onPressed,
     required this.label,
     this.tooltip = 'Add',
     this.backgroundColor,
     this.icon = Icons.add,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/controllers/publisher_controller.dart';
+import 'package:frontend/controllers/users_controller.dart';
 import 'package:frontend/model/PublisherModels.dart';
+import 'package:frontend/model/UserModels.dart';
 import 'package:frontend/model/book_model.dart';
 import 'package:frontend/service/book_service.dart';
 import 'package:frontend/views/book/user_book_page.dart';
+import 'package:frontend/views/profile/edit_profile_page.dart';
 import 'package:frontend/views/publisher/publisher_edit_page.dart';
 import 'package:frontend/widget/book_item.dart';
 import 'package:frontend/widget/bottom_menu.dart';
@@ -40,7 +43,7 @@ class MyApp extends StatelessWidget {
 
 // Example screen that uses the BottomMenu
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -54,6 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Service for API calls
   final BookService _bookService = BookService();
   final PublisherController _controller = PublisherController();
+  final UsersController _usersController = UsersController();
 
   // State variables to hold API data
   List<BookModel> _books = [];
@@ -64,6 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _fetchBooks();
+    _fetchUsers();
   }
 
   // Fetch books from API
@@ -100,6 +105,32 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  List<UserModels> _users = [];
+  bool _isloadUsers = false;
+  String? _errorUsers;
+  Future<void> _fetchUsers() async {
+    print("===== _fetchUsers() is called =====");
+    setState(() {
+      _isloadUsers = true;
+      _errorUsers = null;
+    });
+
+    try {
+      final users = await _usersController.fetchUsers();
+      print("===== _fetchUsers() got ${users.length} users =====");
+      setState(() {
+        _users = users;
+        _isloadUsers = false;
+      });
+    } catch (e) {
+      print("Fetch Users Error: $e");
+      setState(() {
+        _errorUsers = 'Failed to load users: $e';
+        _isloadUsers = false;
+      });
+    }
+  }
+
   List<Publishermodels> _publishers = [];
   bool _isLoadingPublishers = false;
   String? _errorPublisher;
@@ -113,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final publishers = await PublisherController().fetchPublishers();
       setState(() {
-        _publishers = publishers; // Không còn `response['data']`
+        _publishers = publishers;
         _isLoadingPublishers = false;
       });
     } catch (e) {
@@ -273,28 +304,144 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Build user list - placeholder since we're focusing on books
   Widget _buildUserList() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text('User data would be fetched from API'),
-          ElevatedButton(
-            onPressed: () {
-              // Placeholder for user API functionality
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('User API integration not implemented yet'),
+    if (_isloadUsers) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorUsers != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              _errorUsers!,
+              style: TextStyle(color: Colors.red, fontSize: 16),
+            ),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _fetchUsers,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              );
-            },
-            child: Text('Load Users'),
-          ),
-        ],
-      ),
+              ),
+              child: Text(
+                'Thử lại',
+                style: TextStyle(fontSize: 16, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_users.isEmpty) {
+      return Center(
+        child: Text(
+          'Không tìm thấy người dùng',
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+      );
+    }
+
+    return Stack(
+      children: [
+        ListView.builder(
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          itemCount: _users.length,
+          itemBuilder: (context, index) {
+            final user = _users[index];
+
+            return Card(
+              margin: EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  _editUser(user);
+                },
+                onLongPress: () {
+                  _showDeleteConfirmationDialogUserList(context, user);
+                },
+                child: ListTile(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                  leading: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      width: 70,
+                      height: 70,
+                      color: Colors.grey[300],
+                      child:
+                          user.urlAvata != null
+                              ? Image.network(user.urlAvata!, fit: BoxFit.cover)
+                              : Icon(
+                                Icons.person,
+                                color: Colors.white,
+                                size: 30,
+                              ),
+                    ),
+                  ),
+                  title: Text(
+                    user.tenKhachHang ?? "Không có tên",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user.diaChi ?? "Không có địa chỉ",
+                        style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                      ),
+                      Text(
+                        user.email ?? "Không có email",
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                  trailing: PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        _editUser(user);
+                      } else if (value == 'delete') {
+                        _showDeleteConfirmationDialogUserList(context, user);
+                      }
+                    },
+                    itemBuilder:
+                        (context) => [
+                          PopupMenuItem(value: 'edit', child: Text("✏️ Sửa")),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete, color: Colors.red, size: 20),
+                                SizedBox(width: 6),
+                                Text(
+                                  "Xóa",
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
-  // Build author list - placeholder since we're focusing on books
   Widget _buildPublisherList() {
     if (_isLoadingPublishers) {
       return Center(child: CircularProgressIndicator());
@@ -459,6 +606,40 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _showDeleteConfirmationDialogUserList(
+    BuildContext context,
+    UserModels user,
+  ) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Xác nhận xóa"),
+          content: Text(
+            "Bạn có chắc chắn muốn xóa '${user.tenKhachHang}' không?",
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Hủy", style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Đóng dialog trước khi xóa
+                _deleteUser(user.maKhachHang!); // Chỉ gọi hàm xóa
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: Text("Xóa"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _showDeleteConfirmationDialog(
     BuildContext context,
     Publishermodels publisher,
@@ -481,8 +662,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Đóng dialog trước khi xóa
-                _deletePublisher(publisher.maNhaXuatBan!); // Chỉ gọi hàm xóa
+                Navigator.pop(context);
+                _deletePublisher(publisher.maNhaXuatBan!); 
               },
               style: TextButton.styleFrom(foregroundColor: Colors.red),
               child: Text("Xóa"),
@@ -493,28 +674,53 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _deleteUser(int userId) async {
+
+    bool success = await _usersController.deleteUser(
+      userId
+    );
+
+    if (success) {
+      setState(() {
+        _users.removeWhere((user) => user.maKhachHang == userId);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("✅ User đã được xóa thành công!"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("❌ Xóa thất bại. Vui lòng thử lại!"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   void _deletePublisher(int maNhaXuatBan) async {
-  // Gửi request xóa trong database
-  final response = await _controller.deletePublisher(maNhaXuatBan);
-  bool success = response['success'] ?? false;
 
-  if (success) {
-    setState(() {
-      _publishers.removeWhere((p) => p.maNhaXuatBan == maNhaXuatBan);
-    });
-  } else {
-    // Nếu xóa thất bại, hiển thị thông báo lỗi
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Xóa thất bại. Vui lòng thử lại!"),
-        backgroundColor: Colors.red,
-      ),
-    );
+    final response = await _controller.deletePublisher(maNhaXuatBan);
+    bool success = response['success'] ?? false;
+
+    if (success) {
+      setState(() {
+        _publishers.removeWhere((p) => p.maNhaXuatBan == maNhaXuatBan);
+      });
+    } else {
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Xóa thất bại. Vui lòng thử lại!"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
-}
-
-
 
   void _edit(Publishermodels publisher) async {
     final result = await Navigator.push(
@@ -537,6 +743,30 @@ class _HomeScreenState extends State<HomeScreen> {
     _fetchPublishers();
   }
 
+  void _editUser(UserModels user) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => EditProfilePage(
+              isEditing: true,
+              userData: {
+                "id": user.maKhachHang,
+                "name": user.tenKhachHang,
+                "address": user.diaChi,
+                "phone": user.soDienThoai,
+                "email": user.email,
+                "avatar": user.urlAvata,
+              },
+            ),
+      ),
+    );
+
+    if (result == true) {
+      _fetchUsers();
+    }
+  }
+
   // Handle option menu selection
   void _handleOptionSelected(BuildContext context, String value) {
     // Update the current item type
@@ -544,7 +774,9 @@ class _HomeScreenState extends State<HomeScreen> {
       _currentItemType = value;
       // Make sure we're on the first tab to see the items
       _currentIndex = 0;
-
+      if (value == 'users') {
+        _fetchUsers(); // Gọi API lấy danh sách publisher
+      }
       if (value == 'publisher') {
         _fetchPublishers(); // Gọi API lấy danh sách publisher
       }

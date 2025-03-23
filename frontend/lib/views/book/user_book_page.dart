@@ -4,7 +4,7 @@ import 'package:frontend/service/book_service.dart';
 import 'package:frontend/widget/book_item.dart';
 
 class BookPageUser extends StatefulWidget {
-  const BookPageUser({Key? key}) : super(key: key);
+  const BookPageUser({super.key});
 
   @override
   State<BookPageUser> createState() => _BookPageUserState();

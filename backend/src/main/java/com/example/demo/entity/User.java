@@ -45,4 +45,7 @@ public class User {
     @Column(nullable = false, updatable = false)
     private LocalDateTime ngay_tao = LocalDateTime.now();
 
+    @Column(nullable = false, updatable = false)
+    private Integer roles = 1;
+
 }

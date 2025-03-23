@@ -5,7 +5,7 @@ import 'package:frontend/service/book_service.dart';
 
 class AdminEditPage extends StatefulWidget {
   final int? bookId; // Pass bookId for editing, null for adding new book
-  const AdminEditPage({Key? key, this.bookId}) : super(key: key);
+  const AdminEditPage({super.key, this.bookId});
 
   @override
   State<AdminEditPage> createState() => _AdminEditPageState();

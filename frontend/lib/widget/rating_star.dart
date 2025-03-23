@@ -4,9 +4,9 @@ class RatingStar extends StatelessWidget {
   final int rating;
 
   const RatingStar({
-    Key? key,
+    super.key,
     required this.rating,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,9 +26,9 @@ class InteractiveStarRating extends StatefulWidget {
   final Function(double) onRatingChanged;
 
   const InteractiveStarRating({
-    Key? key,
+    super.key,
     required this.onRatingChanged,
-  }) : super(key: key);
+  });
 
   @override
   State<InteractiveStarRating> createState() => _InteractiveStarRatingState();

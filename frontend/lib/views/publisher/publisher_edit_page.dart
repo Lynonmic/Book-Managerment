@@ -191,6 +191,9 @@ class _PublisherEditPageState extends State<PublisherEditPage> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _savePublisher,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurpleAccent,
+                    ),
                     child:
                         _isLoading
                             ? CircularProgressIndicator(color: Colors.white)
@@ -198,9 +201,6 @@ class _PublisherEditPageState extends State<PublisherEditPage> {
                               "Save",
                               style: TextStyle(color: Colors.white),
                             ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurpleAccent,
-                    ),
                   ),
                 ),
               ],

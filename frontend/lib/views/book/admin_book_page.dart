@@ -36,7 +36,7 @@ class MyApp extends StatelessWidget {
 
 // Example screen that uses the BottomMenu
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
