@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/routes/app_routes.dart';
 import 'package:frontend/service/api_service.dart';
 import 'package:frontend/views/login/signin_page.dart';
 
@@ -39,10 +38,10 @@ class _LoginPageState extends State<LoginPage> {
     // Điều hướng theo role
     if (role == 0) {
       // Admin
-      Navigator.pushReplacementNamed(context, AppRoutes.bottomMenu);
+      //Navigator.pushReplacementNamed(context, HomeScreen());
     } else {
       // User
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
+      //Navigator.pushReplacementNamed(context, AppRoutes.home);
     }
   } else {
     _showMessage("❌ ${response["message"]}");
