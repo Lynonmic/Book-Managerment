@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:frontend/model/book_model.dart';
 
-class BookApiService {
+class BookService {
   // Replace with your actual API URL
-  static const String baseUrl = 'http://localhost:3000/api';
+  static const String baseUrl = 'http://10.0.2.2:9090/api';
 
   // Fetch all books
   Future<List<Book>> fetchBooks() async {

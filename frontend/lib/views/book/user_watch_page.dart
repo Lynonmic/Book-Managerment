@@ -21,25 +21,6 @@ class BookDetailScreen extends StatefulWidget {
 class _BookDetailScreenState extends State<BookDetailScreen> {
   String? _imageUrl;
 
-  // Sample page content for demonstration
-  final List<Map<String, dynamic>> _pageContent = [
-    {
-      'title': 'Header',
-      'body':
-          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    },
-    {
-      'title': 'Page 2',
-      'body':
-          'This is the content for page 2. You can add more details about the book here.',
-    },
-    {
-      'title': 'Page 3',
-      'body':
-          'This is the content for page 3. You can include reviews, additional details, or related books here.',
-    },
-  ];
-
   final PageController _pageController = PageController();
 
   void _handleEdit() {
@@ -234,20 +215,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                               },
                             ),
                             const SizedBox(height: 16),
+
                             // Page content with horizontal scrolling
-                            SizedBox(
-                              height: 200, // Set appropriate height
-                              child: PageView.builder(
-                                controller: _pageController,
-                                itemCount: _pageContent.length,
-                                itemBuilder: (context, index) {
-                                  return ContentSection(
-                                    title: _pageContent[index]['title'],
-                                    body: _pageContent[index]['body'],
-                                  );
-                                },
-                              ),
-                            ),
                           ],
                         ),
                       ),

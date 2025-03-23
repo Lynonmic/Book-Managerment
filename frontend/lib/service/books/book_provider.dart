@@ -3,7 +3,7 @@ import 'package:frontend/model/book_model.dart';
 import 'package:frontend/service/books/book_services.dart';
 
 class BookProvider with ChangeNotifier {
-  final _bookService = BookApiService();
+  final _bookService = BookService();
 
   List<Book> _books = [];
   bool _isLoading = false;
