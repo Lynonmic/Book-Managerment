@@ -20,14 +20,13 @@ class UsersController extends ChangeNotifier {
     }
   }
 
-  Future<void> updateUserProfile({
+  Future<Map<String, dynamic>?> updateUserProfile({
     required int userId,
     String? name,
     String? phone,
     String? address,
     String? email,
     File? avatarFile,
-    required String adminToken, // Token của admin
     required BuildContext context,
   }) async {
     var response = await ApiService.updateUser(
@@ -37,18 +36,26 @@ class UsersController extends ChangeNotifier {
       diaChi: address,
       email: email,
       avatar: avatarFile,
-      token: adminToken, // Gửi token của admin
     );
 
+    if (response == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("❌ Lỗi kết nối đến server!")),
+      );
+      return null;
+    }
+
+    bool success = response["success"] ?? false;
+    String message = response["message"] ?? "Lỗi không xác định!";
+
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          response["success"]
-              ? "✅ ${response['message']}"
-              : "❌ ${response['message']}",
-        ),
-      ),
+      SnackBar(content: Text(success ? "✅ $message" : "❌ $message")),
     );
+
+    if (success) {
+      return response;
+    }
+    return null;
   }
 
   Future<bool> deleteUser(int userId) async {

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:frontend/model/PublisherModels.dart';
 import 'package:frontend/model/UserModels.dart';
 import 'package:http/http.dart' as http;
@@ -252,30 +253,29 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> updateUser({
+  static Future<Map<String, dynamic>?> updateUser({
     required int userId,
     String? tenKhachHang,
     String? soDienThoai,
     String? diaChi,
     String? email,
     File? avatar,
-    required String token,
   }) async {
     try {
+      debugPrint("🔹 Chuẩn bị gửi request cập nhật user...");
+
       var request = http.MultipartRequest(
         "PUT",
         Uri.parse("$baseUrl/users/update/$userId"),
       );
-
-      request.headers["Authorization"] = "Bearer $token";
       request.headers["Accept"] = "application/json";
+      request.headers["Content-Type"] = "multipart/form-data";
 
-      if (tenKhachHang != null) request.fields["ten_khach_hang"] = tenKhachHang;
-      if (soDienThoai != null) request.fields["so_dien_thoai"] = soDienThoai;
-      if (diaChi != null) request.fields["dia_chi"] = diaChi;
+      if (tenKhachHang != null) request.fields["tenKhachHang"] = tenKhachHang;
+      if (soDienThoai != null) request.fields["soDienThoai"] = soDienThoai;
+      if (diaChi != null) request.fields["diaChi"] = diaChi;
       if (email != null) request.fields["email"] = email;
 
-      // Thêm avatar nếu có
       if (avatar != null) {
         String? mimeType = lookupMimeType(avatar.path);
         var multipartFile = await http.MultipartFile.fromPath(
@@ -288,34 +288,27 @@ class ApiService {
 
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
-      var responseData = jsonDecode(response.body);
+      debugPrint("📥 Phản hồi từ server: ${response.body}");
 
-      if (response.statusCode == 200) {
-        return {
-          "success": true,
-          "message": responseData["message"] ?? "Cập nhật thành công",
-          "data": responseData["data"] ?? {},
-        };
+      var jsonResponse = jsonDecode(response.body);
+      if (jsonResponse is Map) {
+        return jsonResponse.cast<String, dynamic>();
       } else {
-        return {
-          "success": false,
-          "message": responseData["message"] ?? "Lỗi khi cập nhật thông tin",
-        };
+        return {"success": false, "message": "Dữ liệu phản hồi không hợp lệ!"};
       }
     } catch (e) {
+      debugPrint("❌ Lỗi gửi request: $e");
       return {"success": false, "message": "Lỗi kết nối đến server!"};
     }
   }
 
-static Future<Map<String, dynamic>> deleteUser(int userId) async {
+  static Future<Map<String, dynamic>> deleteUser(int userId) async {
     final url = Uri.parse("$baseUrl/users/$userId");
 
     try {
       final response = await http.delete(
         url,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: {"Content-Type": "application/json"},
       );
 
       if (response.statusCode == 200) {
@@ -323,7 +316,8 @@ static Future<Map<String, dynamic>> deleteUser(int userId) async {
       } else {
         return {
           "success": false,
-          "message": jsonDecode(response.body)["message"] ?? "Lỗi không xác định"
+          "message":
+              jsonDecode(response.body)["message"] ?? "Lỗi không xác định",
         };
       }
     } catch (e) {
@@ -331,4 +325,3 @@ static Future<Map<String, dynamic>> deleteUser(int userId) async {
     }
   }
 }
-

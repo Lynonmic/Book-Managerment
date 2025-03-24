@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/service/api_service.dart';
+import 'package:frontend/views/home/homescreen.dart';
 import 'package:frontend/views/login/signin_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -38,10 +39,15 @@ class _LoginPageState extends State<LoginPage> {
     // Điều hướng theo role
     if (role == 0) {
       // Admin
-      //Navigator.pushReplacementNamed(context, HomeScreen());
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomeScreen()),
+      );
     } else {
-      // User
-      //Navigator.pushReplacementNamed(context, AppRoutes.home);
+     Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomeScreen()),
+      );
     }
   } else {
     _showMessage("❌ ${response["message"]}");

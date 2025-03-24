@@ -13,11 +13,11 @@ class OptionMenu extends StatelessWidget {
   final String? tooltip;
 
   const OptionMenu({
-    Key? key,
+    super.key,
     required this.onOptionSelected,
     this.icon = Icons.more_vert,
     this.tooltip,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -48,12 +48,12 @@ class OptionMenu extends StatelessWidget {
               ),
             ),
             const PopupMenuItem<String>(
-              value: 'authors',
+              value: 'publisher',
               child: Row(
                 children: [
                   Icon(Icons.person),
                   SizedBox(width: 8),
-                  Text('Author List'),
+                  Text('Publisher List'),
                 ],
               ),
             ),

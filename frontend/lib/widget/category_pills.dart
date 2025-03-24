@@ -6,11 +6,11 @@ class CategoryPills extends StatelessWidget {
   final Function(String)? onCategorySelected;
 
   const CategoryPills({
-    Key? key,
+    super.key,
     required this.categories,
     required this.activeCategory,
     this.onCategorySelected,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
