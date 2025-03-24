@@ -70,4 +70,47 @@ class BookService {
       throw Exception('Error rating book: $e');
     }
   }
+
+  // Update a book
+  Future<Book> updateBook(Book book) async {
+    if (book.id == null) {
+      throw Exception('Book ID cannot be null for update operation');
+    }
+
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/books/${book.id}'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(book.toJson()),
+      );
+
+      if (response.statusCode == 200) {
+        final dynamic data = json.decode(response.body);
+        return Book.fromJson(data);
+      } else {
+        throw Exception(
+          'Failed to update book: ${response.statusCode}, ${response.body}',
+        );
+      }
+    } catch (e) {
+      throw Exception('Error updating book: $e');
+    }
+  }
+
+  // Delete a book
+  Future<bool> deleteBook(int id) async {
+    try {
+      final response = await http.delete(Uri.parse('$baseUrl/books/$id'));
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return true;
+      } else {
+        throw Exception(
+          'Failed to delete book: ${response.statusCode}, ${response.body}',
+        );
+      }
+    } catch (e) {
+      throw Exception('Error deleting book: $e');
+    }
+  }
 }

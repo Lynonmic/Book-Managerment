@@ -83,4 +83,45 @@ class BookProvider with ChangeNotifier {
       throw e; // Re-throw so UI can show error
     }
   }
+
+  Future<void> updateBook(Book book) async {
+    try {
+      // Set loading state
+      _isLoading = true;
+      notifyListeners();
+
+      // Call your book service to update the book
+      await _bookService.updateBook(book);
+
+      // Refresh the book list
+      await fetchBooks();
+    } catch (e) {
+      _error = 'Error updating book: $e';
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> deleteBook(int bookId) async {
+    try {
+      // Set loading state
+      _isLoading = true;
+      notifyListeners();
+
+      // Call your book service to delete the book
+      await _bookService.deleteBook(bookId);
+
+      // Remove the book from the local list
+      _books.removeWhere((book) => book.id == bookId);
+
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _error = 'Error deleting book: $e';
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
 }

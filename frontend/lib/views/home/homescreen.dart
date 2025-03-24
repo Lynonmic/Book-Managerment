@@ -6,9 +6,11 @@ import 'package:frontend/model/UserModels.dart';
 import 'package:frontend/model/book_model.dart';
 import 'package:frontend/service/books/book_provider.dart';
 import 'package:frontend/service/books/book_services.dart';
+import 'package:frontend/views/book/admin_book_page.dart';
+import 'package:frontend/views/book/user_watch_page.dart';
 import 'package:frontend/views/profile/edit_profile_page.dart';
 import 'package:frontend/views/publisher/publisher_edit_page.dart';
-import 'package:frontend/widget/book_item.dart';
+import 'package:frontend/views/book/UI/book_item.dart';
 import 'package:frontend/widget/bottom_menu.dart';
 import 'package:frontend/widget/floating_button.dart';
 import 'package:frontend/widget/option_menu.dart';
@@ -45,9 +47,15 @@ class _HomeScreen extends State<HomeScreen> {
     super.initState();
     _usersController = UsersController(); // Initialize UsersController
     _controller = PublisherController(); // Initialize PublisherController
+
+    // Don't directly call Provider methods in initState
+    // Instead, use addPostFrameCallback to schedule it after the build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<BookProvider>(context, listen: false).fetchBooks();
+    });
+
     _fetchUsers();
     _fetchPublishers();
-    // Initialize other necessary elements
   }
 
   // Rate a book
@@ -206,84 +214,10 @@ class _HomeScreen extends State<HomeScreen> {
               return BookItem(
                 title: book.title,
                 description: book.description ?? 'No description available',
-                rating:
-                    book.rating?.round() ??
-                    0, // This is correct, but ensure BookItem accepts this as int
+                rating: book.rating?.round() ?? 0,
                 onTap: () {
-                  // Show book details with rating option
-                  showDialog(
-                    context: context,
-                    builder:
-                        (context) => AlertDialog(
-                          title: Text(book.title),
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (book.imageUrl != null)
-                                Image.network(
-                                  book.imageUrl!,
-                                  height: 150,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                  errorBuilder:
-                                      (ctx, error, _) => Container(
-                                        height: 150,
-                                        color: Colors.grey.shade300,
-                                        child: Icon(Icons.image, size: 50),
-                                      ),
-                                ),
-                              SizedBox(height: 16),
-                              Text('Author: ${book.author}'),
-                              SizedBox(height: 8),
-                              Text(
-                                'Rating: ${book.rating?.toStringAsFixed(1) ?? 'Not rated'} (${book.ratingCount ?? 0} reviews)',
-                              ),
-                              SizedBox(height: 16),
-                              Text('Rate this book:'),
-                              SizedBox(height: 8),
-                              InteractiveStarRating(
-                                onRatingChanged: (rating) async {
-                                  Navigator.pop(context);
-                                  try {
-                                    if (book.id != null) {
-                                      // Ensure conversion to double
-                                      await Provider.of<BookProvider>(
-                                        context,
-                                        listen: false,
-                                      ).rateBook(book.id!, rating.toDouble());
-
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Rating submitted: $rating stars',
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Failed to rate book: $e',
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: Text('Close'),
-                            ),
-                          ],
-                        ),
-                  );
+                  // Navigate based on role
+                  _navigateToBookDetail(book as Book);
                 },
               );
             },
@@ -291,6 +225,47 @@ class _HomeScreen extends State<HomeScreen> {
         );
       },
     );
+  }
+
+  void _navigateToBookDetail(Book book) {
+    // Add debug print to check book object
+    print(
+      'Navigating to book detail for: ${book.title} with roles: ${book.roles}',
+    );
+
+    try {
+      if (book.roles == 1) {
+        // Navigate to admin book page using MaterialPageRoute instead of named route
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => BookFormScreen(
+                  book: book,
+                  onSave: (updatedBook) {
+                    // Refresh the book list after saving
+                    Provider.of<BookProvider>(
+                      context,
+                      listen: false,
+                    ).fetchBooks();
+                  },
+                ),
+          ),
+        );
+      } else {
+        // Navigate to user book page using MaterialPageRoute instead of named route
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => BookDetailScreen()),
+        );
+      }
+    } catch (e) {
+      print('Navigation error: $e');
+      // Fallback navigation
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error navigating to book details: $e')),
+      );
+    }
   }
 
   Widget _buildUserList() {
