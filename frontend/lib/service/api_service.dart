@@ -31,6 +31,7 @@ class ApiService {
           "success": true,
           "token": responseJson["token"],
           "role": responseJson["role"], // Lấy role từ API
+          "userData": responseJson["userData"] ?? {}, // ✅ Lấy userData
         };
       } else {
         return {

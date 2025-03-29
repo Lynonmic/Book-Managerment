@@ -49,30 +49,42 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
- void _updateProfile() async {
-  var response = await ApiService.updateUser(
-    userId: widget.userData?['id'],
-    tenKhachHang: _nameController.text,
-    soDienThoai: _phoneController.text,
-    diaChi: _addressController.text,
-    email: _emailController.text,
-    avatar: _selectedImage,
-  );
-
-  if (response != null) {
-    bool success = response["success"] ?? false;
-    String message = response["message"] ?? "Lỗi không xác định!";
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: success ? Colors.green : Colors.red),
+  void _updateProfile() async {
+    var response = await ApiService.updateUser(
+      userId: widget.userData?['id'],
+      tenKhachHang: _nameController.text,
+      soDienThoai: _phoneController.text,
+      diaChi: _addressController.text,
+      email: _emailController.text,
+      avatar: _selectedImage,
     );
 
-    if (success) {
-      Navigator.pop(context); // Đóng màn hình nếu cập nhật thành công
+    if (response != null) {
+      bool success = response["success"] ?? false;
+      String message = response["message"] ?? "Lỗi không xác định!";
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: success ? Colors.green : Colors.red,
+        ),
+      );
+
+      if (success) {
+        String? avatarUrl = response['user']['url_avata']; // Lấy URL từ server
+        print("Avatar URL mới: $avatarUrl");
+
+        Navigator.pop(context, {
+          'id': widget.userData?['id'],
+          'name': _nameController.text,
+          'email': _emailController.text,
+          'phone': _phoneController.text,
+          'address': _addressController.text,
+          'avatar': avatarUrl, // Trả về URL thay vì File
+        });
+      }
     }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {

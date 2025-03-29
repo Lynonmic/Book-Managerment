@@ -17,43 +17,47 @@ class _LoginPageState extends State<LoginPage> {
   bool isPasswordVisible = false;
 
   Future<void> _login() async {
-  String email = _emailController.text.trim();
-  String password = _passwordController.text.trim();
+    String email = _emailController.text.trim();
+    String password = _passwordController.text.trim();
 
-  if (email.isEmpty || password.isEmpty) {
-    _showMessage("Email và mật khẩu không được để trống!");
-    return;
-  }
-
-  // Gọi API đăng nhập
-  var response = await ApiService.loginUser(email, password);
-  print("📌 API Response: $response");
-
-  if (response["success"]) {
-    String token = response["token"];
-    int role = response["role"]; // Lấy role từ API
-
-    print("✅ Đăng nhập thành công! Token: $token, Role: $role");
-    _showMessage("Đăng nhập thành công!");
-
-    // Điều hướng theo role
-    if (role == 0) {
-      // Admin
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
-      );
-    } else {
-     Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
-      );
+    if (email.isEmpty || password.isEmpty) {
+      _showMessage("Email và mật khẩu không được để trống!");
+      return;
     }
-  } else {
-    _showMessage("❌ ${response["message"]}");
-  }
-}
 
+    // Gọi API đăng nhập
+    var response = await ApiService.loginUser(email, password);
+    print("📌 API Response: $response");
+
+    if (response["success"]) {
+      String token = response["token"];
+      int role = response["role"]; // Lấy role từ API
+      Map<String, dynamic> userData = response["userData"] ?? {};
+
+      print("✅ Đăng nhập thành công! Token: $token, Role: $role");
+      _showMessage("Đăng nhập thành công!");
+
+      // Điều hướng theo role
+      if (role == 0) {
+        // Admin
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(userData: userData),
+          ),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(userData: userData),
+          ),
+        );
+      }
+    } else {
+      _showMessage("❌ ${response["message"]}");
+    }
+  }
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(
@@ -64,12 +68,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(
-        117,
-        222,
-        217,
-        217,
-      ),
+      backgroundColor: const Color.fromARGB(117, 222, 217, 217),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -77,7 +76,6 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-            
               const Center(
                 child: Text(
                   "LOGIN",
@@ -91,7 +89,7 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 40),
               Text("User", style: TextStyle(color: Colors.white)),
-            
+
               TextField(
                 controller: _emailController,
 
@@ -128,24 +126,20 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     onPressed: () {
                       setState(() {
-                        isPasswordVisible =
-                            !isPasswordVisible; 
+                        isPasswordVisible = !isPasswordVisible;
                       });
                     },
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              
+
               Center(
-                child: Image.asset(
-                  'lib/assets/images/logo.png', 
-                  height: 300,
-                ),
+                child: Image.asset('lib/assets/images/logo.png', height: 300),
               ),
 
               const SizedBox(height: 20),
-           
+
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -154,8 +148,8 @@ class _LoginPageState extends State<LoginPage> {
                   },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 15),
-                    backgroundColor: Colors.purpleAccent, 
-                    foregroundColor: Colors.white, 
+                    backgroundColor: Colors.purpleAccent,
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(50),
                     ),

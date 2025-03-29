@@ -33,8 +33,6 @@ import jakarta.persistence.EntityNotFoundException;
 public class UserController {
     @Autowired
     private UserService userService;
-    @Autowired
-    private UserRepository userRepository;
 
     @GetMapping(produces = "application/json; charset=UTF-8")
     public List<User> getUsersWithRole1() {
@@ -66,18 +64,6 @@ public class UserController {
                 "📌 avatarFile = " + (avatarFile != null ? avatarFile.getOriginalFilename() : "Không có file"));
 
         return userService.updateUserProfile(userId, tenKhachHang, soDienThoai, diaChi, email, avatarFile);
-    }
-
-    @PutMapping(value = "/themseltupdate/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> themselfUpdate(
-            @PathVariable Integer userId,
-            @RequestParam(required = false) String tenKhachHang,
-            @RequestParam(required = false) String soDienThoai,
-            @RequestParam(required = false) String diaChi,
-            @RequestParam(required = false) String email,
-            @RequestParam(required = false) String password,
-            @RequestParam(required = false) MultipartFile avatarFile) {
-        return userService.themselfUpdate(userId, tenKhachHang, soDienThoai, diaChi, email, password, avatarFile);
     }
 
     @DeleteMapping("/{userId}")

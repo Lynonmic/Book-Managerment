@@ -70,7 +70,9 @@ public class AuthController {
         return ResponseEntity.ok(Map.of(
                 "success", true,
                 "token", loginResult.get().get("token"),
-                "role", loginResult.get().get("role")));
+                "role", loginResult.get().get("role"),
+                "userData",loginResult.get().get("userData")
+                ));
     }
 
 }

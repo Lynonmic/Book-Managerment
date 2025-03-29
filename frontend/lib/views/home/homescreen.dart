@@ -7,6 +7,7 @@ import 'package:frontend/model/book_model.dart';
 import 'package:frontend/service/books/book_provider.dart';
 import 'package:frontend/service/books/book_services.dart';
 import 'package:frontend/views/profile/edit_profile_page.dart';
+import 'package:frontend/views/profile/profile_page.dart';
 import 'package:frontend/views/publisher/publisher_edit_page.dart';
 import 'package:frontend/widget/book_item.dart';
 import 'package:frontend/widget/bottom_menu.dart';
@@ -16,10 +17,12 @@ import 'package:frontend/widget/rating_star.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final Map<String, dynamic> userData; // ✅ Thêm userData
+
+  const HomeScreen({Key? key, required this.userData}) : super(key: key);
 
   @override
-  State<HomeScreen> createState() => _HomeScreen();
+  _HomeScreen createState() => _HomeScreen();
 }
 
 class _HomeScreen extends State<HomeScreen> {
@@ -47,6 +50,7 @@ class _HomeScreen extends State<HomeScreen> {
     _controller = PublisherController(); // Initialize PublisherController
     _fetchUsers();
     _fetchPublishers();
+
     // Initialize other necessary elements
   }
 
@@ -131,6 +135,10 @@ class _HomeScreen extends State<HomeScreen> {
         // Fetch books list
         Provider.of<BookProvider>(context, listen: false).fetchBooks();
       }
+      if (value == 'profile') {
+        _currentItemType = 'profile';
+      }
+
       if (value == 'users') {
         // Fetch users list
         _fetchUsers();
@@ -578,6 +586,8 @@ class _HomeScreen extends State<HomeScreen> {
           return 'User List';
         case 'publisher':
           return 'Publisher List';
+        case 'profile':
+          return 'Profile Page';
         default:
           return 'Book List';
       }
@@ -761,8 +771,16 @@ class _HomeScreen extends State<HomeScreen> {
                   ? _buildBookList()
                   : _currentItemType == 'users'
                   ? _buildUserList()
-                  : _buildPublisherList()
-              : Container(), // Other tabs implementation
+                  : _currentItemType == 'publisher'
+                  ? _buildPublisherList()
+                  : _currentItemType == 'profile'
+                  ? ProfilePage(userData: widget.userData) 
+                  : Container()
+              : _currentIndex == 3
+              ? ProfilePage(
+                userData: widget.userData,
+              ) // ✅ Profile từ bottom nav
+              : Container(),
       bottomNavigationBar: BottomMenu(
         initialIndex: _currentIndex,
         onIndexChanged: (index) {
