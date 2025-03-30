@@ -34,12 +34,11 @@ class _LoginPageState extends State<LoginPage> {
       String token = response["token"];
       int role = response["role"]; // Lấy role từ API
       Map<String, dynamic> userData = response["userData"] ?? {};
-
-      print("✅ Đăng nhập thành công! Token: $token, Role: $role");
-      _showMessage("Đăng nhập thành công!");
+      
 
       // Điều hướng theo role
       if (role == 0) {
+        _showMessage("Đăng nhập thành công!");
         // Admin
         Navigator.pushReplacement(
           context,
@@ -48,12 +47,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
         );
       } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomeScreen(userData: userData),
-          ),
-        );
+        _showMessage("Bạn không có quyền admin");
       }
     } else {
       _showMessage("❌ ${response["message"]}");

@@ -785,10 +785,10 @@ class _HomeScreen extends State<HomeScreen> {
                   : _currentItemType == 'profile'
                   ? ProfilePage(userData: widget.userData)
                   : _currentItemType == 'search'
-                  ? const SearchPage()
+                  ? const SearchUserPage()
                   : Container()
               : _currentIndex == 2
-              ? const SearchPage()
+              ? const SearchUserPage()
               : _currentIndex == 3
               ? ProfilePage(userData: widget.userData)
               : Container(),

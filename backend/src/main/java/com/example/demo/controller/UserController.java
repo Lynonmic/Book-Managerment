@@ -3,7 +3,6 @@ package com.example.demo.controller;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,11 +19,9 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.demo.dto.UserRequest;
 import com.example.demo.entity.User;
-import com.example.demo.repository.UserRepository;
 import com.example.demo.service.UserService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -86,4 +83,10 @@ public class UserController {
         }
     }
 
+
+
+    @GetMapping("/search")
+    public List<User> searchUsers(@RequestParam String keyword) {
+        return userService.searchUsers(keyword);
+    }
 }

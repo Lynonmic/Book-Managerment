@@ -115,7 +115,7 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("OTP không hợp lệ.");
         }
 
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.getUserByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng."));
 
         user.setPassword(passwordEncoder.encode(newPassword));

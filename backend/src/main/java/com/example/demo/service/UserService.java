@@ -266,4 +266,8 @@ public class UserService {
         userRepository.deleteById(id);
         System.out.println("Đã xóa nhà xuất bản ID: " + id);
     }
+
+    public List<User> searchUsers(String keyword) {
+        return userRepository.searchUsers(keyword);
+    }
 }

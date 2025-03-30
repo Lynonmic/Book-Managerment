@@ -326,7 +326,6 @@ class ApiService {
     }
   }
 
-
   static Future<bool> sendOtp(String email) async {
     final response = await http.post(
       Uri.parse("$baseUrl/forgot-password"),
@@ -347,13 +346,34 @@ class ApiService {
     return response.statusCode == 200;
   }
 
-  static Future<bool> resetPassword(String email, String otp, String newPassword) async {
+  static Future<bool> resetPassword(
+    String email,
+    String otp,
+    String newPassword,
+  ) async {
     final response = await http.post(
       Uri.parse("$baseUrl/reset-password"),
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"email": email, "otp": otp, "newPassword": newPassword}),
+      body: jsonEncode({
+        "email": email,
+        "otp": otp,
+        "newPassword": newPassword,
+      }),
     );
 
     return response.statusCode == 200;
+  }
+
+  Future<List<UserModels>> searchUsers(String query) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/users/search?keyword=$query'),
+    );
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => UserModels.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to search users');
+    }
   }
 }

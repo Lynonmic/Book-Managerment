@@ -121,26 +121,3 @@ exports.deleteBook = async (req, res) => {
     });
   }
 };
-
-exports.searchBooks = async (req, res) => {
-  try {
-    const query = req.query.query;
-    if (!query) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing search query" });
-    }
-
-    console.log(`📩 Received search request: "${query}"`);
-
-    const books = await BookModel.searchBooks(query);
-
-    console.log(`✅ Found ${books.length} books`);
-    res.status(200).json({ success: true, data: books });
-  } catch (error) {
-    console.error("❌ Search API error:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Search failed", error: error.message });
-  }
-};
