@@ -13,6 +13,7 @@ import com.example.demo.entity.User;
 public interface UserRepository extends JpaRepository<User, Integer> {
     Optional<User> getUserByEmail(String email);
     Optional<User> findBySoDienThoai(String soDienThoai);
+    Optional<User> findByEmail(String email);
     List<User> findByRoles(int roles);
     
 }

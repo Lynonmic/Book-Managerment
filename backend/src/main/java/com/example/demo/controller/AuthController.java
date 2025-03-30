@@ -3,9 +3,11 @@ package com.example.demo.controller;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,7 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.dto.LoginRequest;
+import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.service.OtpService;
 import com.example.demo.service.UserService;
 
 import io.jsonwebtoken.io.IOException;
@@ -24,7 +28,13 @@ import io.jsonwebtoken.io.IOException;
 @RequestMapping("/auth")
 public class AuthController {
 
+    @Autowired
+    private OtpService otpService;
     private UserService userService;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     public AuthController(UserService userService, UserRepository userRepository) {
@@ -73,6 +83,45 @@ public class AuthController {
                 "role", loginResult.get().get("role"),
                 "userData",loginResult.get().get("userData")
                 ));
+    }
+
+
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> sendOtp(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        otpService.sendOtp(email);
+        return ResponseEntity.ok("OTP đã được gửi tới email.");
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<String> verifyOtp(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String otp = request.get("otp");
+
+        if (otpService.validateOtp(email, otp)) {
+            return ResponseEntity.ok("OTP hợp lệ.");
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("OTP không hợp lệ hoặc đã hết hạn.");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String otp = request.get("otp");
+        String newPassword = request.get("newPassword");
+
+        if (!otpService.validateOtp(email, otp)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("OTP không hợp lệ.");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng."));
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        return ResponseEntity.ok("Mật khẩu đã được đặt lại thành công.");
     }
 
 }
