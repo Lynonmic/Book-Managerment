@@ -7,6 +7,8 @@ class Book {
   final String? imageUrl;
   final double? rating; // Ensure this is a double
   final int? ratingCount;
+  final double? price;
+  final int roles; // 1 for admin, 0 for regular user
 
   Book({
     this.id,
@@ -16,13 +18,18 @@ class Book {
     this.imageUrl,
     this.rating,
     this.ratingCount,
+    this.price,
+    this.roles = 0, // Default to regular user
   });
 
   factory Book.fromJson(Map<String, dynamic> json) {
+    // Print the JSON to debug
+    print('Book JSON: $json');
+
     return Book(
       id: json['id'],
-      title: json['title'],
-      author: json['author'],
+      title: json['title'] ?? 'Unknown Title',
+      author: json['author'] ?? 'Unknown Author',
       description: json['description'],
       imageUrl: json['imageUrl'],
       // Convert the rating to double explicitly
@@ -31,6 +38,11 @@ class Book {
               ? double.parse(json['rating'].toString())
               : null,
       ratingCount: json['ratingCount'],
+      price:
+          json['price'] != null ? double.parse(json['price'].toString()) : null,
+      // Ensure roles is properly parsed from the JSON
+      roles:
+          json.containsKey('roles') ? int.parse(json['roles'].toString()) : 0,
     );
   }
 
@@ -43,6 +55,8 @@ class Book {
       'imageUrl': imageUrl,
       'rating': rating,
       'ratingCount': ratingCount,
+      'price': price,
+      'roles': roles,
     };
   }
 
@@ -55,6 +69,8 @@ class Book {
     String? imageUrl,
     double? rating,
     int? ratingCount,
+    double? price,
+    int? roles,
   }) {
     return Book(
       id: id ?? this.id,
@@ -64,6 +80,8 @@ class Book {
       imageUrl: imageUrl ?? this.imageUrl,
       rating: rating ?? this.rating,
       ratingCount: ratingCount ?? this.ratingCount,
+      price: price ?? this.price,
+      roles: roles ?? this.roles,
     );
   }
 }
