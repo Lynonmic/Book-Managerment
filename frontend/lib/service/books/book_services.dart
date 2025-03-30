@@ -70,4 +70,32 @@ class BookService {
       throw Exception('Error rating book: $e');
     }
   }
+
+  Future<List<Book>> searchBooks(String query) async {
+    try {
+      final url = '$baseUrl/books/search?query=$query';
+      print('📡 Sending search request to: $url');
+
+      final response = await http.get(Uri.parse(url));
+      print('📩 Response status: ${response.statusCode}');
+      print('📜 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final dynamic parsedJson = json.decode(response.body);
+        final books =
+            (parsedJson['data'] as List)
+                .map((json) => Book.fromJson(json))
+                .toList();
+
+        print("✅ Parsed ${books.length} books from API");
+        return books;
+      } else {
+        print("❌ Failed to search books, status: ${response.statusCode}");
+        throw Exception('Failed to search books');
+      }
+    } catch (e) {
+      print('❌ Error: $e');
+      throw Exception('Error searching books: $e');
+    }
+  }
 }

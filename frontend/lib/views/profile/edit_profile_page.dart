@@ -20,10 +20,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
-  final UsersController _usersController = UsersController();
 
   File? _selectedImage;
-  bool _isLoading = false;
+  final bool _isLoading = false;
 
   @override
   void initState() {

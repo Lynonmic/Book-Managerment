@@ -1,9 +1,9 @@
-const BookModel = require('../models/bookModel');
+const BookModel = require("../models/bookModel");
 
 // Utility function to convert snake_case database fields to camelCase
 const formatBookResponse = (book) => {
   if (!book) return null;
-  
+
   return {
     id: book.ma_sach || book.id,
     title: book.ten_sach || book.title,
@@ -14,7 +14,7 @@ const formatBookResponse = (book) => {
     publisher: book.ma_nha_xuat_ban || book.publisher,
     quantity: book.so_luong || book.quantity,
     createdAt: book.ngay_tao || book.created_at,
-    updatedAt: book.ngay_cap_nhat || book.updated_at
+    updatedAt: book.ngay_cap_nhat || book.updated_at,
   };
 };
 
@@ -24,13 +24,13 @@ exports.getAllBooks = async (req, res) => {
     const books = await BookModel.getAllBooks();
     res.status(200).json({
       success: true,
-      data: books.map(book => formatBookResponse(book))
+      data: books.map((book) => formatBookResponse(book)),
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch books',
-      error: error.message
+      message: "Failed to fetch books",
+      error: error.message,
     });
   }
 };
@@ -42,18 +42,18 @@ exports.getBookById = async (req, res) => {
     if (!book) {
       return res.status(404).json({
         success: false,
-        message: 'Book not found'
+        message: "Book not found",
       });
     }
     res.status(200).json({
       success: true,
-      data: formatBookResponse(book)
+      data: formatBookResponse(book),
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch book',
-      error: error.message
+      message: "Failed to fetch book",
+      error: error.message,
     });
   }
 };
@@ -64,14 +64,14 @@ exports.createBook = async (req, res) => {
     const bookId = await BookModel.createBook(req.body);
     res.status(201).json({
       success: true,
-      message: 'Book created successfully',
-      data: { id: bookId }
+      message: "Book created successfully",
+      data: { id: bookId },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Failed to create book',
-      error: error.message
+      message: "Failed to create book",
+      error: error.message,
     });
   }
 };
@@ -83,18 +83,18 @@ exports.updateBook = async (req, res) => {
     if (affected === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Book not found or no changes made'
+        message: "Book not found or no changes made",
       });
     }
     res.status(200).json({
       success: true,
-      message: 'Book updated successfully'
+      message: "Book updated successfully",
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Failed to update book',
-      error: error.message
+      message: "Failed to update book",
+      error: error.message,
     });
   }
 };
@@ -106,18 +106,41 @@ exports.deleteBook = async (req, res) => {
     if (affected === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Book not found'
+        message: "Book not found",
       });
     }
     res.status(200).json({
       success: true,
-      message: 'Book deleted successfully'
+      message: "Book deleted successfully",
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Failed to delete book',
-      error: error.message
+      message: "Failed to delete book",
+      error: error.message,
     });
+  }
+};
+
+exports.searchBooks = async (req, res) => {
+  try {
+    const query = req.query.query;
+    if (!query) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing search query" });
+    }
+
+    console.log(`📩 Received search request: "${query}"`);
+
+    const books = await BookModel.searchBooks(query);
+
+    console.log(`✅ Found ${books.length} books`);
+    res.status(200).json({ success: true, data: books });
+  } catch (error) {
+    console.error("❌ Search API error:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Search failed", error: error.message });
   }
 };

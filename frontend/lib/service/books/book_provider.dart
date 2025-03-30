@@ -25,7 +25,9 @@ class BookProvider with ChangeNotifier {
     try {
       _books = await _bookService.fetchBooks();
       print("===== _fetchUsers() got ${_books.length} users =====");
-      _books.forEach((book) => print(book.title));
+      for (var book in _books) {
+        print(book.title);
+      }
     } catch (e) {
       _error = e.toString();
     } finally {

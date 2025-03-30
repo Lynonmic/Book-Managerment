@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/service/api_service.dart';
 import 'package:frontend/views/home/homescreen.dart';
+import 'package:frontend/views/login/forgot_password_page.dart';
 import 'package:frontend/views/login/signin_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -68,14 +69,15 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: const Color.fromARGB(117, 222, 217, 217),
-      body: Center(
+      body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SizedBox(height: 60),
               const Center(
                 child: Text(
                   "LOGIN",
@@ -86,13 +88,11 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
+              const SizedBox(height: 30),
 
-              const SizedBox(height: 40),
-              Text("User", style: TextStyle(color: Colors.white)),
-
+              const Text("User", style: TextStyle(color: Colors.white)),
               TextField(
                 controller: _emailController,
-
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.white,
@@ -103,9 +103,9 @@ class _LoginPageState extends State<LoginPage> {
                   prefixIcon: const Icon(Icons.email, color: Colors.black),
                 ),
               ),
-
               const SizedBox(height: 20),
-              Text("Password", style: TextStyle(color: Colors.white)),
+
+              const Text("Password", style: TextStyle(color: Colors.white)),
               TextField(
                 controller: _passwordController,
                 obscureText: !isPasswordVisible,
@@ -135,7 +135,11 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 20),
 
               Center(
-                child: Image.asset('lib/assets/images/logo.png', height: 300),
+                child: Image.asset(
+                  'lib/assets/images/logo.png',
+                  height: 200,
+                  fit: BoxFit.contain,
+                ),
               ),
 
               const SizedBox(height: 20),
@@ -143,9 +147,7 @@ class _LoginPageState extends State<LoginPage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    _login();
-                  },
+                  onPressed: _login,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     backgroundColor: Colors.purpleAccent,
@@ -158,22 +160,45 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 10),
+
               Center(
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SigninPage(),
+                child: Column(
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SigninPage(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        "Chưa có tài khoản? Đăng ký ngay",
+                        style: TextStyle(color: Colors.white),
                       ),
-                    );
-                  },
-                  child: const Text(
-                    "Chưa có tài khoản? Đăng ký ngay",
-                    style: TextStyle(color: Colors.white),
-                  ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ForgotPasswordPage(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        "Quên mật khẩu?",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(height: 20),
             ],
           ),
         ),

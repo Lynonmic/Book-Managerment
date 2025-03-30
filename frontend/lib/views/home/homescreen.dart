@@ -3,12 +3,12 @@ import 'package:frontend/controllers/publisher_controller.dart';
 import 'package:frontend/controllers/users_controller.dart';
 import 'package:frontend/model/PublisherModels.dart';
 import 'package:frontend/model/UserModels.dart';
-import 'package:frontend/model/book_model.dart';
 import 'package:frontend/service/books/book_provider.dart';
 import 'package:frontend/service/books/book_services.dart';
 import 'package:frontend/views/profile/edit_profile_page.dart';
 import 'package:frontend/views/profile/profile_page.dart';
 import 'package:frontend/views/publisher/publisher_edit_page.dart';
+import 'package:frontend/views/search/search_page.dart';
 import 'package:frontend/widget/book_item.dart';
 import 'package:frontend/widget/bottom_menu.dart';
 import 'package:frontend/widget/floating_button.dart';
@@ -19,7 +19,7 @@ import 'package:provider/provider.dart';
 class HomeScreen extends StatefulWidget {
   final Map<String, dynamic> userData; // ✅ Thêm userData
 
-  const HomeScreen({Key? key, required this.userData}) : super(key: key);
+  const HomeScreen({super.key, required this.userData});
 
   @override
   _HomeScreen createState() => _HomeScreen();
@@ -50,8 +50,11 @@ class _HomeScreen extends State<HomeScreen> {
     _controller = PublisherController(); // Initialize PublisherController
     _fetchUsers();
     _fetchPublishers();
-
-    // Initialize other necessary elements
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        Provider.of<BookProvider>(context, listen: false).fetchBooks();
+      }
+    });
   }
 
   // Rate a book
@@ -137,6 +140,10 @@ class _HomeScreen extends State<HomeScreen> {
       }
       if (value == 'profile') {
         _currentItemType = 'profile';
+      }
+
+      if (value == 'search') {
+        _currentItemType = 'search';
       }
 
       if (value == 'users') {
@@ -588,6 +595,8 @@ class _HomeScreen extends State<HomeScreen> {
           return 'Publisher List';
         case 'profile':
           return 'Profile Page';
+        case 'search':
+          return 'Search Page';
         default:
           return 'Book List';
       }
@@ -774,12 +783,14 @@ class _HomeScreen extends State<HomeScreen> {
                   : _currentItemType == 'publisher'
                   ? _buildPublisherList()
                   : _currentItemType == 'profile'
-                  ? ProfilePage(userData: widget.userData) 
+                  ? ProfilePage(userData: widget.userData)
+                  : _currentItemType == 'search'
+                  ? const SearchPage()
                   : Container()
+              : _currentIndex == 2
+              ? const SearchPage()
               : _currentIndex == 3
-              ? ProfilePage(
-                userData: widget.userData,
-              ) // ✅ Profile từ bottom nav
+              ? ProfilePage(userData: widget.userData)
               : Container(),
       bottomNavigationBar: BottomMenu(
         initialIndex: _currentIndex,
