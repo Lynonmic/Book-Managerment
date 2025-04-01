@@ -1,6 +1,5 @@
 const BookModel = require('../models/bookModel');
 
-// Utility function to convert snake_case database fields to camelCase
 const formatBookResponse = (book) => {
   if (!book) return null;
   

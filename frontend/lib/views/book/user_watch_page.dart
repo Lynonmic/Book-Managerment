@@ -1,4 +1,6 @@
 // book_detail_screen.dart
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:frontend/widget/backbutton_and_title.dart';
 import 'package:frontend/widget/image_placeholder.dart';
@@ -17,6 +19,14 @@ class BookDetailScreen extends StatefulWidget {
 
 class _BookDetailScreenState extends State<BookDetailScreen> {
   String? _imageUrl;
+  File? _imageFile;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize _imageUrl with the book's image URL if available
+    _imageUrl = widget.book?['imageUrl'];
+  }
 
   final PageController _pageController = PageController();
 
@@ -109,8 +119,43 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     );
   }
 
+  Widget _buildImageWidget() {
+    if (_imageFile != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.file(_imageFile!, fit: BoxFit.cover),
+      );
+    } else if (_imageUrl != null) {
+      // Construct the asset path using imageUrl
+      String assetPath = 'assets/images/$_imageUrl';
+
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.asset(
+          assetPath, // Use the constructed asset path
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Center(child: Text('Error loading image'));
+          },
+        ),
+      );
+    } else {
+      // Placeholder for no image
+      return Center(child: Text('No image available'));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Extract book information from the passed map
+    final id = widget.book?['id'];
+    final title = widget.book?['title'] ?? 'No Title';
+    final author = widget.book?['author'] ?? 'Unknown Author';
+    final description =
+        widget.book?['description'] ?? 'No description available';
+    final category = widget.book?['category'] ?? '';
+    final rating = widget.book?['rating'] ?? 0.0;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -122,14 +167,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      BookImagePicker(
-                        imageUrl: _imageUrl,
-                        onImageSelected: (url) {
-                          setState(() {
-                            _imageUrl = url;
-                          });
-                        },
-                      ),
+                      _buildImageWidget(),
                       Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Column(
@@ -157,25 +195,33 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                               ],
                             ),
                             const SizedBox(height: 8),
-                            // Scrollable category pills
+
+                            // Show book's category if available
                             SizedBox(
                               height: 40,
                               child: ListView(
                                 scrollDirection: Axis.horizontal,
-                                children: const [
+                                children: [
                                   CategoryPill(
-                                    label: 'Hài hước',
+                                    label:
+                                        category.isNotEmpty
+                                            ? category
+                                            : 'Chưa phân loại',
                                     isActive: true,
                                   ),
-                                  CategoryPill(
+                                  const CategoryPill(
+                                    label: 'Hài hước',
+                                    isActive: false,
+                                  ),
+                                  const CategoryPill(
                                     label: 'Lãng mạn',
                                     isActive: false,
                                   ),
-                                  CategoryPill(
+                                  const CategoryPill(
                                     label: 'Hàng động',
                                     isActive: false,
                                   ),
-                                  CategoryPill(
+                                  const CategoryPill(
                                     label: 'Section',
                                     isActive: false,
                                   ),
@@ -183,37 +229,59 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                               ),
                             ),
                             const SizedBox(height: 16),
+
+                            // Book title and author
                             Text(
-                              'Row Header',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[500],
+                              title,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
+                            const SizedBox(height: 8),
                             Text(
-                              'Body copy description',
+                              'by $author',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Book description
+                            Text(
+                              'Description:',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey[500],
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 4),
+                            Text(
+                              description,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Rating display with interactive stars
                             InteractiveStarRating(
                               maxRating: 5,
                               color: Colors.amber,
                               size: 24,
-                              onRatingChanged: (rating) {
+                              onRatingChanged: (newRating) {
                                 // Handle the rating change
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('Rated $rating stars'),
+                                    content: Text('Rated $newRating stars'),
                                   ),
                                 );
                               },
+                              initialRating: rating.toInt().toDouble(),
                             ),
-                            const SizedBox(height: 16),
-
-                            // Page content with horizontal scrolling
                           ],
                         ),
                       ),

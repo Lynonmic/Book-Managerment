@@ -45,7 +45,11 @@ class ContentSection extends StatelessWidget {
                     ? InteractiveStarRating(
                       maxRating: 5,
                       color: Colors.amber,
-                      onRatingChanged: onRatingChanged!,
+                      onRatingChanged: (newRating) {
+                        if (onRatingChanged != null) {
+                          onRatingChanged!(newRating as int);
+                        }
+                      },
                     )
                     : _buildReadOnlyStars(rating),
               ],

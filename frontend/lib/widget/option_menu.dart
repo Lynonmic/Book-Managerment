@@ -57,6 +57,16 @@ class OptionMenu extends StatelessWidget {
                 ],
               ),
             ),
+            const PopupMenuItem<String>(
+              value: 'categories',
+              child: Row(
+                children: [
+                  Icon(Icons.category),
+                  SizedBox(width: 8),
+                  Text('Category List'),
+                ],
+              ),
+            ),
             PopupMenuItem<String>(
               value: 'ratings',
               child: Row(
