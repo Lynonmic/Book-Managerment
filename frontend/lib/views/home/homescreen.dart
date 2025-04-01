@@ -170,7 +170,6 @@ class _HomeScreen extends State<HomeScreen> {
                         _rateBook(book.id!, rating.toDouble());
                       }
                     },
-                    initialRating: book.rating ?? 0,
                   ),
                   actions: [
                     TextButton(
@@ -222,56 +221,62 @@ class _HomeScreen extends State<HomeScreen> {
               return BookItem(
                 title: book.title,
                 description: book.description ?? 'No description available',
-                rating: book.rating?.round() ?? 0,
                 onTap: () {
-                  if (book.roles == 1) {
+                  if (book.roles != 0) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder:
-                            (context) => BookFormScreen(
-                              book: book,
-                              onSave: (updatedBook) async {
-                                final bookProvider = Provider.of<BookProvider>(
-                                  context,
-                                  listen: false,
-                                );
+                            (context) => ChangeNotifierProvider.value(
+                              value: Provider.of<BookProvider>(
+                                context,
+                                listen: false,
+                              ),
+                              child: BookFormScreen(
+                                book: book,
+                                onSave: (updatedBook) async {
+                                  final bookProvider =
+                                      Provider.of<BookProvider>(
+                                        context,
+                                        listen: false,
+                                      );
 
-                                try {
-                                  if (updatedBook.id != null) {
-                                    // Update existing book
-                                    print(
-                                      'Updating book with ID: ${updatedBook.id}',
-                                    );
-                                    final result = await bookProvider
-                                        .updateBook(updatedBook);
-                                    if (result != null) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Book updated successfully',
-                                          ),
-                                        ),
+                                  try {
+                                    if (updatedBook.id != null) {
+                                      // Update existing book
+                                      print(
+                                        'Updating book with ID: ${updatedBook.id}',
                                       );
-                                    } else {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Failed to update book: ${bookProvider.error}',
+                                      final result = await bookProvider
+                                          .updateBook(updatedBook);
+                                      if (result != null) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Book updated successfully',
+                                            ),
                                           ),
-                                        ),
-                                      );
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Failed to update book: ${bookProvider.error}',
+                                            ),
+                                          ),
+                                        );
+                                      }
                                     }
+                                  } finally {
+                                    // Refresh books list whether successful or not
+                                    bookProvider.fetchBooks();
                                   }
-                                } finally {
-                                  // Refresh books list whether successful or not
-                                  bookProvider.fetchBooks();
-                                }
-                              },
+                                },
+                              ),
                             ),
                       ),
                     );
@@ -287,7 +292,6 @@ class _HomeScreen extends State<HomeScreen> {
                                 'author': book.author,
                                 'description': book.description,
                                 'imageUrl': book.imageUrl,
-                                'rating': book.rating,
                                 'category': book.category,
                               },
                             ),
@@ -315,31 +319,36 @@ class _HomeScreen extends State<HomeScreen> {
           context,
           MaterialPageRoute(
             builder:
-                (context) => BookFormScreen(
-                  book: book,
-                  onSave: (updatedBook) async {
-                    print(
-                      'Book to update: ${updatedBook.id} - ${updatedBook.title}',
-                    );
-                    final bookProvider = Provider.of<BookProvider>(
-                      context,
-                      listen: false,
-                    );
+                (context) => ChangeNotifierProvider.value(
+                  value: Provider.of<BookProvider>(context, listen: false),
+                  child: BookFormScreen(
+                    book: book,
+                    onSave: (updatedBook) async {
+                      print(
+                        'Book to update: ${updatedBook.id} - ${updatedBook.title}',
+                      );
+                      final bookProvider = Provider.of<BookProvider>(
+                        context,
+                        listen: false,
+                      );
 
-                    if (updatedBook.id != null) {
-                      // Update existing book
-                      print('Updating book with ID: ${updatedBook.id}');
-                      final result = await bookProvider.updateBook(updatedBook);
-                      if (result != null) {
-                        print('Book updated successfully');
-                      } else {
-                        print('Failed to update book: ${bookProvider.error}');
+                      if (updatedBook.id != null) {
+                        // Update existing book
+                        print('Updating book with ID: ${updatedBook.id}');
+                        final result = await bookProvider.updateBook(
+                          updatedBook,
+                        );
+                        if (result != null) {
+                          print('Book updated successfully');
+                        } else {
+                          print('Failed to update book: ${bookProvider.error}');
+                        }
                       }
-                    }
 
-                    // Refresh the book list
-                    bookProvider.fetchBooks();
-                  },
+                      // Refresh the book list
+                      bookProvider.fetchBooks();
+                    },
+                  ),
                 ),
           ),
         );
@@ -356,7 +365,6 @@ class _HomeScreen extends State<HomeScreen> {
                     'author': book.author,
                     'description': book.description,
                     'imageUrl': book.imageUrl,
-                    'rating': book.rating,
                   },
                 ),
           ),
@@ -932,6 +940,31 @@ class _HomeScreen extends State<HomeScreen> {
                                 context,
                                 listen: false,
                               );
+
+                              try {
+                                // Call addBook for new books
+                                final result = await bookProvider.addBook(
+                                  newBook,
+                                );
+                                if (result != null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Book added successfully'),
+                                    ),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Failed to add book: ${bookProvider.error}',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              } finally {
+                                // Refresh the book list
+                                bookProvider.fetchBooks();
+                              }
                             },
                           ),
                     ),
@@ -994,6 +1027,23 @@ class BookProvider with ChangeNotifier {
     }
   }
 
+  Future<Book?> addBook(Book book) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final bookService = BookService();
+      final createdBook = await bookService.createBook(book);
+      return createdBook;
+    } catch (e) {
+      _error = 'Failed to add book: $e';
+      return null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<bool> rateBook(int bookId, double rating) async {
     try {
       final bookService = BookService();
@@ -1004,6 +1054,28 @@ class BookProvider with ChangeNotifier {
       _error = 'Failed to rate book: $e';
       notifyListeners();
       return false;
+    }
+  }
+
+  Future<bool> deleteBook(int bookId) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final bookService = BookService();
+      final success = await bookService.deleteBook(bookId);
+      if (success) {
+        // Remove the book from the local list
+        _books.removeWhere((book) => book.id == bookId);
+        _error = '';
+      }
+      return success;
+    } catch (e) {
+      _error = 'Failed to delete book: $e';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 

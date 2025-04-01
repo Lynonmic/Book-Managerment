@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:frontend/controllers/publisher_controller.dart';
+import 'package:frontend/controllers/users_controller.dart';
 import 'package:frontend/model/book_model.dart';
 import 'package:frontend/service/books/book_provider.dart';
 import 'package:frontend/widget/action_button.dart';
@@ -14,6 +15,9 @@ import 'package:path/path.dart' as path;
 import 'package:frontend/widget/backbutton_and_title.dart';
 import 'package:frontend/widget/primary_button.dart';
 import 'package:frontend/model/PublisherModels.dart';
+import 'package:frontend/model/UserModels.dart';
+import 'package:frontend/model/category_model.dart';
+import 'package:frontend/service/categories/category_provider.dart';
 
 class BookFormScreen extends StatefulWidget {
   final Book? book;
@@ -35,37 +39,33 @@ class _BookFormScreenState extends State<BookFormScreen> {
   late TextEditingController _descriptionController;
   late TextEditingController _priceController;
   late TextEditingController _publisherController;
+  late TextEditingController _quantityController;
 
   String? _imageUrl;
   File? _imageFile;
   double _rating = 0.0;
 
-  // Add categories list and active category
-  final List<String> _categories = [
-    'All',
-    'Fiction',
-    'Non-Fiction',
-    'Science',
-    'History',
-    'Biography',
-    'Technology',
-    'Romance',
-    'Mystery',
-    'Thriller',
-    'Self-Help',
-  ];
-
-  String _activeCategory = 'All'; // Default category
+  // Replace hardcoded categories list with a dynamic list from the API
+  List<CategoryModel> _categories = [];
+  bool _isLoadingCategories = false;
+  String? _errorCategories;
+  String? _selectedCategoryId;
+  String? _selectedCategoryName;
 
   // Add publisher-related state
   bool _isLoadingPublishers = false;
   String? _selectedPublisherId;
   String? _selectedPublisherName;
+  List<Publishermodels> _publishers = [];
+  String? _errorPublisher;
+  PublisherController _controller =
+      PublisherController(); // Changed variable name to match HomeScreen
 
   @override
   void initState() {
     super.initState();
-
+    _controller =
+        PublisherController(); // Initialize PublisherController with the renamed variable
     // Initialize controllers with the book data if editing
     _titleController = TextEditingController(text: widget.book?.title ?? '');
     _authorController = TextEditingController(text: widget.book?.author ?? '');
@@ -78,19 +78,117 @@ class _BookFormScreenState extends State<BookFormScreen> {
     _publisherController = TextEditingController(
       text: widget.book?.publisher ?? '',
     );
+    _quantityController = TextEditingController(
+      text: widget.book?.quantity?.toString() ?? '0',
+    );
 
     _imageUrl = widget.book?.imageUrl;
-    _rating = widget.book?.rating?.toDouble() ?? 0.0;
 
-    // Set the active category if book has one
-    if (widget.book?.category != null && widget.book!.category!.isNotEmpty) {
-      _activeCategory = widget.book!.category!;
+    // Set the selected publisher ID and name if editing a book
+    if (widget.book?.publisherId != null) {
+      _selectedPublisherId = widget.book!.publisherId;
     }
 
-    // Set the selected publisher ID from the book's author field
-    _selectedPublisherId = widget.book?.author;
+    // Use post-frame callback to ensure we're not in build phase
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchCategories();
+      _fetchPublishers();
+    });
+  }
 
-    // Fetch publishers for the dropdown
+  Future<void> _fetchCategories() async {
+    setState(() {
+      _isLoadingCategories = true;
+      _errorCategories = null;
+    });
+
+    try {
+      // Get the provider outside of setState
+      final categoryProvider = Provider.of<CategoryProvider>(
+        context,
+        listen: false,
+      );
+      final categories = await categoryProvider.fetchCategories();
+
+      // Use a post-frame callback to avoid setState during build
+      if (mounted) {
+        setState(() {
+          _categories = categoryProvider.categories;
+          _isLoadingCategories = false;
+
+          // If editing a book, set the selected category
+          if (widget.book?.category != null &&
+              widget.book!.category!.isNotEmpty) {
+            _selectedCategoryId = widget.book!.category;
+            // Find the category name based on the ID
+            final category = _categories.firstWhere(
+              (cat) => cat.id.toString() == _selectedCategoryId,
+              orElse: () => CategoryModel(id: 0, name: 'Unknown'),
+            );
+            _selectedCategoryName = category.name;
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorCategories = 'Failed to load categories: $e';
+          _isLoadingCategories = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _fetchPublishers() async {
+    setState(() {
+      _isLoadingPublishers = true;
+      _errorPublisher = null;
+    });
+
+    try {
+      final publishers = await _controller.fetchPublishers();
+
+      if (mounted) {
+        setState(() {
+          _publishers = publishers;
+          _isLoadingPublishers = false;
+
+          // If we're editing a book and have a publisher ID, find and set the name
+          if (_selectedPublisherId != null) {
+            final publisher = _publishers.firstWhere(
+              (p) => p.maNhaXuatBan.toString() == _selectedPublisherId,
+              orElse: () => Publishermodels(),
+            );
+            _selectedPublisherName = publisher.tenNhaXuatBan;
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorPublisher = 'Failed to load publishers: $e';
+          _isLoadingPublishers = false;
+        });
+      }
+    }
+  }
+
+  void _handleRatingChanged(int bookId, int rating) async {
+    try {
+      // Convert the integer rating to a double explicitly
+      await Provider.of<BookProvider>(
+        context,
+        listen: false,
+      ).rateBook(bookId, rating.toDouble());
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Rating submitted: $rating stars')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to rate book: $e')));
+    }
   }
 
   @override
@@ -100,6 +198,7 @@ class _BookFormScreenState extends State<BookFormScreen> {
     _descriptionController.dispose();
     _priceController.dispose();
     _publisherController.dispose();
+    _quantityController.dispose();
     super.dispose();
   }
 
@@ -234,20 +333,21 @@ class _BookFormScreenState extends State<BookFormScreen> {
 
   void _saveBook() {
     if (_formKey.currentState!.validate()) {
+      // Ensure the publisher ID is correctly formatted before saving
+      final publisherId = _selectedPublisherId;
+
       final book = Book(
-        id: widget.book?.id,
+        id: widget.book?.id, // Keep the id for updates, null for new books
         title: _titleController.text,
         author: _authorController.text,
         description: _descriptionController.text,
         price: double.tryParse(_priceController.text) ?? 0.0,
-        publisher: _selectedPublisherName,
+        publisherId: publisherId,
         imageUrl: _imageUrl,
-        rating: _rating,
-        category: _activeCategory == 'All' ? '' : _activeCategory,
-        roles: 1, // Admin role
+        category: _selectedCategoryId,
+        quantity: int.tryParse(_quantityController.text) ?? 0,
+        roles: 1,
       );
-
-      print("Saving book: ${book.toJson()}"); // Log the book data
 
       widget.onSave(book);
       Navigator.pop(context);
@@ -264,25 +364,26 @@ class _BookFormScreenState extends State<BookFormScreen> {
       return;
     }
 
+    // Get the provider reference BEFORE showing the dialog
+    final provider = Provider.of<BookProvider>(context, listen: false);
+
     showDialog(
       context: context,
       builder:
-          (context) => AlertDialog(
+          (dialogContext) => AlertDialog(
+            // Note: using dialogContext here
             title: Text('Confirm Delete'),
             content: Text('Are you sure you want to delete this book?'),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.pop(dialogContext),
                 child: Text('Cancel'),
               ),
               TextButton(
                 onPressed: () async {
-                  Navigator.pop(context); // Close dialog
+                  Navigator.pop(dialogContext); // Close dialog
 
-                  final provider = Provider.of<BookProvider>(
-                    context,
-                    listen: false,
-                  );
+                  // Use the provider reference we captured earlier
                   final success = await provider.deleteBook(widget.book!.id!);
 
                   if (success) {
@@ -364,36 +465,100 @@ class _BookFormScreenState extends State<BookFormScreen> {
               ),
               SizedBox(height: 16),
 
-              // Category Pills
+              // Replace Category Dropdown with one that uses real data
               Text(
                 'Category',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 8),
-              CategoryPills(
-                categories: _categories,
-                activeCategory: _activeCategory,
-                onCategorySelected: (category) {
-                  setState(() {
-                    _activeCategory = category;
-                  });
-                },
-              ),
+              _isLoadingCategories
+                  ? Center(child: CircularProgressIndicator())
+                  : DropdownButtonFormField<String>(
+                    value: _selectedCategoryId,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'Select Category',
+                    ),
+                    items:
+                        _categories.map((category) {
+                          return DropdownMenuItem<String>(
+                            value: category.id.toString(),
+                            child: Text(category.name),
+                          );
+                        }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          _selectedCategoryId = newValue;
+                          final category = _categories.firstWhere(
+                            (c) => c.id.toString() == newValue,
+                            orElse: () => CategoryModel(id: 0, name: 'Unknown'),
+                          );
+                          _selectedCategoryName = category.name;
+                        });
+                      }
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select a category';
+                      }
+                      return null;
+                    },
+                  ),
               SizedBox(height: 16),
 
-              // Author
+              // Publisher Dropdown
+              Text(
+                'Publisher',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              _isLoadingPublishers
+                  ? Center(child: CircularProgressIndicator())
+                  : DropdownButtonFormField<String>(
+                    value: _selectedPublisherId,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'Select Publisher',
+                    ),
+                    items:
+                        _publishers.map((publisher) {
+                          return DropdownMenuItem<String>(
+                            value: publisher.maNhaXuatBan.toString(),
+                            child: Text(publisher.tenNhaXuatBan ?? 'Unknown'),
+                          );
+                        }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          _selectedPublisherId = newValue;
+                          // Log the selected publisher ID for debugging
+                          print("Selected publisher ID: $_selectedPublisherId");
+                          final publisher = _publishers.firstWhere(
+                            (p) => p.maNhaXuatBan.toString() == newValue,
+                            orElse: () => Publishermodels(),
+                          );
+                          _selectedPublisherName = publisher.tenNhaXuatBan;
+                        });
+                      }
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select a publisher';
+                      }
+                      return null;
+                    },
+                  ),
+              SizedBox(height: 16),
+
+              // Author input (now optional since we use publisher ID)
               TextFormField(
                 controller: _authorController,
                 decoration: InputDecoration(
-                  labelText: 'Author',
+                  labelText: 'Author Name (Optional)',
                   border: OutlineInputBorder(),
+                  hintText: 'Enter author name if different from publisher',
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter an author';
-                  }
-                  return null;
-                },
               ),
               SizedBox(height: 16),
 
@@ -428,24 +593,25 @@ class _BookFormScreenState extends State<BookFormScreen> {
               ),
               SizedBox(height: 16),
 
-              // Rating
-              Text(
-                'Rating',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 8),
-              InteractiveStarRating(
-                initialRating: _rating,
-                maxRating: 5,
-                color: Colors.amber,
-                size: 28,
-                onRatingChanged: (rating) {
-                  setState(() {
-                    _rating = rating;
-                  });
+              // Quantity input
+              TextFormField(
+                controller: _quantityController,
+                decoration: InputDecoration(
+                  labelText: 'Quantity',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a quantity';
+                  }
+                  if (int.tryParse(value) == null) {
+                    return 'Please enter a valid number';
+                  }
+                  return null;
                 },
               ),
-              SizedBox(height: 24),
+              SizedBox(height: 16),
 
               // Save Button
               PrimaryButton(label: 'Save Book', onPressed: _saveBook),

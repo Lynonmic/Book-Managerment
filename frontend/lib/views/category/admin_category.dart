@@ -16,6 +16,7 @@ class AdminCategoryScreen extends StatefulWidget {
 class _AdminCategoryScreenState extends State<AdminCategoryScreen> {
   late TextEditingController _nameController;
   late TextEditingController _descriptionController;
+  bool _isInitialized = false;
 
   @override
   void initState() {
@@ -23,10 +24,21 @@ class _AdminCategoryScreenState extends State<AdminCategoryScreen> {
     _nameController = TextEditingController();
     _descriptionController = TextEditingController();
 
-    // Fetch categories when screen loads
+    // Schedule the fetch for after the build is complete
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // This will run after the first build is complete
       Provider.of<CategoryProvider>(context, listen: false).fetchCategories();
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Another option is to check if it's the first time and fetch only once
+    if (!_isInitialized) {
+      _isInitialized = true;
+    }
   }
 
   @override
@@ -173,6 +185,9 @@ class _AdminCategoryScreenState extends State<AdminCategoryScreen> {
   Widget build(BuildContext context) {
     return Consumer<CategoryProvider>(
       builder: (context, categoryProvider, child) {
+        // The provider is already initialized in initState, so we don't need to call
+        // fetchCategories() here - that was causing the error
+
         if (categoryProvider.isLoading) {
           return Center(child: CircularProgressIndicator());
         }

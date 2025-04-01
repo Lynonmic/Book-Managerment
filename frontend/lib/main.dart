@@ -11,7 +11,6 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => BookProvider()),
         ChangeNotifierProvider(create: (_) => CategoryProvider()),
-        // Other providers if any
       ],
       child: MyApp(),
     ),

@@ -4,11 +4,11 @@ class Book {
   final String? author;
   final String? description;
   final double? price;
-  final String? publisher;
+  final String? publisher; // Display name
+  final String? publisherId; // Database ID - new field
   final String? imageUrl;
-  final double? rating;
   final String? category;
-  final int? quantity; // Add this
+  final int? quantity;
   final int? roles;
 
   Book({
@@ -18,14 +18,13 @@ class Book {
     this.description,
     this.price,
     this.publisher,
+    this.publisherId, // Add this field
     this.imageUrl,
-    this.rating,
     this.category,
-    this.quantity, // Add this
+    this.quantity,
     this.roles,
   });
 
-  // Update toJson method
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -34,15 +33,14 @@ class Book {
       'description': description,
       'price': price,
       'publisher': publisher,
+      'publisherId': publisherId, // Include in serialization
       'imageUrl': imageUrl,
-      'rating': rating,
       'category': category,
-      'quantity': quantity, // Add this
+      'quantity': quantity,
       'roles': roles,
     };
   }
 
-  // Update fromJson method
   factory Book.fromJson(Map<String, dynamic> json) {
     return Book(
       id: json['id'],
@@ -51,10 +49,10 @@ class Book {
       description: json['description'],
       price: json['price']?.toDouble(),
       publisher: json['publisher'],
+      publisherId: json['publisherId'], // Include in deserialization
       imageUrl: json['imageUrl'],
-      rating: json['rating']?.toDouble(),
       category: json['category'],
-      quantity: json['quantity'], // Add this
+      quantity: json['quantity'],
       roles: json['roles'],
     );
   }

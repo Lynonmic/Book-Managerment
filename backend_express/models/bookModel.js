@@ -35,25 +35,35 @@ class BookModel {
   static async createBook(bookData) {
     try {
       // Validate required fields
-      if (!bookData.title || !bookData.imageUrl || !bookData.price || !bookData.publisherId) {
-        throw new Error('Missing required fields: title, imageUrl, price, or publisherId');
+      if (!bookData.title || !bookData.imageUrl || !bookData.price) {
+        throw new Error('Missing required fields: title, imageUrl, or price');
       }
 
+      // Enhanced logging to debug publisherId
+      console.log('Creating book with detailed data:');
+      console.log('- publisherId:', bookData.publisherId);
+      console.log('- Type of publisherId:', typeof bookData.publisherId);
+      console.log('- All book data:', bookData);
+      console.log('- All book data:', bookData.quantity);
+
+
       const [result] = await db.query(
-        `INSERT INTO books (ten_sach, tac_gia, mo_ta, url_anh, gia, ma_nha_xuat_ban, so_luong, ngay_tao, ngay_cap_nhat) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+        `INSERT INTO books (ten_sach, url_anh, tac_gia, ma_danh_muc, ma_nha_xuat_ban, gia, so_luong, mo_ta, ngay_tao, ngay_cap_nhat) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
         [
           bookData.title,
-          bookData.author || null, // Allow author to be optional
-          bookData.description || null, // Allow description to be optional
           bookData.imageUrl,
+          bookData.author || null, // Allow author to be optional
+          bookData.category || null, // Add category ID (ma_danh_muc)
+          bookData.publisherId || null, // Publisher ID (ma_nha_xuat_ban)
           bookData.price,
-          bookData.publisherId,
-          bookData.quantity 
+          bookData.quantity || 0, // Default quantity to 0 if not provided
+          bookData.description || null, // Allow description to be optional
         ]
       );
       return result.insertId;
     } catch (error) {
+      console.error('Error in createBook:', error);
       throw error;
     }
   }
@@ -102,7 +112,7 @@ class BookModel {
       }
       
       if (bookData.category) {
-        updateFields.push('category = ?');
+        updateFields.push('ma_danh_muc = ?');
         values.push(bookData.category);
       }
       
@@ -111,9 +121,9 @@ class BookModel {
         values.push(bookData.publisherId);
       }
       
-      if (bookData.rating) {
-        updateFields.push('rating = ?');
-        values.push(bookData.rating);
+      if (bookData.quantity) {
+        updateFields.push('so_luong = ?');
+        values.push(bookData.quantity);
       }
       
       // If no fields to update, return
