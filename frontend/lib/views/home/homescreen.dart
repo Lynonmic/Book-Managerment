@@ -926,30 +926,27 @@ class _HomeScreen extends State<HomeScreen> {
             OptionMenu(onOptionSelected: _handleOptionSelected),
         ],
       ),
-      body:
-          _currentIndex == 0
-              ? _currentItemType == 'books'
-                  ? _buildBookList()
-                  : _currentItemType == 'users'
+      body: _currentIndex == 0
+          ? (_currentItemType == 'books'
+              ? _buildBookList()
+              : _currentItemType == 'users'
                   ? _buildUserList()
                   : _currentItemType == 'publisher'
-                  ? _buildPublisherList()
-                  : _currentItemType == 'profile'
-                  ? ProfilePage(userData: widget.userData)
-                  : _currentItemType == 'search'
-                  ? const SearchUserPage()
-                  : Container()
-              : _currentIndex == 2
-              ? const SearchUserPage()
-              : _currentIndex == 3
-              ? ProfilePage(userData: widget.userData)
-              : Container(),
-                  : _currentItemType == 'categories'
-                  ? _buildCategoryList()
-                  : _buildPublisherList()
-              : _currentIndex == 1
+                      ? _buildPublisherList()
+                      : _currentItemType == 'profile'
+                          ? ProfilePage(userData: widget.userData)
+                          : _currentItemType == 'search'
+                              ? const SearchUserPage()
+                              : _currentItemType == 'categories'
+                                  ? _buildCategoryList()
+                                  : Container())
+          : _currentIndex == 1
               ? CartPage() // Show CartPage when cart tab is selected
-              : Container(), // Placeholder for other tabs
+              : _currentIndex == 2
+                  ? const SearchUserPage()
+                  : _currentIndex == 3
+                      ? ProfilePage(userData: widget.userData)
+                      : Container(), // Placeholder for other tabs
       bottomNavigationBar: BottomMenu(
         initialIndex: _currentIndex,
         onIndexChanged: (index) {
