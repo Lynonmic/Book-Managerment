@@ -1,4 +1,4 @@
-const db = require('../config/database');
+const db = require("../config/database");
 
 class BookModel {
   static async getAllBooks() {
@@ -48,8 +48,11 @@ class BookModel {
 
 
       const [result] = await db.query(
+        "INSERT INTO books (title, author, description, image_url, price, publisher, page_count, isbn, rating, rating_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+
         `INSERT INTO books (ten_sach, url_anh, tac_gia, ma_danh_muc, ma_nha_xuat_ban, gia, so_luong, mo_ta, ngay_tao, ngay_cap_nhat) 
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+
         [
           bookData.title,
           bookData.imageUrl,
@@ -70,6 +73,22 @@ class BookModel {
 
   static async updateBook(id, bookData) {
     try {
+      const [result] = await db.query(
+        "UPDATE books SET title = ?, author = ?, description = ?, image_url = ?, price = ?, publisher = ?, page_count = ?, isbn = ?, rating = ?, rating_count = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        [
+          bookData.title,
+          bookData.author,
+          bookData.description,
+          bookData.imageUrl,
+          bookData.price,
+          bookData.publisher,
+          bookData.pageCount,
+          bookData.isbn,
+          bookData.rating,
+          bookData.ratingCount,
+          id,
+        ]
+      );
       console.log(`Updating book with ID ${id}:`, bookData);
       
       // Query to check if the book exists first

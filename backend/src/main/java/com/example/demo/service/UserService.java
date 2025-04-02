@@ -56,26 +56,38 @@ public class UserService {
 
     public Optional<Map<String, Object>> loginUser(LoginRequest request) {
         Optional<User> userOpt = userRepository.getUserByEmail(request.getEmail());
-
+    
         if (userOpt.isEmpty()) {
             return Optional.empty();
         }
-
+    
         User user = userOpt.get();
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             System.out.println("❌ Sai mật khẩu, không tạo token!");
             return Optional.empty();
         }
-
+    
         String token = generateAuthToken(user);
-
-        // Trả về token + role để frontend điều hướng
+    
+        // Trả về token, role và userData
         Map<String, Object> response = new HashMap<>();
         response.put("token", token);
         response.put("role", user.getRoles());
-
+    
+        // Thêm thông tin userData
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("id", user.getMa_khach_hang());
+        userData.put("name", user.getTen_khach_hang());
+        userData.put("email", user.getEmail());
+        userData.put("phone", user.getSoDienThoai());
+        userData.put("address", user.getDia_chi());
+        userData.put("avatar", user.getUrl_avata());
+    
+        response.put("userData", userData); // ✅ Thêm userData
+    
         return Optional.of(response);
     }
+    
 
     private String generateAuthToken(User user) {
         Key key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes()); // Dùng key chuẩn từ config
@@ -183,70 +195,6 @@ public class UserService {
         return ResponseEntity.ok(userOpt.get());
     }
 
-    public ResponseEntity<?> themselfUpdate(
-            Integer userId,
-            String tenKhachHang,
-            String soDienThoai,
-            String diaChi,
-            String email,
-            String password,
-            MultipartFile avatarFile) {
-        Optional<User> userOpt = userRepository.findById(userId);
-
-        if (userOpt.isEmpty()) {
-            return ResponseEntity.status(404).body(Map.of("success", false, "message", "Không tìm thấy người dùng!"));
-        }
-
-        User user = userOpt.get();
-
-        // Cập nhật tên khách hàng
-        if (tenKhachHang != null && !tenKhachHang.isBlank()) {
-            user.setTen_khach_hang(tenKhachHang);
-        }
-
-        if (soDienThoai != null && !soDienThoai.isBlank()) {
-            Optional<User> existingUserWithPhone = userRepository.findBySoDienThoai(soDienThoai);
-            if (existingUserWithPhone.isPresent() && !existingUserWithPhone.get().getMa_khach_hang().equals(userId)) {
-                return ResponseEntity.status(400)
-                        .body(Map.of("success", false, "message", "Số điện thoại đã được sử dụng!"));
-            }
-            user.setSoDienThoai(soDienThoai);
-        }
-
-        // Cập nhật địa chỉ
-        if (diaChi != null && !diaChi.isBlank()) {
-            user.setDia_chi(diaChi);
-        }
-
-        // Cập nhật email
-        if (email != null && !email.isBlank()) {
-            Optional<User> existingUser = userRepository.getUserByEmail(email);
-            if (existingUser.isPresent() && !existingUser.get().getMa_khach_hang().equals(userId)) {
-                return ResponseEntity.status(400).body(Map.of("success", false, "message", "Email đã được sử dụng!"));
-            }
-            user.setEmail(email);
-        }
-
-        // Cập nhật mật khẩu (nếu có)
-        if (password != null && !password.isBlank()) {
-            String hashedPassword = passwordEncoder.encode(password);
-            user.setPassword(hashedPassword);
-        }
-
-        // Cập nhật avatar
-        if (avatarFile != null && !avatarFile.isEmpty()) {
-            try {
-                String avatarUrl = cloudinaryService.uploadFile(avatarFile);
-                user.setUrl_avata(avatarUrl);
-            } catch (Exception e) {
-                return ResponseEntity.status(500)
-                        .body(Map.of("success", false, "message", "Lỗi tải ảnh lên Cloudinary!"));
-            }
-        }
-
-        userRepository.save(user);
-        return ResponseEntity.ok(Map.of("success", true, "message", "Cập nhật thông tin thành công!", "user", user));
-    }
 
     public ResponseEntity<?> updateUserProfile(
             Integer userId,
@@ -317,5 +265,9 @@ public class UserService {
 
         userRepository.deleteById(id);
         System.out.println("Đã xóa nhà xuất bản ID: " + id);
+    }
+
+    public List<User> searchUsers(String keyword) {
+        return userRepository.searchUsers(keyword);
     }
 }
