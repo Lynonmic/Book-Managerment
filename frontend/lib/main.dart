@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/service/books/book_provider.dart';
 import 'package:frontend/service/categories/category_provider.dart';
 import 'package:frontend/views/home/homescreen.dart';
 import 'package:frontend/views/login/login_page.dart';
@@ -28,7 +29,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.purple,
         scaffoldBackgroundColor: Colors.white,
       ),
-      home: const HomeScreen(),
+      home: const LoginPage(),
     );
   }
 }

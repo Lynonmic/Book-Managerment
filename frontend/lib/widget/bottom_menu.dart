@@ -5,10 +5,10 @@ class BottomMenu extends StatefulWidget {
   final Function(int) onIndexChanged;
 
   const BottomMenu({
-    Key? key,
+    super.key,
     this.initialIndex = 0,
     required this.onIndexChanged,
-  }) : super(key: key);
+  });
 
   @override
   _BottomMenuState createState() => _BottomMenuState();

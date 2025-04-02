@@ -47,5 +47,4 @@ public class User {
 
     @Column(nullable = false, updatable = false)
     private Integer roles = 1;
-
 }

@@ -31,6 +31,7 @@ class ApiService {
           "success": true,
           "token": responseJson["token"],
           "role": responseJson["role"], // Lấy role từ API
+          "userData": responseJson["userData"] ?? {}, // ✅ Lấy userData
         };
       } else {
         return {
@@ -322,6 +323,57 @@ class ApiService {
       }
     } catch (e) {
       return {"success": false, "message": "Lỗi kết nối"};
+    }
+  }
+
+  static Future<bool> sendOtp(String email) async {
+    final response = await http.post(
+      Uri.parse("$baseUrl/forgot-password"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"email": email}),
+    );
+
+    return response.statusCode == 200;
+  }
+
+  static Future<bool> verifyOtp(String email, String otp) async {
+    final response = await http.post(
+      Uri.parse("$baseUrl/verify-otp"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"email": email, "otp": otp}),
+    );
+
+    return response.statusCode == 200;
+  }
+
+  static Future<bool> resetPassword(
+    String email,
+    String otp,
+    String newPassword,
+  ) async {
+    final response = await http.post(
+      Uri.parse("$baseUrl/reset-password"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "email": email,
+        "otp": otp,
+        "newPassword": newPassword,
+      }),
+    );
+
+    return response.statusCode == 200;
+  }
+
+  Future<List<UserModels>> searchUsers(String query) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/users/search?keyword=$query'),
+    );
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => UserModels.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to search users');
     }
   }
 }

@@ -6,6 +6,7 @@ import 'package:frontend/model/UserModels.dart';
 import 'package:frontend/model/book_model.dart';
 import 'package:frontend/model/category_model.dart';
 import 'package:frontend/service/books/book_services.dart';
+import 'package:frontend/views/book/UI/book_item.dart';
 import 'package:frontend/service/categories/category_provider.dart';
 import 'package:frontend/views/book/admin_book_page.dart';
 import 'package:frontend/views/book/user_watch_page.dart';
@@ -14,8 +15,9 @@ import 'package:frontend/views/category/admin_category.dart';
 import 'package:frontend/views/category/category_item.dart';
 import 'package:frontend/views/category/edit_category_screen.dart';
 import 'package:frontend/views/profile/edit_profile_page.dart';
+import 'package:frontend/views/profile/profile_page.dart';
 import 'package:frontend/views/publisher/publisher_edit_page.dart';
-import 'package:frontend/views/book/UI/book_item.dart';
+import 'package:frontend/views/search/search_page.dart';
 import 'package:frontend/widget/bottom_menu.dart';
 import 'package:frontend/widget/floating_button.dart';
 import 'package:frontend/widget/option_menu.dart';
@@ -23,10 +25,12 @@ import 'package:frontend/widget/rating_star.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final Map<String, dynamic> userData; // ✅ Thêm userData
+
+  const HomeScreen({super.key, required this.userData});
 
   @override
-  State<HomeScreen> createState() => _HomeScreen();
+  _HomeScreen createState() => _HomeScreen();
 }
 
 class _HomeScreen extends State<HomeScreen> {
@@ -47,7 +51,7 @@ class _HomeScreen extends State<HomeScreen> {
 
   final BookService _bookService = BookService();
 
-  @override
+ @override
   void initState() {
     super.initState();
     _usersController = UsersController(); // Initialize UsersController
@@ -59,6 +63,11 @@ class _HomeScreen extends State<HomeScreen> {
 
     _fetchUsers();
     _fetchPublishers();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        Provider.of<BookProvider>(context, listen: false).fetchBooks();
+      }
+    });
   }
 
   // Rate a book
@@ -142,6 +151,14 @@ class _HomeScreen extends State<HomeScreen> {
         // Fetch books list
         Provider.of<BookProvider>(context, listen: false).fetchBooks();
       }
+      if (value == 'profile') {
+        _currentItemType = 'profile';
+      }
+
+      if (value == 'search') {
+        _currentItemType = 'search';
+      }
+
       if (value == 'users') {
         // Fetch users list
         _fetchUsers();
@@ -726,6 +743,10 @@ class _HomeScreen extends State<HomeScreen> {
           return 'User List';
         case 'publisher':
           return 'Publisher List';
+        case 'profile':
+          return 'Profile Page';
+        case 'search':
+          return 'Search Page';
         case 'categories':
           return 'Category List';
         default:
@@ -911,6 +932,18 @@ class _HomeScreen extends State<HomeScreen> {
                   ? _buildBookList()
                   : _currentItemType == 'users'
                   ? _buildUserList()
+                  : _currentItemType == 'publisher'
+                  ? _buildPublisherList()
+                  : _currentItemType == 'profile'
+                  ? ProfilePage(userData: widget.userData)
+                  : _currentItemType == 'search'
+                  ? const SearchUserPage()
+                  : Container()
+              : _currentIndex == 2
+              ? const SearchUserPage()
+              : _currentIndex == 3
+              ? ProfilePage(userData: widget.userData)
+              : Container(),
                   : _currentItemType == 'categories'
                   ? _buildCategoryList()
                   : _buildPublisherList()

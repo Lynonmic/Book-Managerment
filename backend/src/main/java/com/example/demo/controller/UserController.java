@@ -3,7 +3,6 @@ package com.example.demo.controller;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,11 +19,9 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.demo.dto.UserRequest;
 import com.example.demo.entity.User;
-import com.example.demo.repository.UserRepository;
 import com.example.demo.service.UserService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -33,8 +30,6 @@ import jakarta.persistence.EntityNotFoundException;
 public class UserController {
     @Autowired
     private UserService userService;
-    @Autowired
-    private UserRepository userRepository;
 
     @GetMapping(produces = "application/json; charset=UTF-8")
     public List<User> getUsersWithRole1() {
@@ -68,18 +63,6 @@ public class UserController {
         return userService.updateUserProfile(userId, tenKhachHang, soDienThoai, diaChi, email, avatarFile);
     }
 
-    @PutMapping(value = "/themseltupdate/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> themselfUpdate(
-            @PathVariable Integer userId,
-            @RequestParam(required = false) String tenKhachHang,
-            @RequestParam(required = false) String soDienThoai,
-            @RequestParam(required = false) String diaChi,
-            @RequestParam(required = false) String email,
-            @RequestParam(required = false) String password,
-            @RequestParam(required = false) MultipartFile avatarFile) {
-        return userService.themselfUpdate(userId, tenKhachHang, soDienThoai, diaChi, email, password, avatarFile);
-    }
-
     @DeleteMapping("/{userId}")
     public ResponseEntity<Map<String, Object>> deleteUser(@PathVariable Integer userId) {
         Map<String, Object> response = new HashMap<>();
@@ -100,4 +83,10 @@ public class UserController {
         }
     }
 
+
+
+    @GetMapping("/search")
+    public List<User> searchUsers(@RequestParam String keyword) {
+        return userService.searchUsers(keyword);
+    }
 }

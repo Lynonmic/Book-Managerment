@@ -12,6 +12,17 @@ spring:
     username: root
     password: ""
     driver-class-name: com.mysql.cj.jdbc.Driver
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: vthgiang181003@gmail.com
+    password: mmwg mjrr xkzi kjhq
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
   http:
     encoding:
       charset: UTF-8
@@ -38,4 +49,3 @@ cloudinary:
   api-secret: ww3wSfsLqr047sgmPwShAii0iJ8
 
 
- 
