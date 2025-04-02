@@ -1,50 +1,29 @@
-
 class Book {
   final int? id;
   final String title;
-  final String author;
+  final String? author;
   final String? description;
-  final String? imageUrl;
-  final double? rating; // Ensure this is a double
-  final int? ratingCount;
   final double? price;
-  final int roles; // 1 for admin, 0 for regular user
+  final String? publisher; // Display name
+  final String? publisherId; // Database ID - new field
+  final String? imageUrl;
+  final String? category;
+  final int? quantity;
+  final int? roles;
 
   Book({
     this.id,
     required this.title,
-    required this.author,
+    this.author,
     this.description,
-    this.imageUrl,
-    this.rating,
-    this.ratingCount,
     this.price,
-    this.roles = 0, // Default to regular user
+    this.publisher,
+    this.publisherId, // Add this field
+    this.imageUrl,
+    this.category,
+    this.quantity,
+    this.roles,
   });
-
-  factory Book.fromJson(Map<String, dynamic> json) {
-    // Print the JSON to debug
-    print('Book JSON: $json');
-
-    return Book(
-      id: json['id'],
-      title: json['title'] ?? 'Unknown Title',
-      author: json['author'] ?? 'Unknown Author',
-      description: json['description'],
-      imageUrl: json['imageUrl'],
-      // Convert the rating to double explicitly
-      rating:
-          json['rating'] != null
-              ? double.parse(json['rating'].toString())
-              : null,
-      ratingCount: json['ratingCount'],
-      price:
-          json['price'] != null ? double.parse(json['price'].toString()) : null,
-      // Ensure roles is properly parsed from the JSON
-      roles:
-          json.containsKey('roles') ? int.parse(json['roles'].toString()) : 0,
-    );
-  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -52,36 +31,29 @@ class Book {
       'title': title,
       'author': author,
       'description': description,
-      'imageUrl': imageUrl,
-      'rating': rating,
-      'ratingCount': ratingCount,
       'price': price,
+      'publisher': publisher,
+      'publisherId': publisherId, // Include in serialization
+      'imageUrl': imageUrl,
+      'category': category,
+      'quantity': quantity,
       'roles': roles,
     };
   }
 
-  // Create a copy with updated fields
-  Book copyWith({
-    int? id,
-    String? title,
-    String? author,
-    String? description,
-    String? imageUrl,
-    double? rating,
-    int? ratingCount,
-    double? price,
-    int? roles,
-  }) {
+  factory Book.fromJson(Map<String, dynamic> json) {
     return Book(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      author: author ?? this.author,
-      description: description ?? this.description,
-      imageUrl: imageUrl ?? this.imageUrl,
-      rating: rating ?? this.rating,
-      ratingCount: ratingCount ?? this.ratingCount,
-      price: price ?? this.price,
-      roles: roles ?? this.roles,
+      id: json['id'],
+      title: json['title'],
+      author: json['author'],
+      description: json['description'],
+      price: json['price']?.toDouble(),
+      publisher: json['publisher'],
+      publisherId: json['publisherId'], // Include in deserialization
+      imageUrl: json['imageUrl'],
+      category: json['category'],
+      quantity: json['quantity'],
+      roles: json['roles'],
     );
   }
 }

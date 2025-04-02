@@ -3,22 +3,23 @@ import 'package:frontend/model/book_model.dart';
 import 'package:frontend/service/books/book_services.dart';
 
 class BookProvider with ChangeNotifier {
-  final _bookService = BookService();
-
   List<Book> _books = [];
-  bool _isLoading = false;
-  String _error = '';
+  List<Book> get books => _filteredBooks.isEmpty ? _books : _filteredBooks;
 
-  // Getters
-  List<Book> get books => _books;
+  List<Book> _filteredBooks = [];
+  bool _isLoading = false;
   bool get isLoading => _isLoading;
+
+  String _error = '';
   String get error => _error;
 
-  // Fetch books from API
-  Future<void> fetchBooks() async {
-    print("===== _fetchUsers() is called =====");
+  final BookService _bookService = BookService();
 
+  Future<void> fetchBooks({bool isRetry = false}) async {
     _isLoading = true;
+    if (!isRetry) {
+      _filteredBooks = [];
+    }
     _error = '';
     notifyListeners();
 
@@ -28,84 +29,68 @@ class BookProvider with ChangeNotifier {
       for (var book in _books) {
         print(book.title);
       }
-    } catch (e) {
-      _error = e.toString();
-    } finally {
+      final fetchedBooks = await _bookService.fetchBooks();
+      _books = fetchedBooks;
       _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _isLoading = false;
+      _error = 'Failed to fetch books: $e';
       notifyListeners();
     }
   }
 
-  // Refresh books (force fetch)
   Future<void> refreshBooks() async {
+    _filteredBooks = [];
     return fetchBooks();
   }
 
-  // Get book by ID from local cache
-  Book? getBookById(int id) {
+  Future<Book?> updateBook(Book book) async {
     try {
-      return _books.firstWhere((book) => book.id == id);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  // Fetch book by ID from API
-  Future<Book?> fetchBookById(int id) async {
-    // Check cache first
-    final cachedBook = getBookById(id);
-    if (cachedBook != null) {
-      return cachedBook;
-    }
-
-    // If not in cache, fetch from API
-    try {
-      return await _bookService.fetchBookById(id);
-    } catch (e) {
-      _error = e.toString();
-      notifyListeners();
-      return null;
-    }
-  }
-
-  // Rate a book
-  Future<void> rateBook(int bookId, double rating) async {
-    try {
-      final updatedBook = await _bookService.rateBook(bookId, rating);
-
-      // Update book in local cache if it exists
-      final index = _books.indexWhere((book) => book.id == bookId);
+      final updatedBook = await _bookService.updateBook(book);
+      final index = _books.indexWhere((b) => b.id == book.id);
       if (index != -1) {
         _books[index] = updatedBook;
         notifyListeners();
       }
+      return updatedBook;
     } catch (e) {
-      _error = e.toString();
+      _error = 'Failed to update book: $e';
       notifyListeners();
-      rethrow; // Re-throw so UI can show error
+      return null;
     }
   }
 
-  Future<void> updateBook(Book book) async {
+  Future<Book?> addBook(Book book) async {
     try {
-      // Set loading state
-      _isLoading = true;
+      final newBook = await _bookService.createBook(book);
+      _books.add(newBook);
       notifyListeners();
-
-      // Call your book service to update the book
-      await _bookService.updateBook(book);
-
-      // Refresh the book list
-      await fetchBooks();
+      return newBook;
     } catch (e) {
-      _error = 'Error updating book: $e';
-      _isLoading = false;
+      _error = 'Failed to add book: $e';
       notifyListeners();
-      rethrow;
+      return null;
     }
   }
 
-  Future<void> deleteBook(int bookId) async {
+  Future<bool> rateBook(int bookId, double rating) async {
+    try {
+      await _bookService.rateBook(bookId, rating);
+      // Update the local book's rating
+      final index = _books.indexWhere((b) => b.id == bookId);
+      if (index != -1) {
+        notifyListeners();
+      }
+      return true;
+    } catch (e) {
+      _error = 'Failed to rate book: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> deleteBook(int bookId) async {
     try {
       // Set loading state
       _isLoading = true;
@@ -119,11 +104,19 @@ class BookProvider with ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
+
+      return true;
     } catch (e) {
       _error = 'Error deleting book: $e';
       _isLoading = false;
       notifyListeners();
-      rethrow;
+      return false;
     }
+  }
+
+  void filterByCategory(int categoryId) {
+    _filteredBooks =
+        _books.where((book) => book.category == categoryId).toList();
+    notifyListeners();
   }
 }

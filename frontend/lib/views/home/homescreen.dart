@@ -4,11 +4,16 @@ import 'package:frontend/controllers/users_controller.dart';
 import 'package:frontend/model/PublisherModels.dart';
 import 'package:frontend/model/UserModels.dart';
 import 'package:frontend/model/book_model.dart';
-import 'package:frontend/service/books/book_provider.dart';
+import 'package:frontend/model/category_model.dart';
 import 'package:frontend/service/books/book_services.dart';
 import 'package:frontend/views/book/UI/book_item.dart';
+import 'package:frontend/service/categories/category_provider.dart';
 import 'package:frontend/views/book/admin_book_page.dart';
 import 'package:frontend/views/book/user_watch_page.dart';
+import 'package:frontend/views/cart/cart_page.dart'; // Add this import
+import 'package:frontend/views/category/admin_category.dart';
+import 'package:frontend/views/category/category_item.dart';
+import 'package:frontend/views/category/edit_category_screen.dart';
 import 'package:frontend/views/profile/edit_profile_page.dart';
 import 'package:frontend/views/profile/profile_page.dart';
 import 'package:frontend/views/publisher/publisher_edit_page.dart';
@@ -51,6 +56,11 @@ class _HomeScreen extends State<HomeScreen> {
     super.initState();
     _usersController = UsersController(); // Initialize UsersController
     _controller = PublisherController(); // Initialize PublisherController
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<BookProvider>(context, listen: false).fetchBooks();
+      Provider.of<CategoryProvider>(context, listen: false).fetchCategories();
+    });
+
     _fetchUsers();
     _fetchPublishers();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -157,10 +167,14 @@ class _HomeScreen extends State<HomeScreen> {
         _fetchPublishers();
         // Fetch publishers list
       }
+      if (value == 'categories') {
+        // Fetch categories list
+        Provider.of<CategoryProvider>(context, listen: false).fetchCategories();
+      }
       if (value == 'ratings') {
         final bookProvider = Provider.of<BookProvider>(context, listen: false);
-        if (bookProvider.books.isNotEmpty) {
-          final book = bookProvider.books.first;
+        if (bookProvider._books.isNotEmpty) {
+          final book = bookProvider._books.first;
           showDialog(
             context: context,
             builder:
@@ -203,7 +217,7 @@ class _HomeScreen extends State<HomeScreen> {
                 Text(bookProvider.error, style: TextStyle(color: Colors.red)),
                 SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () => bookProvider.fetchBooks(),
+                  onPressed: () => bookProvider.fetchBooks(isRetry: true),
                   child: Text('Try Again'),
                 ),
               ],
@@ -224,10 +238,83 @@ class _HomeScreen extends State<HomeScreen> {
               return BookItem(
                 title: book.title,
                 description: book.description ?? 'No description available',
-                rating: book.rating?.round() ?? 0,
                 onTap: () {
-                  // Navigate based on role
-                  _navigateToBookDetail(book as Book);
+                  if (book.roles != 0) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => ChangeNotifierProvider.value(
+                              value: Provider.of<BookProvider>(
+                                context,
+                                listen: false,
+                              ),
+                              child: BookFormScreen(
+                                book: book,
+                                onSave: (updatedBook) async {
+                                  final bookProvider =
+                                      Provider.of<BookProvider>(
+                                        context,
+                                        listen: false,
+                                      );
+
+                                  try {
+                                    if (updatedBook.id != null) {
+                                      // Update existing book
+                                      print(
+                                        'Updating book with ID: ${updatedBook.id}',
+                                      );
+                                      final result = await bookProvider
+                                          .updateBook(updatedBook);
+                                      if (result != null) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Book updated successfully',
+                                            ),
+                                          ),
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Failed to update book: ${bookProvider.error}',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  } finally {
+                                    // Refresh books list whether successful or not
+                                    bookProvider.fetchBooks();
+                                  }
+                                },
+                              ),
+                            ),
+                      ),
+                    );
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => BookDetailScreen(
+                              book: {
+                                'id': book.id,
+                                'title': book.title,
+                                'author': book.author,
+                                'description': book.description,
+                                'imageUrl': book.imageUrl,
+                                'category': book.category,
+                              },
+                            ),
+                      ),
+                    );
+                  }
                 },
               );
             },
@@ -238,40 +325,70 @@ class _HomeScreen extends State<HomeScreen> {
   }
 
   void _navigateToBookDetail(Book book) {
-    // Add debug print to check book object
     print(
-      'Navigating to book detail for: ${book.title} with roles: ${book.roles}',
+      'Navigating to book detail for: ${book.title} with roles: ${book.roles} and ID: ${book.id}',
     );
 
     try {
       if (book.roles == 1) {
-        // Navigate to admin book page using MaterialPageRoute instead of named route
+        // Navigate to admin book page
         Navigator.push(
           context,
           MaterialPageRoute(
             builder:
-                (context) => BookFormScreen(
-                  book: book,
-                  onSave: (updatedBook) {
-                    // Refresh the book list after saving
-                    Provider.of<BookProvider>(
-                      context,
-                      listen: false,
-                    ).fetchBooks();
-                  },
+                (context) => ChangeNotifierProvider.value(
+                  value: Provider.of<BookProvider>(context, listen: false),
+                  child: BookFormScreen(
+                    book: book,
+                    onSave: (updatedBook) async {
+                      print(
+                        'Book to update: ${updatedBook.id} - ${updatedBook.title}',
+                      );
+                      final bookProvider = Provider.of<BookProvider>(
+                        context,
+                        listen: false,
+                      );
+
+                      if (updatedBook.id != null) {
+                        // Update existing book
+                        print('Updating book with ID: ${updatedBook.id}');
+                        final result = await bookProvider.updateBook(
+                          updatedBook,
+                        );
+                        if (result != null) {
+                          print('Book updated successfully');
+                        } else {
+                          print('Failed to update book: ${bookProvider.error}');
+                        }
+                      }
+
+                      // Refresh the book list
+                      bookProvider.fetchBooks();
+                    },
+                  ),
                 ),
           ),
         );
       } else {
-        // Navigate to user book page using MaterialPageRoute instead of named route
+        // Navigate to user book page
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => BookDetailScreen()),
+          MaterialPageRoute(
+            builder:
+                (context) => BookDetailScreen(
+                  book: {
+                    'id': book.id,
+                    'title': book.title,
+                    'author': book.author,
+                    'description': book.description,
+                    'imageUrl': book.imageUrl,
+                  },
+                ),
+          ),
         );
       }
     } catch (e) {
       print('Navigation error: $e');
-      // Fallback navigation
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error navigating to book details: $e')),
       );
@@ -537,7 +654,7 @@ class _HomeScreen extends State<HomeScreen> {
         Positioned(
           bottom: 20,
           right: 20,
-          child: FloatingButton(
+          child: FloatingActionButton(
             onPressed: () async {
               final result = await Navigator.push(
                 context,
@@ -547,9 +664,72 @@ class _HomeScreen extends State<HomeScreen> {
               );
               _fetchPublishers();
             },
+            child: Icon(Icons.add),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildCategoryList() {
+    return Consumer<CategoryProvider>(
+      builder: (context, categoryProvider, child) {
+        if (categoryProvider.isLoading) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        if (categoryProvider.error.isNotEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  categoryProvider.error,
+                  style: TextStyle(color: Colors.red),
+                ),
+                SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => categoryProvider.fetchCategories(),
+                  child: Text('Try Again'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        if (categoryProvider.categories.isEmpty) {
+          return Center(child: Text('No categories found'));
+        }
+
+        return RefreshIndicator(
+          onRefresh: () async => categoryProvider.refreshCategories(),
+          child: ListView.builder(
+            itemCount: categoryProvider.categories.length,
+            itemBuilder: (context, index) {
+              final category = categoryProvider.categories[index];
+
+              // Use the correct property names based on the JSON structure
+              String displayName = "ID: ${category.id} - ${category.name}";
+
+              return CategoryItem(
+                name: displayName,
+                onTap: () {
+                  // Check if the user has admin privileges
+
+                  // Navigate to edit screen for admin users
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => EditCategoryScreen(category: category),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -567,6 +747,8 @@ class _HomeScreen extends State<HomeScreen> {
           return 'Profile Page';
         case 'search':
           return 'Search Page';
+        case 'categories':
+          return 'Category List';
         default:
           return 'Book List';
       }
@@ -762,6 +944,12 @@ class _HomeScreen extends State<HomeScreen> {
               : _currentIndex == 3
               ? ProfilePage(userData: widget.userData)
               : Container(),
+                  : _currentItemType == 'categories'
+                  ? _buildCategoryList()
+                  : _buildPublisherList()
+              : _currentIndex == 1
+              ? CartPage() // Show CartPage when cart tab is selected
+              : Container(), // Placeholder for other tabs
       bottomNavigationBar: BottomMenu(
         initialIndex: _currentIndex,
         onIndexChanged: (index) {
@@ -770,6 +958,163 @@ class _HomeScreen extends State<HomeScreen> {
           });
         },
       ),
+      floatingActionButton:
+          _currentItemType == 'categories' || _currentIndex != 0
+              ? null
+              : FloatingButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => BookFormScreen(
+                            onSave: (Book newBook) async {
+                              final bookProvider = Provider.of<BookProvider>(
+                                context,
+                                listen: false,
+                              );
+
+                              try {
+                                // Call addBook for new books
+                                final result = await bookProvider.addBook(
+                                  newBook,
+                                );
+                                if (result != null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Book added successfully'),
+                                    ),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Failed to add book: ${bookProvider.error}',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              } finally {
+                                // Refresh the book list
+                                bookProvider.fetchBooks();
+                              }
+                            },
+                          ),
+                    ),
+                  );
+                },
+                tooltip: 'Add Book',
+                backgroundColor: Colors.blue,
+              ),
     );
+  }
+}
+
+class BookProvider with ChangeNotifier {
+  List<Book> _books = [];
+  List<Book> _filteredBooks = [];
+  bool _isLoading = false;
+  String _error = '';
+
+  List<Book> get books => _filteredBooks.isNotEmpty ? _filteredBooks : _books;
+  bool get isLoading => _isLoading;
+  String get error => _error;
+
+  Future<void> fetchBooks({bool isRetry = false}) async {
+    _isLoading = true;
+    if (!isRetry) _error = '';
+    notifyListeners();
+
+    try {
+      final bookService = BookService();
+      final fetchedBooks = await bookService.fetchBooks();
+      _books = fetchedBooks;
+      _filteredBooks = [];
+      _error = '';
+    } catch (e) {
+      _error = 'Failed to fetch books: $e';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> refreshBooks() async {
+    return fetchBooks(isRetry: true);
+  }
+
+  Future<Book?> updateBook(Book book) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final bookService = BookService();
+      final updatedBook = await bookService.updateBook(book);
+      return updatedBook;
+    } catch (e) {
+      _error = 'Failed to update book: $e';
+      return null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<Book?> addBook(Book book) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final bookService = BookService();
+      final createdBook = await bookService.createBook(book);
+      return createdBook;
+    } catch (e) {
+      _error = 'Failed to add book: $e';
+      return null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> rateBook(int bookId, double rating) async {
+    try {
+      final bookService = BookService();
+      await bookService.rateBook(bookId, rating);
+      await fetchBooks();
+      return true;
+    } catch (e) {
+      _error = 'Failed to rate book: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> deleteBook(int bookId) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final bookService = BookService();
+      final success = await bookService.deleteBook(bookId);
+      if (success) {
+        // Remove the book from the local list
+        _books.removeWhere((book) => book.id == bookId);
+        _error = '';
+      }
+      return success;
+    } catch (e) {
+      _error = 'Failed to delete book: $e';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void filterByCategory(int categoryId) {
+    _filteredBooks =
+        _books.where((book) => book.category == categoryId).toList();
+    notifyListeners();
   }
 }

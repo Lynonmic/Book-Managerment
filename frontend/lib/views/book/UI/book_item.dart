@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 class BookItem extends StatelessWidget {
   final String title;
   final String description;
-  final int rating; // This is correct as int for UI display
   final VoidCallback? onTap;
   final Widget? trailing;
 
@@ -11,7 +10,6 @@ class BookItem extends StatelessWidget {
     super.key,
     required this.title,
     required this.description,
-    required this.rating,
     this.onTap,
     this.trailing,
   });
@@ -53,16 +51,6 @@ class BookItem extends StatelessWidget {
                     height: 40,
                     color: Colors.grey.shade300,
                     child: Icon(Icons.image, color: Colors.grey),
-                  ),
-                  SizedBox(height: 8),
-                  Row(
-                    children: List.generate(5, (index) {
-                      return Icon(
-                        index < rating ? Icons.star : Icons.star_border,
-                        size: 16,
-                        color: Colors.black,
-                      );
-                    }),
                   ),
                 ],
               ),
