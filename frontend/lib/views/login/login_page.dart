@@ -34,7 +34,6 @@ class _LoginPageState extends State<LoginPage> {
       String token = response["token"];
       int role = response["role"]; // Lấy role từ API
       Map<String, dynamic> userData = response["userData"] ?? {};
-      
 
       // Điều hướng theo role
       if (role == 0) {
@@ -130,7 +129,7 @@ class _LoginPageState extends State<LoginPage> {
 
               Center(
                 child: Image.asset(
-                  'lib/assets/images/logo.png',
+                  'assets/images/logo.png',
                   height: 200,
                   fit: BoxFit.contain,
                 ),

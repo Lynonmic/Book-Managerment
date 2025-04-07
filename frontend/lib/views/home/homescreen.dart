@@ -51,7 +51,7 @@ class _HomeScreen extends State<HomeScreen> {
 
   final BookService _bookService = BookService();
 
- @override
+  @override
   void initState() {
     super.initState();
     _usersController = UsersController(); // Initialize UsersController
@@ -928,7 +928,7 @@ class _HomeScreen extends State<HomeScreen> {
       ),
       body:
           _currentIndex == 0
-              ? _currentItemType == 'books'
+              ? (_currentItemType == 'books'
                   ? _buildBookList()
                   : _currentItemType == 'users'
                   ? _buildUserList()
@@ -938,18 +938,16 @@ class _HomeScreen extends State<HomeScreen> {
                   ? ProfilePage(userData: widget.userData)
                   : _currentItemType == 'search'
                   ? const SearchUserPage()
-                  : Container()
+                  : _currentItemType == 'categories'
+                  ? _buildCategoryList()
+                  : Container())
+              : _currentIndex == 1
+              ? CartPage()
               : _currentIndex == 2
               ? const SearchUserPage()
               : _currentIndex == 3
               ? ProfilePage(userData: widget.userData)
-              : Container(),
-                  : _currentItemType == 'categories'
-                  ? _buildCategoryList()
-                  : _buildPublisherList()
-              : _currentIndex == 1
-              ? CartPage() // Show CartPage when cart tab is selected
-              : Container(), // Placeholder for other tabs
+              : Container(), // Plac
       bottomNavigationBar: BottomMenu(
         initialIndex: _currentIndex,
         onIndexChanged: (index) {
