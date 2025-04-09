@@ -54,13 +54,17 @@ exports.getCategoryById = async (req, res) => {
 // Create a new category
 exports.createCategory = async (req, res) => {
   try {
+    console.log('Creating category with data:', req.body);
     const categoryId = await CategoryModel.createCategory(req.body);
+    const newCategory = await CategoryModel.getCategoryById(categoryId);
+    
+    console.log('Created category:', newCategory);
     res.status(201).json({
       success: true,
-      message: 'Category created successfully',
-      data: { id: categoryId }
+      data: formatCategoryResponse(newCategory)
     });
   } catch (error) {
+    console.error('Error creating category:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to create category',
@@ -72,6 +76,7 @@ exports.createCategory = async (req, res) => {
 // Update a category
 exports.updateCategory = async (req, res) => {
   try {
+    console.log('Updating category:', req.params.id, 'with data:', req.body);
     const affected = await CategoryModel.updateCategory(req.params.id, req.body);
     if (affected === 0) {
       return res.status(404).json({
@@ -79,11 +84,13 @@ exports.updateCategory = async (req, res) => {
         message: 'Category not found or no changes made'
       });
     }
+    const updatedCategory = await CategoryModel.getCategoryById(req.params.id);
     res.status(200).json({
       success: true,
-      message: 'Category updated successfully'
+      data: formatCategoryResponse(updatedCategory)
     });
   } catch (error) {
+    console.error('Error updating category:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update category',

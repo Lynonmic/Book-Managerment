@@ -653,7 +653,6 @@ class _BookFormScreenState extends State<BookFormScreen> {
         );
       }
     } else {
-      // Show placeholder with camera icon
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
