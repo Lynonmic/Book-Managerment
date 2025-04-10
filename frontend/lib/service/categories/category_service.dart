@@ -40,44 +40,60 @@ class CategoryService {
   // Create a new category
   Future<CategoryModel> createCategory(CategoryModel category) async {
     try {
+      final Map<String, dynamic> requestBody = {
+        'name': category.name, // Changed from ten_danh_muc to name
+      };
+
+      print('Creating category with data: $requestBody');
       final response = await http.post(
         Uri.parse('$baseUrl/categories'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({'ten_danh_muc': category.name}),
+        body: json.encode(requestBody),
       );
 
-      if (response.statusCode == 201) {
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
         final dynamic data = json.decode(response.body);
-        return CategoryModel.fromJson(data);
+        final categoryData = data['data'];
+        return CategoryModel.fromJson(categoryData);
       } else {
-        throw Exception('Failed to create category: ${response.statusCode}');
+        throw Exception('Failed to create category: ${response.body}');
       }
     } catch (e) {
-      throw Exception('Error creating category: $e');
+      print('Error creating category: $e');
+      rethrow;
     }
   }
 
   // Update an existing category
   Future<CategoryModel> updateCategory(CategoryModel category) async {
     try {
-      if (category.id == null) {
-        throw Exception('Category ID cannot be null for update');
-      }
+      final Map<String, dynamic> requestBody = {
+        'name': category.name, // Changed from ten_danh_muc to name
+      };
 
+      print('Updating category with data: $requestBody');
       final response = await http.put(
         Uri.parse('$baseUrl/categories/${category.id}'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({'ten_danh_muc': category.name}),
+        body: json.encode(requestBody),
       );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final dynamic data = json.decode(response.body);
-        return CategoryModel.fromJson(data);
+        final categoryData = data['data'];
+        return CategoryModel.fromJson(categoryData);
       } else {
-        throw Exception('Failed to update category: ${response.statusCode}');
+        throw Exception('Failed to update category: ${response.body}');
       }
     } catch (e) {
-      throw Exception('Error updating category: $e');
+      print('Error updating category: $e');
+      rethrow;
     }
   }
 

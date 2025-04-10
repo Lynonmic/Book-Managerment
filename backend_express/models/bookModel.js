@@ -16,6 +16,7 @@ class BookModel {
           ngay_tao as created_at,
           ngay_cap_nhat as updated_at
         FROM books
+        WHERE is_deleted = 1
       `);
       return rows;
     } catch (error) {
@@ -25,7 +26,7 @@ class BookModel {
 
   static async getBookById(id) {
     try {
-      const [rows] = await db.query('SELECT * FROM books WHERE ma_sach = ?', [id]);
+      const [rows] = await db.query('SELECT * FROM books WHERE ma_sach = ? AND is_deleted = 1', [id]);
       return rows[0];
     } catch (error) {
       throw error;
@@ -46,13 +47,9 @@ class BookModel {
       console.log('- All book data:', bookData);
       console.log('- All book data:', bookData.quantity);
 
-
       const [result] = await db.query(
-        "INSERT INTO books (title, author, description, image_url, price, publisher, page_count, isbn, rating, rating_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-
-        `INSERT INTO books (ten_sach, url_anh, tac_gia, ma_danh_muc, ma_nha_xuat_ban, gia, so_luong, mo_ta, ngay_tao, ngay_cap_nhat) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-
+        `INSERT INTO books (ten_sach, url_anh, tac_gia, ma_danh_muc, ma_nha_xuat_ban, gia, so_luong, mo_ta, is_deleted, ngay_tao, ngay_cap_nhat) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), NOW())`,
         [
           bookData.title,
           bookData.imageUrl,
@@ -73,29 +70,11 @@ class BookModel {
 
   static async updateBook(id, bookData) {
     try {
-      const [result] = await db.query(
-        "UPDATE books SET title = ?, author = ?, description = ?, image_url = ?, price = ?, publisher = ?, page_count = ?, isbn = ?, rating = ?, rating_count = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-        [
-          bookData.title,
-          bookData.author,
-          bookData.description,
-          bookData.imageUrl,
-          bookData.price,
-          bookData.publisher,
-          bookData.pageCount,
-          bookData.isbn,
-          bookData.rating,
-          bookData.ratingCount,
-          id,
-        ]
-      );
-      console.log(`Updating book with ID ${id}:`, bookData);
-      
       // Query to check if the book exists first
-      const [checkBook] = await db.query('SELECT ma_sach FROM books WHERE ma_sach = ?', [id]);
+      const [checkBook] = await db.query('SELECT ma_sach FROM books WHERE ma_sach = ? AND is_deleted = 1', [id]);
       
       if (checkBook.length === 0) {
-        console.log(`Book with ID ${id} not found in database`);
+        console.log(`Book with ID ${id} not found in database or has been deleted`);
         return 0; // Book not found
       }
       
@@ -145,6 +124,9 @@ class BookModel {
         values.push(bookData.quantity);
       }
       
+      // Always update the timestamp when updating a record
+      updateFields.push('ngay_cap_nhat = NOW()');
+      
       // If no fields to update, return
       if (updateFields.length === 0) {
         console.log('No fields to update');
@@ -154,7 +136,7 @@ class BookModel {
       // Add the WHERE clause value at the end
       values.push(id);
       
-      const query = `UPDATE books SET ${updateFields.join(', ')} WHERE ma_sach = ?`;
+      const query = `UPDATE books SET ${updateFields.join(', ')} WHERE ma_sach = ? AND is_deleted = 1`;
       console.log('Update query:', query);
       console.log('Update values:', values);
       
@@ -169,11 +151,36 @@ class BookModel {
 
   static async deleteBook(id) {
     try {
-      console.log(`Deleting book with ID ${id}`);
-      const [result] = await db.query('DELETE FROM books WHERE ma_sach = ?', [id]);
+      console.log(`Soft deleting book with ID ${id}`);
+      // Instead of actually deleting the record, we set is_deleted to 0
+      const [result] = await db.query('UPDATE books SET is_deleted = 0, ngay_cap_nhat = NOW() WHERE ma_sach = ? AND is_deleted = 1', [id]);
       return result.affectedRows;
     } catch (error) {
       console.error('Error in deleteBook:', error);
+      throw error;
+    }
+  }
+  
+  // Add a method to hard delete a book if needed
+  static async hardDeleteBook(id) {
+    try {
+      console.log(`Hard deleting book with ID ${id}`);
+      const [result] = await db.query('DELETE FROM books WHERE ma_sach = ?', [id]);
+      return result.affectedRows;
+    } catch (error) {
+      console.error('Error in hardDeleteBook:', error);
+      throw error;
+    }
+  }
+  
+  // Optional: Add a method to restore deleted books
+  static async restoreBook(id) {
+    try {
+      console.log(`Restoring deleted book with ID ${id}`);
+      const [result] = await db.query('UPDATE books SET is_deleted = 1, ngay_cap_nhat = NOW() WHERE ma_sach = ? AND is_deleted = 0', [id]);
+      return result.affectedRows;
+    } catch (error) {
+      console.error('Error in restoreBook:', error);
       throw error;
     }
   }

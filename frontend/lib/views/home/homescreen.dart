@@ -51,7 +51,7 @@ class _HomeScreen extends State<HomeScreen> {
 
   final BookService _bookService = BookService();
 
- @override
+  @override
   void initState() {
     super.initState();
     _usersController = UsersController(); // Initialize UsersController
@@ -229,96 +229,134 @@ class _HomeScreen extends State<HomeScreen> {
           return Center(child: Text('No books found'));
         }
 
-        return RefreshIndicator(
-          onRefresh: () => bookProvider.refreshBooks(),
-          child: ListView.builder(
-            itemCount: bookProvider.books.length,
-            itemBuilder: (context, index) {
-              final book = bookProvider.books[index];
-              return BookItem(
-                title: book.title,
-                description: book.description ?? 'No description available',
-                onTap: () {
-                  if (book.roles != 0) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => ChangeNotifierProvider.value(
-                              value: Provider.of<BookProvider>(
-                                context,
-                                listen: false,
-                              ),
-                              child: BookFormScreen(
-                                book: book,
-                                onSave: (updatedBook) async {
-                                  final bookProvider =
-                                      Provider.of<BookProvider>(
-                                        context,
-                                        listen: false,
-                                      );
+        return Stack(
+          children: [
+            RefreshIndicator(
+              onRefresh: () => bookProvider.refreshBooks(),
+              child: ListView.builder(
+                itemCount: bookProvider.books.length,
+                itemBuilder: (context, index) {
+                  final book = bookProvider.books[index];
+                  return BookItem(
+                    title: book.title,
+                    description: book.description ?? 'No description available',
+                    onTap: () {
+                      if (book.roles != 0) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => ChangeNotifierProvider.value(
+                                  value: Provider.of<BookProvider>(
+                                    context,
+                                    listen: false,
+                                  ),
+                                  child: BookFormScreen(
+                                    book: book,
+                                    onSave: (updatedBook) async {
+                                      final bookProvider =
+                                          Provider.of<BookProvider>(
+                                            context,
+                                            listen: false,
+                                          );
 
-                                  try {
-                                    if (updatedBook.id != null) {
-                                      // Update existing book
-                                      print(
-                                        'Updating book with ID: ${updatedBook.id}',
-                                      );
-                                      final result = await bookProvider
-                                          .updateBook(updatedBook);
-                                      if (result != null) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Book updated successfully',
+                                      try {
+                                        if (updatedBook.id != null) {
+                                          // Update existing book
+                                          print(
+                                            'Updating book with ID: ${updatedBook.id}',
+                                          );
+                                          final result = await bookProvider
+                                              .updateBook(updatedBook);
+
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Book updated successfully',
+                                              ),
                                             ),
-                                          ),
-                                        );
-                                      } else {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Failed to update book: ${bookProvider.error}',
-                                            ),
-                                          ),
-                                        );
+                                          );
+                                        }
+                                      } finally {
+                                        // Refresh books list whether successful or not
+                                        bookProvider.fetchBooks();
                                       }
-                                    }
-                                  } finally {
-                                    // Refresh books list whether successful or not
-                                    bookProvider.fetchBooks();
-                                  }
-                                },
-                              ),
-                            ),
-                      ),
-                    );
-                  } else {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => BookDetailScreen(
-                              book: {
-                                'id': book.id,
-                                'title': book.title,
-                                'author': book.author,
-                                'description': book.description,
-                                'imageUrl': book.imageUrl,
-                                'category': book.category,
-                              },
-                            ),
-                      ),
-                    );
-                  }
+                                    },
+                                  ),
+                                ),
+                          ),
+                        );
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => BookDetailScreen(
+                                  book: {
+                                    'id': book.id,
+                                    'title': book.title,
+                                    'author': book.author,
+                                    'description': book.description,
+                                    'imageUrl': book.imageUrl,
+                                    'category': book.category,
+                                  },
+                                ),
+                          ),
+                        );
+                      }
+                    },
+                  );
                 },
-              );
-            },
-          ),
+              ),
+            ),
+            Positioned(
+              bottom: 20,
+              right: 20,
+              child:
+                  _currentItemType == 'categories' || _currentIndex != 0
+                      ? Container()
+                      : FloatingButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => BookFormScreen(
+                                    onSave: (Book newBook) async {
+                                      final bookProvider =
+                                          Provider.of<BookProvider>(
+                                            context,
+                                            listen: false,
+                                          );
+
+                                      try {
+                                        final result = await bookProvider
+                                            .addBook(newBook);
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Book added successfully',
+                                            ),
+                                          ),
+                                        );
+                                      } finally {
+                                        // Refresh the book list
+                                        bookProvider.fetchBooks();
+                                      }
+                                    },
+                                  ),
+                            ),
+                          );
+                        },
+                        tooltip: 'Add Book',
+                        backgroundColor: Colors.blue,
+                      ),
+            ),
+          ],
         );
       },
     );
@@ -701,33 +739,61 @@ class _HomeScreen extends State<HomeScreen> {
           return Center(child: Text('No categories found'));
         }
 
-        return RefreshIndicator(
-          onRefresh: () async => categoryProvider.refreshCategories(),
-          child: ListView.builder(
-            itemCount: categoryProvider.categories.length,
-            itemBuilder: (context, index) {
-              final category = categoryProvider.categories[index];
-
-              // Use the correct property names based on the JSON structure
-              String displayName = "ID: ${category.id} - ${category.name}";
-
-              return CategoryItem(
-                name: displayName,
-                onTap: () {
-                  // Check if the user has admin privileges
-
-                  // Navigate to edit screen for admin users
+        return Stack(
+          children: [
+            RefreshIndicator(
+              onRefresh: () async => categoryProvider.refreshCategories(),
+              child: ListView.builder(
+                itemCount: categoryProvider.categories.length,
+                itemBuilder: (context, index) {
+                  final category = categoryProvider.categories[index];
+                  String displayName = "ID: ${category.id} - ${category.name}";
+                  return CategoryItem(
+                    name: displayName,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => EditCategoryScreen(
+                                category:
+                                    category, // Pass CategoryModel directly
+                              ),
+                        ),
+                      ).then((_) {
+                        categoryProvider.fetchCategories();
+                      });
+                    },
+                  );
+                },
+              ),
+            ),
+            Positioned(
+              bottom: 20,
+              right: 20,
+              child: FloatingActionButton(
+                onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder:
-                          (context) => EditCategoryScreen(category: category),
+                          (context) => EditCategoryScreen(
+                            category: CategoryModel(
+                              id: 0,
+                              name: '',
+                            ), // Pass empty CategoryModel for new category
+                          ),
                     ),
-                  );
+                  ).then((_) {
+                    // Refresh categories after adding new one
+                    categoryProvider.fetchCategories();
+                  });
                 },
-              );
-            },
-          ),
+                child: Icon(Icons.add),
+                tooltip: 'Add Category',
+              ),
+            ),
+          ],
         );
       },
     );
@@ -926,27 +992,28 @@ class _HomeScreen extends State<HomeScreen> {
             OptionMenu(onOptionSelected: _handleOptionSelected),
         ],
       ),
-      body: _currentIndex == 0
-          ? (_currentItemType == 'books'
-              ? _buildBookList()
-              : _currentItemType == 'users'
+      body:
+          _currentIndex == 0
+              ? (_currentItemType == 'books'
+                  ? _buildBookList()
+                  : _currentItemType == 'users'
                   ? _buildUserList()
                   : _currentItemType == 'publisher'
-                      ? _buildPublisherList()
-                      : _currentItemType == 'profile'
-                          ? ProfilePage(userData: widget.userData)
-                          : _currentItemType == 'search'
-                              ? const SearchUserPage()
-                              : _currentItemType == 'categories'
-                                  ? _buildCategoryList()
-                                  : Container())
-          : _currentIndex == 1
-              ? CartPage() // Show CartPage when cart tab is selected
-              : _currentIndex == 2
+                  ? _buildPublisherList()
+                  : _currentItemType == 'profile'
+                  ? ProfilePage(userData: widget.userData)
+                  : _currentItemType == 'search'
                   ? const SearchUserPage()
-                  : _currentIndex == 3
-                      ? ProfilePage(userData: widget.userData)
-                      : Container(), // Placeholder for other tabs
+                  : _currentItemType == 'categories'
+                  ? _buildCategoryList()
+                  : Container())
+              : _currentIndex == 1
+              ? CartPage()
+              : _currentIndex == 2
+              ? const SearchUserPage()
+              : _currentIndex == 3
+              ? ProfilePage(userData: widget.userData)
+              : Container(), // Plac
       bottomNavigationBar: BottomMenu(
         initialIndex: _currentIndex,
         onIndexChanged: (index) {
@@ -955,54 +1022,6 @@ class _HomeScreen extends State<HomeScreen> {
           });
         },
       ),
-      floatingActionButton:
-          _currentItemType == 'categories' || _currentIndex != 0
-              ? null
-              : FloatingButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) => BookFormScreen(
-                            onSave: (Book newBook) async {
-                              final bookProvider = Provider.of<BookProvider>(
-                                context,
-                                listen: false,
-                              );
-
-                              try {
-                                // Call addBook for new books
-                                final result = await bookProvider.addBook(
-                                  newBook,
-                                );
-                                if (result != null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Book added successfully'),
-                                    ),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Failed to add book: ${bookProvider.error}',
-                                      ),
-                                    ),
-                                  );
-                                }
-                              } finally {
-                                // Refresh the book list
-                                bookProvider.fetchBooks();
-                              }
-                            },
-                          ),
-                    ),
-                  );
-                },
-                tooltip: 'Add Book',
-                backgroundColor: Colors.blue,
-              ),
     );
   }
 }

@@ -43,12 +43,15 @@ class CategoryProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      print('Provider: Creating category with name: ${category.name}');
       final result = await _categoryService.createCategory(category);
+      print('Provider: Category created successfully: ${result.name}');
       _categories.add(result);
       _isLoading = false;
       notifyListeners();
       return result;
     } catch (e) {
+      print('Provider: Error creating category: $e');
       _error = e.toString();
       _isLoading = false;
       notifyListeners();
