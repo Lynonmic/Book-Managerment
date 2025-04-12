@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/controllers/auth_controller.dart';
+import 'package:provider/provider.dart';
 import 'package:frontend/service/api_service.dart';
 import 'package:frontend/views/home/homescreen.dart';
 import 'package:frontend/views/login/forgot_password_page.dart';
 import 'package:frontend/views/login/signin_page.dart';
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,10 +17,9 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
   bool isPasswordVisible = false;
 
-  Future<void> _login() async {
+  Future<void> _login(AuthController authController) async {
     String email = _emailController.text.trim();
     String password = _passwordController.text.trim();
 
@@ -26,41 +28,36 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    // Gọi API đăng nhập
-    var response = await ApiService.loginUser(email, password);
-    print("📌 API Response: $response");
+    bool success = await authController.loginUser(email, password);
 
-    if (response["success"]) {
+    if (success) {
+      var response = await ApiService.loginUser(email, password);
       String token = response["token"];
-      int role = response["role"]; // Lấy role từ API
+      int role = response["role"];
       Map<String, dynamic> userData = response["userData"] ?? {};
 
-      // Điều hướng theo role
       if (role == 0) {
         _showMessage("Đăng nhập thành công!");
-        // Admin
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => HomeScreen(userData: userData),
-          ),
+          MaterialPageRoute(builder: (_) => HomeScreen(userData: userData)),
         );
       } else {
         _showMessage("Bạn không có quyền admin");
       }
     } else {
-      _showMessage("❌ ${response["message"]}");
+      _showMessage("❌ ${authController.errorMess}");
     }
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
   Widget build(BuildContext context) {
+    final authController = Provider.of<AuthController>(context);
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: const Color.fromARGB(117, 222, 217, 217),
@@ -82,7 +79,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 30),
-
               const Text("User", style: TextStyle(color: Colors.white)),
               TextField(
                 controller: _emailController,
@@ -97,7 +93,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 20),
-
               const Text("Password", style: TextStyle(color: Colors.white)),
               TextField(
                 controller: _passwordController,
@@ -112,9 +107,7 @@ class _LoginPageState extends State<LoginPage> {
                   prefixIcon: const Icon(Icons.lock, color: Colors.black),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      isPasswordVisible
-                          ? Icons.visibility
-                          : Icons.visibility_off,
+                      isPasswordVisible ? Icons.visibility : Icons.visibility_off,
                       color: Colors.black,
                     ),
                     onPressed: () {
@@ -126,7 +119,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 20),
-
               Center(
                 child: Image.asset(
                   'assets/images/logo.png',
@@ -134,26 +126,26 @@ class _LoginPageState extends State<LoginPage> {
                   fit: BoxFit.contain,
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _login,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    backgroundColor: Colors.purpleAccent,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(50),
+              if (authController.isLoading)
+                const Center(child: CircularProgressIndicator())
+              else
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => _login(authController),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      backgroundColor: Colors.purpleAccent,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(50),
+                      ),
                     ),
+                    child: const Text("Submit"),
                   ),
-                  child: const Text("Submit"),
                 ),
-              ),
               const SizedBox(height: 10),
-
               Center(
                 child: Column(
                   children: [
@@ -161,9 +153,7 @@ class _LoginPageState extends State<LoginPage> {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => const SigninPage(),
-                          ),
+                          MaterialPageRoute(builder: (_) => const SigninPage()),
                         );
                       },
                       child: const Text(
@@ -175,9 +165,7 @@ class _LoginPageState extends State<LoginPage> {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => const ForgotPasswordPage(),
-                          ),
+                          MaterialPageRoute(builder: (_) => const ForgotPasswordPage()),
                         );
                       },
                       child: const Text(

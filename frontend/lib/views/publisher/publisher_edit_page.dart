@@ -20,6 +20,9 @@ class _PublisherEditPageState extends State<PublisherEditPage> {
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+
+
+  
   final PublisherController _publisherController = PublisherController();
 
   bool _isLoading = false;

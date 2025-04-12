@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/controllers/users_controller.dart';
 import 'package:frontend/model/UserModels.dart';
 import 'package:frontend/service/api_service.dart';
 import 'package:frontend/views/profile/edit_profile_page.dart';
@@ -12,6 +13,7 @@ class SearchUserPage extends StatefulWidget {
 
 class _SearchUserPageState extends State<SearchUserPage> {
   final TextEditingController _searchController = TextEditingController();
+  final UsersController _controller= UsersController();
   List<UserModels> _searchResults = [];
   bool _isLoading = false;
 
@@ -65,33 +67,32 @@ class _SearchUserPageState extends State<SearchUserPage> {
     }
   }
 
-  Future<void> _deleteUser(UserModels user) async {
-    bool confirm = await _showDeleteConfirmation(user);
-    if (confirm) {
-      Map<String, dynamic> response = await ApiService.deleteUser(
-        user.maKhachHang!,
-      );
+ Future<void> _deleteUser(UserModels user) async {
+  bool confirm = await _showDeleteConfirmation(user);
+  if (confirm) {
+    bool success = await _controller.deleteUser(user.maKhachHang!);
 
-      if (response["success"] == true) {
-        setState(() {
-          _searchResults.removeWhere((u) => u.maKhachHang == user.maKhachHang);
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Xóa người dùng thành công"),
-            backgroundColor: Colors.green,
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response["message"] ?? "Xóa thất bại"),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+    if (success) {
+      setState(() {
+        _searchResults.removeWhere((u) => u.maKhachHang == user.maKhachHang);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Xóa người dùng thành công"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_controller.errorMessage ?? "Xóa thất bại"),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
+}
+
 
   Future<bool> _showDeleteConfirmation(UserModels user) async {
     return await showDialog(

@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:frontend/controllers/users_controller.dart';
-import 'package:frontend/service/api_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 
@@ -22,11 +21,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final TextEditingController _addressController = TextEditingController();
 
   File? _selectedImage;
-  final bool _isLoading = false;
+  bool _isLoading = false;
+  late UsersController _usersController;
 
   @override
   void initState() {
     super.initState();
+    _usersController = UsersController();
     _loadUserData();
   }
 
@@ -49,39 +50,35 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   void _updateProfile() async {
-    var response = await ApiService.updateUser(
+    setState(() {
+      _isLoading = true;
+    });
+
+    var response = await _usersController.updateUserProfile(
       userId: widget.userData?['id'],
-      tenKhachHang: _nameController.text,
-      soDienThoai: _phoneController.text,
-      diaChi: _addressController.text,
+      name: _nameController.text,
+      phone: _phoneController.text,
+      address: _addressController.text,
       email: _emailController.text,
-      avatar: _selectedImage,
+      avatarFile: _selectedImage,
+      context: context,
     );
 
-    if (response != null) {
-      bool success = response["success"] ?? false;
-      String message = response["message"] ?? "Lỗi không xác định!";
+    setState(() {
+      _isLoading = false;
+    });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: success ? Colors.green : Colors.red,
-        ),
-      );
+    if (response != null && response["success"]) {
+      String? avatarUrl = response['user']['url_avata'];
 
-      if (success) {
-        String? avatarUrl = response['user']['url_avata']; // Lấy URL từ server
-        print("Avatar URL mới: $avatarUrl");
-
-        Navigator.pop(context, {
-          'id': widget.userData?['id'],
-          'name': _nameController.text,
-          'email': _emailController.text,
-          'phone': _phoneController.text,
-          'address': _addressController.text,
-          'avatar': avatarUrl, // Trả về URL thay vì File
-        });
-      }
+      Navigator.pop(context, {
+        'id': widget.userData?['id'],
+        'name': _nameController.text,
+        'email': _emailController.text,
+        'phone': _phoneController.text,
+        'address': _addressController.text,
+        'avatar': avatarUrl,
+      });
     }
   }
 
