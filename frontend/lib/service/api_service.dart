@@ -3,12 +3,16 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:frontend/model/PublisherModels.dart';
 import 'package:frontend/model/UserModels.dart';
+import 'package:frontend/model/book_model.dart';
+import 'package:frontend/model/category_model.dart';
+import 'package:frontend/model/order_model.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 
 class ApiService {
   static const String baseUrl = "http://10.0.2.2:9090/book_management/auth";
+  static const String apiUrl = "http://10.0.2.2:3000/api";
 
   static Future<Map<String, dynamic>> loginUser(
     String email,
@@ -374,6 +378,632 @@ class ApiService {
       return data.map((json) => UserModels.fromJson(json)).toList();
     } else {
       throw Exception('Failed to search users');
+    }
+  }
+
+  // Book API Methods
+  static Future<List<Book>> getAllBooks() async {
+    try {
+      final response = await http.get(
+        Uri.parse("$apiUrl/books"),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> jsonList = jsonDecode(response.body);
+        return jsonList.map((json) => Book.fromJson(json)).toList();
+      } else {
+        throw Exception("Failed to fetch books");
+      }
+    } catch (e) {
+      throw Exception("Error connecting to server: $e");
+    }
+  }
+
+  static Future<Book> getBookById(int id) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$apiUrl/books/$id"),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      if (response.statusCode == 200) {
+        return Book.fromJson(jsonDecode(response.body));
+      } else {
+        throw Exception("Book not found");
+      }
+    } catch (e) {
+      throw Exception("Error connecting to server: $e");
+    }
+  }
+
+  static Future<Map<String, dynamic>> createBook(Book book) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$apiUrl/books"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(book.toJson()),
+      );
+
+      final responseJson = jsonDecode(response.body);
+
+      if (response.statusCode == 201) {
+        return {
+          "success": true,
+          "message": responseJson["message"] ?? "Book added successfully",
+          "bookId": responseJson["bookId"],
+        };
+      } else {
+        return {
+          "success": false,
+          "message": responseJson["message"] ?? "Failed to add book",
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Error connecting to server: $e"};
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateBook(int id, Book book) async {
+    try {
+      final response = await http.put(
+        Uri.parse("$apiUrl/books/$id"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(book.toJson()),
+      );
+
+      final responseJson = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          "success": true,
+          "message": responseJson["message"] ?? "Book updated successfully",
+        };
+      } else {
+        return {
+          "success": false,
+          "message": responseJson["message"] ?? "Failed to update book",
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Error connecting to server: $e"};
+    }
+  }
+
+  static Future<Map<String, dynamic>> deleteBook(int id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse("$apiUrl/books/$id"),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      final responseJson = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          "success": true,
+          "message": responseJson["message"] ?? "Book deleted successfully",
+        };
+      } else {
+        return {
+          "success": false,
+          "message": responseJson["message"] ?? "Failed to delete book",
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Error connecting to server: $e"};
+    }
+  }
+
+  static Future<Map<String, dynamic>> rateBook(
+    int bookId,
+    double rating,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$apiUrl/books/$bookId/rate"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"rating": rating}),
+      );
+
+      final responseJson = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          "success": true,
+          "message": responseJson["message"] ?? "Book rated successfully",
+        };
+      } else {
+        return {
+          "success": false,
+          "message": responseJson["message"] ?? "Failed to rate book",
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Error connecting to server: $e"};
+    }
+  }
+
+  // Category API Methods
+  static Future<List<CategoryModel>> getAllCategories() async {
+    try {
+      final response = await http.get(
+        Uri.parse("$apiUrl/categories"),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> jsonList = jsonDecode(response.body);
+        return jsonList.map((json) => CategoryModel.fromJson(json)).toList();
+      } else {
+        throw Exception("Failed to fetch categories");
+      }
+    } catch (e) {
+      throw Exception("Error connecting to server: $e");
+    }
+  }
+
+  static Future<CategoryModel> getCategoryById(int id) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$apiUrl/categories/$id"),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      if (response.statusCode == 200) {
+        return CategoryModel.fromJson(jsonDecode(response.body));
+      } else {
+        throw Exception("Category not found");
+      }
+    } catch (e) {
+      throw Exception("Error connecting to server: $e");
+    }
+  }
+
+  static Future<Map<String, dynamic>> createCategory(
+    CategoryModel category,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$apiUrl/categories"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(category.toJson()),
+      );
+
+      final responseJson = jsonDecode(response.body);
+
+      if (response.statusCode == 201) {
+        return {
+          "success": true,
+          "message": responseJson["message"] ?? "Category created successfully",
+        };
+      } else {
+        return {
+          "success": false,
+          "message": responseJson["message"] ?? "Failed to create category",
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Error connecting to server: $e"};
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateCategory(
+    int id,
+    CategoryModel category,
+  ) async {
+    try {
+      final response = await http.put(
+        Uri.parse("$apiUrl/categories/$id"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(category.toJson()),
+      );
+
+      final responseJson = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          "success": true,
+          "message": responseJson["message"] ?? "Category updated successfully",
+        };
+      } else {
+        return {
+          "success": false,
+          "message": responseJson["message"] ?? "Failed to update category",
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Error connecting to server: $e"};
+    }
+  }
+
+  static Future<Map<String, dynamic>> deleteCategory(int id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse("$apiUrl/categories/$id"),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      final responseJson = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          "success": true,
+          "message": responseJson["message"] ?? "Category deleted successfully",
+        };
+      } else {
+        return {
+          "success": false,
+          "message": responseJson["message"] ?? "Failed to delete category",
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Error connecting to server: $e"};
+    }
+  }
+
+  // Order API Methods
+  static Future<List<Order>> getAllOrders() async {
+    try {
+      final response = await http.get(
+        Uri.parse("$apiUrl/orders"),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> jsonList = jsonDecode(response.body);
+        return jsonList.map((json) => Order.fromJson(json)).toList();
+      } else {
+        throw Exception("Failed to fetch orders");
+      }
+    } catch (e) {
+      throw Exception("Error connecting to server: $e");
+    }
+  }
+
+  static Future<Order> getOrderById(String id) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$apiUrl/orders/$id"),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      if (response.statusCode == 200) {
+        return Order.fromJson(jsonDecode(response.body));
+      } else {
+        throw Exception("Order not found");
+      }
+    } catch (e) {
+      throw Exception("Error connecting to server: $e");
+    }
+  }
+
+  static Future<Order> getOrderWithDetails(String id) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$apiUrl/orders/$id/with-details"),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      if (response.statusCode == 200) {
+        return Order.fromJson(jsonDecode(response.body));
+      } else {
+        throw Exception("Order not found");
+      }
+    } catch (e) {
+      throw Exception("Error connecting to server: $e");
+    }
+  }
+
+  static Future<Map<String, dynamic>> createOrder(Order order) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$apiUrl/orders"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(order.toJson()),
+      );
+
+      final responseJson = jsonDecode(response.body);
+
+      if (response.statusCode == 201) {
+        return {
+          "success": true,
+          "message": responseJson["message"] ?? "Order created successfully",
+          "orderId": responseJson["orderId"],
+        };
+      } else {
+        return {
+          "success": false,
+          "message": responseJson["message"] ?? "Failed to create order",
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Error connecting to server: $e"};
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateOrder(
+    String id,
+    Order order,
+  ) async {
+    try {
+      final response = await http.put(
+        Uri.parse("$apiUrl/orders/$id"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(order.toJson()),
+      );
+
+      final responseJson = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          "success": true,
+          "message": responseJson["message"] ?? "Order updated successfully",
+        };
+      } else {
+        return {
+          "success": false,
+          "message": responseJson["message"] ?? "Failed to update order",
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Error connecting to server: $e"};
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateOrderStatus(
+    String id,
+    String status,
+  ) async {
+    try {
+      final response = await http.patch(
+        Uri.parse("$apiUrl/orders/$id/status"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"status": status}),
+      );
+
+      final responseJson = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          "success": true,
+          "message":
+              responseJson["message"] ?? "Order status updated successfully",
+        };
+      } else {
+        return {
+          "success": false,
+          "message": responseJson["message"] ?? "Failed to update order status",
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Error connecting to server: $e"};
+    }
+  }
+
+  static Future<Map<String, dynamic>> deleteOrder(String id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse("$apiUrl/orders/$id"),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      final responseJson = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          "success": true,
+          "message": responseJson["message"] ?? "Order deleted successfully",
+        };
+      } else {
+        return {
+          "success": false,
+          "message": responseJson["message"] ?? "Failed to delete order",
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Error connecting to server: $e"};
+    }
+  }
+
+  static Future<List<OrderDetail>> getOrderDetails(String orderId) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$apiUrl/orders/$orderId/details"),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> jsonList = jsonDecode(response.body);
+        return jsonList.map((json) => OrderDetail.fromJson(json)).toList();
+      } else {
+        throw Exception("Failed to fetch order details");
+      }
+    } catch (e) {
+      throw Exception("Error connecting to server: $e");
+    }
+  }
+
+  static Future<Map<String, dynamic>> addOrderDetail(
+    String orderId,
+    OrderDetail detail,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$apiUrl/orders/$orderId/details"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(detail.toJson()),
+      );
+
+      final responseJson = jsonDecode(response.body);
+
+      if (response.statusCode == 201) {
+        return {
+          "success": true,
+          "message":
+              responseJson["message"] ?? "Order detail added successfully",
+        };
+      } else {
+        return {
+          "success": false,
+          "message": responseJson["message"] ?? "Failed to add order detail",
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Error connecting to server: $e"};
+    }
+  }
+
+  // Review/Evaluation API Methods
+  static Future<List<dynamic>> getAllReviews() async {
+    try {
+      final response = await http.get(
+        Uri.parse("$apiUrl/reviews"),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception("Failed to fetch reviews");
+      }
+    } catch (e) {
+      throw Exception("Error connecting to server: $e");
+    }
+  }
+
+  static Future<dynamic> getReviewById(String id) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$apiUrl/reviews/$id"),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception("Review not found");
+      }
+    } catch (e) {
+      throw Exception("Error connecting to server: $e");
+    }
+  }
+
+  static Future<List<dynamic>> getReviewsByBookId(String bookId) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$apiUrl/reviews/book/$bookId"),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception("Failed to fetch reviews for book");
+      }
+    } catch (e) {
+      throw Exception("Error connecting to server: $e");
+    }
+  }
+
+  static Future<double> getBookAverageRating(String bookId) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$apiUrl/reviews/book/$bookId/rating"),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return (data['averageRating'] as num).toDouble();
+      } else {
+        throw Exception("Failed to fetch book rating");
+      }
+    } catch (e) {
+      throw Exception("Error connecting to server: $e");
+    }
+  }
+
+  static Future<Map<String, dynamic>> createReview(
+    Map<String, dynamic> reviewData,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$apiUrl/reviews"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(reviewData),
+      );
+
+      final responseJson = jsonDecode(response.body);
+
+      if (response.statusCode == 201) {
+        return {
+          "success": true,
+          "message": responseJson["message"] ?? "Review created successfully",
+          "reviewId": responseJson["reviewId"],
+        };
+      } else {
+        return {
+          "success": false,
+          "message": responseJson["message"] ?? "Failed to create review",
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Error connecting to server: $e"};
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateReview(
+    String id,
+    Map<String, dynamic> reviewData,
+  ) async {
+    try {
+      final response = await http.put(
+        Uri.parse("$apiUrl/reviews/$id"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(reviewData),
+      );
+
+      final responseJson = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          "success": true,
+          "message": responseJson["message"] ?? "Review updated successfully",
+        };
+      } else {
+        return {
+          "success": false,
+          "message": responseJson["message"] ?? "Failed to update review",
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Error connecting to server: $e"};
+    }
+  }
+
+  static Future<Map<String, dynamic>> deleteReview(String id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse("$apiUrl/reviews/$id"),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      final responseJson = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          "success": true,
+          "message": responseJson["message"] ?? "Review deleted successfully",
+        };
+      } else {
+        return {
+          "success": false,
+          "message": responseJson["message"] ?? "Failed to delete review",
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Error connecting to server: $e"};
     }
   }
 }

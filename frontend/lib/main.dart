@@ -1,17 +1,39 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/service/categories/category_provider.dart';
-import 'package:frontend/views/home/homescreen.dart';
-import 'package:frontend/views/login/login_page.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:frontend/blocs/auth/auth_bloc.dart';
+import 'package:frontend/blocs/book/book_bloc.dart';
+import 'package:frontend/blocs/category/category_bloc.dart';
+import 'package:frontend/blocs/evaluation/evaluation_bloc.dart';
+import 'package:frontend/blocs/forgot_pass/forgot_password_bloc.dart';
+import 'package:frontend/blocs/order/order_bloc.dart';
+import 'package:frontend/blocs/profile/profile_bloc.dart';
+import 'package:frontend/blocs/publisher/publisher_bloc.dart';
+import 'package:frontend/blocs/user/user_bloc.dart';
+import 'package:frontend/repositories/auth_repository.dart';
+import 'package:frontend/repositories/book_repository.dart';
+import 'package:frontend/repositories/category_repository.dart';
+import 'package:frontend/repositories/evaluation_repository.dart';
+import 'package:frontend/repositories/order_repository.dart';
+import 'package:frontend/repositories/publisher_repository.dart';
+import 'package:frontend/repositories/user_repository.dart';
+import 'package:frontend/screens/login/login_page.dart';
+
 
 void main() {
   runApp(
-    MultiProvider(
+    MultiBlocProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => CategoryProvider()),
-        ChangeNotifierProvider(create: (_) => BookProvider()),
+        BlocProvider(create: (_) => AuthBloc(authRepository: AuthRepository())),
+        BlocProvider(create: (_) => ForgotPasswordBloc(authRepository: AuthRepository())),
+        BlocProvider(create: (_) => PublisherBloc(PublisherRepository())),
+        BlocProvider(create: (_) => ProfileBloc(UserRepository())),
+        BlocProvider(create: (_) => UserBloc(UserRepository())),
+        BlocProvider(create: (_) => BookBloc(bookRepository: BookRepository())),
+        BlocProvider(create: (_) => CategoryBloc(categoryRepository: CategoryRepository())),
+        BlocProvider(create: (_) => OrderBloc(orderRepository: OrderRepository())),
+        BlocProvider(create: (_) => EvaluationBloc(evaluationRepository: EvaluationRepository())),
       ],
-      child: MyApp(),
+      child: const MyApp(),
     ),
   );
 }
