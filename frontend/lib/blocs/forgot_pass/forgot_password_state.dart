@@ -4,7 +4,11 @@ class ForgotPasswordInitial extends ForgotPasswordState {}
 
 class ForgotPasswordLoading extends ForgotPasswordState {}
 
-class ForgotPasswordOtpSent extends ForgotPasswordState {}
+class ForgotPasswordOtpSent extends ForgotPasswordState {
+  final String email; 
+
+  ForgotPasswordOtpSent({required this.email});
+}
 
 class ForgotPasswordOtpVerified extends ForgotPasswordState {}
 

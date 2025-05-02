@@ -8,7 +8,6 @@ class UserBloc extends Bloc<UserEvent, UserState> {
 
   UserBloc(this.userRepository) : super(UserInitial()) {
     on<LoadUsersEvent>(_onLoadUsers);
-    on<SearchUserEvent>(_onSearchUsers);
     on<DeleteUserEvent>(_onDeleteUser);
     on<UpdateUserEvent>(_onUpdateUser);
   }
@@ -26,18 +25,6 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     }
   }
 
-  Future<void> _onSearchUsers(
-    SearchUserEvent event,
-    Emitter<UserState> emit,
-  ) async {
-    emit(UserLoading());
-    try {
-      final users = await userRepository.searchUsers(event.query);
-      emit(UserLoaded(users));
-    } catch (e) {
-      emit(UserError("Lỗi khi tìm kiếm người dùng"));
-    }
-  }
 
   Future<void> _onDeleteUser(
     DeleteUserEvent event,

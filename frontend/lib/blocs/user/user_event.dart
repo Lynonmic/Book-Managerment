@@ -4,12 +4,6 @@ abstract class UserEvent {}
 
 class LoadUsersEvent extends UserEvent {}
 
-class SearchUserEvent extends UserEvent {
-  final String query;
-
-  SearchUserEvent(this.query);
-}
-
 class DeleteUserEvent extends UserEvent {
   final int userId;
 

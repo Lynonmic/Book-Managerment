@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend/blocs/auth/auth_bloc.dart';
 import 'package:frontend/blocs/auth/auth_event.dart';
 import 'package:frontend/blocs/auth/auth_state.dart';
-import 'package:frontend/repositories/auth_repository.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
@@ -25,7 +24,9 @@ class _SigninPageState extends State<SigninPage> {
   bool isPasswordVisible = false;
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _pickImage() async {
@@ -46,100 +47,132 @@ class _SigninPageState extends State<SigninPage> {
     final phone = _phoneController.text.trim();
     final address = _addressController.text.trim();
 
-    if (name.isEmpty || email.isEmpty || password.isEmpty || phone.isEmpty || address.isEmpty) {
+    if (name.isEmpty ||
+        email.isEmpty ||
+        password.isEmpty ||
+        phone.isEmpty ||
+        address.isEmpty) {
       _showMessage("⚠️ Vui lòng điền đầy đủ thông tin!");
       return;
     }
 
-    context.read<AuthBloc>().add(AuthSignUpEvent(
-      name: name,
-      email: email,
-      password: password,
-      phone: phone,
-      address: address,
-      avatar: _selectedImage,
-    ));
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+      _showMessage("📧 Email không hợp lệ!");
+      return;
+    }
+
+    context.read<AuthBloc>().add(
+      AuthSignUpEvent(
+        name: name,
+        email: email,
+        password: password,
+        phone: phone,
+        address: address,
+        avatar: _selectedImage,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => AuthBloc(authRepository: AuthRepository()),
-      child: Scaffold(
-        resizeToAvoidBottomInset: true,
-        backgroundColor: const Color.fromARGB(117, 222, 217, 217),
-        body: BlocListener<AuthBloc, AuthState>(
-          listener: (context, state) {
-            if (state is AuthLoading) {
-              _showMessage("Đang xử lý...");
-            } else if (state is AuthSuccess) {
-              _showMessage("🎉 Đăng ký thành công!");
-              Navigator.pop(context);
-            } else if (state is AuthFailure) {
-              _showMessage("❌ ${state.message}");
-            }
-          },
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 60),
-                const Center(
-                  child: Text("SIGN IN", style: TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold)),
+    return Scaffold(
+      resizeToAvoidBottomInset: true,
+      backgroundColor: const Color.fromARGB(117, 222, 217, 217),
+      body: BlocListener<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is AuthLoading) {
+            _showMessage("Đang xử lý...");
+          } else if (state is AuthSuccess) {
+            _showMessage("🎉 Đăng ký thành công!");
+            Navigator.pop(context);
+          } else if (state is AuthFailure) {
+            _showMessage("❌ ${state.message}");
+          }
+        },
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 60),
+              const Center(
+                child: Text(
+                  "SIGN IN",
+                  style: TextStyle(
+                    fontSize: 24,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                const SizedBox(height: 30),
-
-                // Avatar selection
-                GestureDetector(
+              ),
+              const SizedBox(height: 30),
+              Center(
+                child: GestureDetector(
                   onTap: _pickImage,
                   child: CircleAvatar(
                     radius: 60,
                     backgroundColor: Colors.grey[300],
-                    backgroundImage: _selectedImage != null
-                        ? FileImage(_selectedImage!)
-                        : null,
-                    child: _selectedImage == null
-                        ? const Icon(Icons.camera_alt, size: 40, color: Colors.black)
-                        : null,
+                    backgroundImage:
+                        _selectedImage != null
+                            ? FileImage(_selectedImage!)
+                            : null,
+                    child:
+                        _selectedImage == null
+                            ? const Icon(
+                              Icons.camera_alt,
+                              size: 40,
+                              color: Colors.black,
+                            )
+                            : null,
                   ),
                 ),
-                const SizedBox(height: 20),
+              ),
 
-                // Input fields
-                _buildInputField("Họ và tên", _nameController, Icons.person),
-                _buildInputField("Email", _emailController, Icons.email),
-                _buildInputField("Mật khẩu", _passwordController, Icons.lock, isPassword: true),
-                _buildInputField("Số điện thoại", _phoneController, Icons.phone),
-                _buildInputField("Địa chỉ", _addressController, Icons.home),
+              const SizedBox(height: 20),
 
-                const SizedBox(height: 20),
+              // Input fields
+              _buildInputField("Họ và tên", _nameController, Icons.person),
+              _buildInputField("Email", _emailController, Icons.email),
+              _buildInputField(
+                "Mật khẩu",
+                _passwordController,
+                Icons.lock,
+                isPassword: true,
+              ),
+              _buildInputField("Số điện thoại", _phoneController, Icons.phone),
+              _buildInputField("Địa chỉ", _addressController, Icons.home),
 
-                // Submit button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _signin,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      backgroundColor: Colors.purpleAccent,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+              const SizedBox(height: 20),
+
+              // Submit button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _signin,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    backgroundColor: Colors.purpleAccent,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
                     ),
-                    child: const Text("Đăng Ký"),
                   ),
+                  child: const Text("Đăng Ký"),
                 ),
-                const SizedBox(height: 10),
+              ),
+              const SizedBox(height: 10),
 
-                // Navigation buttons
-                Center(
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text("Đã có tài khoản? Đăng nhập ngay", style: TextStyle(color: Colors.white)),
+              // Navigation buttons
+              Center(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    "Đã có tài khoản? Đăng nhập ngay",
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -167,15 +200,21 @@ class _SigninPageState extends State<SigninPage> {
             hintText: "Nhập $label...",
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(50)),
             prefixIcon: Icon(icon, color: Colors.black),
-            suffixIcon: isPassword
-                ? IconButton(
-                    icon: Icon(
-                      isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                      color: Colors.black,
-                    ),
-                    onPressed: () => setState(() => isPasswordVisible = !isPasswordVisible),
-                  )
-                : null,
+            suffixIcon:
+                isPassword
+                    ? IconButton(
+                      icon: Icon(
+                        isPasswordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color: Colors.black,
+                      ),
+                      onPressed:
+                          () => setState(
+                            () => isPasswordVisible = !isPasswordVisible,
+                          ),
+                    )
+                    : null,
           ),
         ),
         const SizedBox(height: 10),

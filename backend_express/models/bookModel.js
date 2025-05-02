@@ -140,7 +140,7 @@ class BookModel {
       console.log('Update query:', query);
       console.log('Update values:', values);
       
-      const [result] = await db.query(query, values);
+      [result] = await db.query(query, values);
       console.log('Update result:', result);
       return result.affectedRows;
     } catch (error) {
