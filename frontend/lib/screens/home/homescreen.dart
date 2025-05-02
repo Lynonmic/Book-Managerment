@@ -8,13 +8,13 @@ import 'package:frontend/blocs/category/category_event.dart';
 import 'package:frontend/blocs/category/category_state.dart';
 import 'package:frontend/blocs/evaluation/evaluation_bloc.dart';
 import 'package:frontend/blocs/evaluation/evaluation_event.dart';
-import 'package:frontend/blocs/evaluation/evaluation_state.dart';
 import 'package:frontend/blocs/order/order_bloc.dart';
 import 'package:frontend/blocs/order/order_event.dart';
-import 'package:frontend/blocs/order/order_state.dart';
 import 'package:frontend/blocs/publisher/publisher_bloc.dart';
 import 'package:frontend/blocs/publisher/publisher_event.dart';
 import 'package:frontend/blocs/publisher/publisher_state.dart';
+import 'package:frontend/blocs/search/search_user_bloc.dart';
+import 'package:frontend/blocs/search/search_user_event.dart';
 import 'package:frontend/blocs/user/user_bloc.dart';
 import 'package:frontend/blocs/user/user_event.dart';
 import 'package:frontend/blocs/user/user_state.dart';
@@ -22,10 +22,6 @@ import 'package:frontend/model/PublisherModels.dart';
 import 'package:frontend/model/UserModels.dart';
 import 'package:frontend/model/book_model.dart';
 import 'package:frontend/model/category_model.dart';
-import 'package:frontend/model/evaluation_model.dart';
-import 'package:frontend/model/order_model.dart';
-import 'package:frontend/screens/category/category_list.dart';
-import 'package:frontend/screens/order/order_list.dart';
 import 'package:frontend/screens/evaluation/evaluation_list.dart';
 import 'package:frontend/screens/book/UI/book_item.dart';
 import 'package:frontend/screens/book/admin_book_page.dart';
@@ -62,6 +58,7 @@ class _HomeScreen extends State<HomeScreen> {
       context.read<UserBloc>().add(LoadUsersEvent());
       context.read<PublisherBloc>().add(LoadPublishersEvent());
       context.read<EvaluationBloc>().add(LoadAllReviews());
+      context.read<SearchUserBloc>().add(PerformSearchUserEvent(''));
     });
   }
 
@@ -107,6 +104,8 @@ class _HomeScreen extends State<HomeScreen> {
         _currentItemType = 'profile';
       } else if (value == 'search') {
         _currentItemType = 'search';
+        context.read<SearchUserBloc>().add(PerformSearchUserEvent(''));
+
       } else if (value == 'categories') {
         _currentItemType = 'categories';
         context.read<CategoryBloc>().add(LoadCategories());
@@ -625,16 +624,13 @@ class _HomeScreen extends State<HomeScreen> {
                 if (nameController.text.trim().isNotEmpty) {
                   Navigator.pop(context);
                   context.read<CategoryBloc>().add(
-                        AddCategory(
-                          CategoryModel(
-                            id: null,
-                            name: nameController.text.trim(),
-                          ),
-                        ),
-                      );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Category added')),
+                    AddCategory(
+                      CategoryModel(id: null, name: nameController.text.trim()),
+                    ),
                   );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Category added')));
                 }
               },
               child: Text('Add'),
@@ -646,7 +642,9 @@ class _HomeScreen extends State<HomeScreen> {
   }
 
   void _showEditCategoryDialog(BuildContext context, CategoryModel category) {
-    final TextEditingController nameController = TextEditingController(text: category.name);
+    final TextEditingController nameController = TextEditingController(
+      text: category.name,
+    );
 
     showDialog(
       context: context,
@@ -670,16 +668,16 @@ class _HomeScreen extends State<HomeScreen> {
                 if (nameController.text.trim().isNotEmpty) {
                   Navigator.pop(context);
                   context.read<CategoryBloc>().add(
-                        UpdateCategory(
-                          CategoryModel(
-                            id: category.id,
-                            name: nameController.text.trim(),
-                          ),
-                        ),
-                      );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Category updated')),
+                    UpdateCategory(
+                      CategoryModel(
+                        id: category.id,
+                        name: nameController.text.trim(),
+                      ),
+                    ),
                   );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Category updated')));
                 }
               },
               child: Text('Update'),
@@ -698,7 +696,10 @@ class _HomeScreen extends State<HomeScreen> {
     );
   }
 
-  void _showDeleteCategoryConfirmationDialog(BuildContext context, CategoryModel category) {
+  void _showDeleteCategoryConfirmationDialog(
+    BuildContext context,
+    CategoryModel category,
+  ) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -714,9 +715,9 @@ class _HomeScreen extends State<HomeScreen> {
               onPressed: () {
                 Navigator.pop(context);
                 context.read<CategoryBloc>().add(DeleteCategory(category.id!));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Category deleted')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('Category deleted')));
               },
               style: TextButton.styleFrom(foregroundColor: Colors.red),
               child: Text('Delete'),
@@ -745,7 +746,8 @@ class _HomeScreen extends State<HomeScreen> {
                 ),
                 SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () => context.read<CategoryBloc>().add(LoadCategories()),
+                  onPressed:
+                      () => context.read<CategoryBloc>().add(LoadCategories()),
                   child: Text('Try Again'),
                 ),
               ],
@@ -916,9 +918,7 @@ class _HomeScreen extends State<HomeScreen> {
       ),
     );
 
-    if (result == true) {
-      context.read<PublisherBloc>().add(LoadPublishersEvent());
-    }
+    context.read<PublisherBloc>().add(LoadPublishersEvent());
   }
 
   void _editUser(UserModels user) async {
@@ -939,10 +939,7 @@ class _HomeScreen extends State<HomeScreen> {
             ),
       ),
     );
-
-    if (result == true) {
       context.read<UserBloc>().add(LoadUsersEvent());
-    }
   }
 
   @override
@@ -951,7 +948,8 @@ class _HomeScreen extends State<HomeScreen> {
       appBar: AppBar(
         title: Text(_getTitle()),
         actions: [
-          if (_currentIndex == 0)
+          if (_currentIndex ==
+              0) // Chỉ hiển thị OptionMenu khi đang ở tab 'books'
             OptionMenu(onOptionSelected: _handleOptionSelected),
         ],
       ),
@@ -984,6 +982,16 @@ class _HomeScreen extends State<HomeScreen> {
         onIndexChanged: (index) {
           setState(() {
             _currentIndex = index;
+
+            if (_currentIndex == 0) {
+              _currentItemType = 'books';
+            } else if (_currentIndex == 1) {
+              _currentItemType = 'orders';
+            } else if (_currentIndex == 2) {
+              _currentItemType = 'search';
+            } else if (_currentIndex == 3) {
+              _currentItemType = 'profile';
+            }
           });
         },
       ),

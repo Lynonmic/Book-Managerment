@@ -4,6 +4,7 @@ import 'package:frontend/blocs/forgot_pass/forgot_password_bloc.dart';
 import 'package:frontend/blocs/forgot_pass/forgot_password_event.dart';
 import 'package:frontend/blocs/forgot_pass/forgot_password_state.dart';
 import 'package:frontend/repositories/auth_repository.dart';
+
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
 
@@ -44,38 +45,48 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             ),
           ),
           child: Center(
-            child: Card(
-              elevation: 10,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: BlocListener<ForgotPasswordBloc, ForgotPasswordState>(
-                  listener: (context, state) {
-                    if (state is ForgotPasswordLoading) {
-                      _showMessage(context, "Đang xử lý...");
-                    } else if (state is ForgotPasswordOtpSent) {
-                      _showMessage(context, "OTP đã được gửi!");
-                    } else if (state is ForgotPasswordOtpVerified) {
-                      _showMessage(context, "OTP xác thực thành công!");
-                    } else if (state is ForgotPasswordResetSuccess) {
-                      _showMessage(context, "Đổi mật khẩu thành công!");
-                    } else if (state is ForgotPasswordFailure) {
-                      _showMessage(context, state.message);
-                    }
-                  },
-                  child: BlocBuilder<ForgotPasswordBloc, ForgotPasswordState>(
-                    builder: (context, state) {
-                      if (state is ForgotPasswordInitial) {
-                        return _buildEmailInput(context);
+            child: SingleChildScrollView(
+              child: Card(
+                elevation: 10,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: BlocListener<ForgotPasswordBloc, ForgotPasswordState>(
+                    listener: (context, state) {
+                      if (state is ForgotPasswordLoading) {
+                        _showMessage(context, "Đang xử lý...");
                       } else if (state is ForgotPasswordOtpSent) {
-                        return _buildOtpInput(context);
+                        _showMessage(context, "OTP đã được gửi!");
                       } else if (state is ForgotPasswordOtpVerified) {
-                        return _buildResetPasswordInput(context);
-                      } else {
-                        return const SizedBox.shrink();
+                        _showMessage(context, "OTP xác thực thành công!");
+                      } else if (state is ForgotPasswordResetSuccess) {
+                        _showMessage(
+                          context,
+                          "Đổi mật khẩu thành công!",
+                          shouldPop: true,
+                        );
+                      } else if (state is ForgotPasswordFailure) {
+                        _showMessage(context, state.message);
                       }
                     },
+                    child: BlocBuilder<ForgotPasswordBloc, ForgotPasswordState>(
+                      builder: (context, state) {
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (state is ForgotPasswordInitial)
+                              _buildEmailInput(context)
+                            else if (state is ForgotPasswordOtpSent)
+                              _buildOtpInput(context)
+                            else if (state is ForgotPasswordOtpVerified)
+                              _buildResetPasswordInput(context),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -86,8 +97,20 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     );
   }
 
-  void _showMessage(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  void _showMessage(
+    BuildContext context,
+    String message, {
+    bool shouldPop = false,
+  }) {
+    final snackBar = SnackBar(content: Text(message));
+    final messenger = ScaffoldMessenger.of(context);
+    final controller = messenger.showSnackBar(snackBar);
+
+    if (shouldPop) {
+      controller.closed.then((reason) {
+        Navigator.pop(context);
+      });
+    }
   }
 
   Widget _buildEmailInput(BuildContext context) {
@@ -116,7 +139,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         final otp = _otpController.text.trim();
         if (otp.isNotEmpty) {
           final email = _emailController.text.trim();
-          context.read<ForgotPasswordBloc>().add(VerifyOtpEvent(otp: otp, email: email));
+          context.read<ForgotPasswordBloc>().add(
+            VerifyOtpEvent(otp: otp, email: email),
+          );
         }
       },
       "Xác thực OTP",
@@ -134,7 +159,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         if (newPassword.isNotEmpty) {
           final email = _emailController.text.trim();
           final otp = _otpController.text.trim();
-          context.read<ForgotPasswordBloc>().add(ResetPasswordEvent(newPassword: newPassword, email: email, otp: otp));
+          context.read<ForgotPasswordBloc>().add(
+            ResetPasswordEvent(
+              newPassword: newPassword,
+              email: email,
+              otp: otp,
+            ),
+          );
         }
       },
       "Đổi mật khẩu",
@@ -142,10 +173,25 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     );
   }
 
-  Widget _buildInputSection(String title, String hintText, IconData icon, TextEditingController controller, VoidCallback onPressed, String buttonText, {bool obscureText = false}) {
+  Widget _buildInputSection(
+    String title,
+    String hintText,
+    IconData icon,
+    TextEditingController controller,
+    VoidCallback onPressed,
+    String buttonText, {
+    bool obscureText = false,
+  }) {
     return Column(
       children: [
-        Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blueAccent)),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.blueAccent,
+          ),
+        ),
         const SizedBox(height: 10),
         TextFormField(
           controller: controller,
@@ -162,9 +208,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           style: ElevatedButton.styleFrom(
             minimumSize: const Size(double.infinity, 50),
             backgroundColor: Colors.purpleAccent,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
-          child: Text(buttonText, style: const TextStyle(fontSize: 16, color: Colors.white)),
+          child: Text(
+            buttonText,
+            style: const TextStyle(fontSize: 16, color: Colors.white),
+          ),
         ),
       ],
     );

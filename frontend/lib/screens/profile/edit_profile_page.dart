@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend/blocs/profile/profile_bloc.dart';
 import 'package:frontend/blocs/profile/profile_event.dart';
+import 'package:frontend/blocs/user/user_bloc.dart';
+import 'package:frontend/blocs/user/user_event.dart';
 import 'package:frontend/repositories/user_repository.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
@@ -59,113 +61,111 @@ class _EditProfilePageState extends State<EditProfilePage> {
       'avatar': _selectedImage,
     };
 
+    // Dispatch the update event to the ProfileBloc
     context.read<ProfileBloc>().add(ProfileUpdateEvent(updatedData));
+
+    // After updating, trigger the event to load the updated users list
+    context.read<UserBloc>().add(LoadUsersEvent());
+
+    Navigator.pop(context, updatedData);
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => ProfileBloc(UserRepository()),
-      child: Scaffold(
-        body: Center(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Center(
-                    child: Text(
-                      "CHỈNH SỬA THÔNG TIN",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
+    return Scaffold(
+      body: Center(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Center(
+                  child: Text(
+                    "CHỈNH SỬA THÔNG TIN",
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(height: 30),
+
+                Center(
+                  child: GestureDetector(
+                    onTap: _pickImage,
+                    child: CircleAvatar(
+                      radius: 60,
+                      backgroundColor: Colors.grey[300],
+                      backgroundImage:
+                          _selectedImage != null
+                              ? FileImage(_selectedImage!)
+                              : (widget.userData?['avatar'] != null
+                                      ? NetworkImage(widget.userData!['avatar'])
+                                      : null)
+                                  as ImageProvider?,
+                      child:
+                          (_selectedImage == null &&
+                                  widget.userData?['avatar'] == null)
+                              ? const Icon(
+                                Icons.camera_alt,
+                                size: 40,
+                                color: Colors.black,
+                              )
+                              : null,
                     ),
                   ),
-                  const SizedBox(height: 30),
+                ),
 
-                  Center(
-                    child: GestureDetector(
-                      onTap: _pickImage,
-                      child: CircleAvatar(
-                        radius: 60,
-                        backgroundColor: Colors.grey[300],
-                        backgroundImage:
-                            _selectedImage != null
-                                ? FileImage(_selectedImage!)
-                                : (widget.userData?['avatar'] != null
-                                        ? NetworkImage(
-                                          widget.userData!['avatar'],
-                                        )
-                                        : null)
-                                    as ImageProvider?,
-                        child:
-                            (_selectedImage == null &&
-                                    widget.userData?['avatar'] == null)
-                                ? const Icon(
-                                  Icons.camera_alt,
-                                  size: 40,
-                                  color: Colors.black,
-                                )
-                                : null,
+                const SizedBox(height: 20),
+
+                _buildInputField("Họ và tên", _nameController, Icons.person),
+                _buildInputField("Email", _emailController, Icons.email),
+                _buildInputField(
+                  "Số điện thoại",
+                  _phoneController,
+                  Icons.phone,
+                ),
+                _buildInputField("Địa chỉ", _addressController, Icons.home),
+
+                const SizedBox(height: 20),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          backgroundColor: Colors.grey,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                        ),
+                        child: const Text(
+                          "Cancel",
+                          style: TextStyle(color: Colors.white),
+                        ),
                       ),
                     ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  _buildInputField("Họ và tên", _nameController, Icons.person),
-                  _buildInputField("Email", _emailController, Icons.email),
-                  _buildInputField(
-                    "Số điện thoại",
-                    _phoneController,
-                    Icons.phone,
-                  ),
-                  _buildInputField("Địa chỉ", _addressController, Icons.home),
-
-                  const SizedBox(height: 20),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            backgroundColor: Colors.grey,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(50),
-                            ),
-                          ),
-                          child: const Text(
-                            "Cancel",
-                            style: TextStyle(color: Colors.white),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _updateProfile,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          backgroundColor: Colors.purpleAccent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _updateProfile,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            backgroundColor: Colors.purpleAccent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(50),
-                            ),
-                          ),
-                          child: const Text(
-                            "Save",
-                            style: TextStyle(color: Colors.white),
-                          ),
+                        child: const Text(
+                          "Save",
+                          style: TextStyle(color: Colors.white),
                         ),
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),

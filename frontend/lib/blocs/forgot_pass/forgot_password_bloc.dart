@@ -8,7 +8,7 @@ class ForgotPasswordBloc
   final AuthRepository authRepository;
 
   ForgotPasswordBloc({required this.authRepository})
-    : super(ForgotPasswordInitial()) {
+      : super(ForgotPasswordInitial()) {
     on<SendOtpEvent>(_onSendOtp);
     on<VerifyOtpEvent>(_onVerifyOtp);
     on<ResetPasswordEvent>(_onResetPassword);
@@ -18,12 +18,12 @@ class ForgotPasswordBloc
     SendOtpEvent event,
     Emitter<ForgotPasswordState> emit,
   ) async {
-    emit(ForgotPasswordLoading());
+    emit(ForgotPasswordLoading());  // Hiển thị trạng thái loading
 
     try {
       final response = await authRepository.sendOtp(event.email);
       if (response["success"]) {
-        emit(ForgotPasswordOtpSent());
+        emit(ForgotPasswordOtpSent(email: event.email));  // Gửi email vào state
       } else {
         emit(ForgotPasswordFailure(message: response["message"]));
       }
@@ -36,20 +36,22 @@ class ForgotPasswordBloc
     VerifyOtpEvent event,
     Emitter<ForgotPasswordState> emit,
   ) async {
-    emit(ForgotPasswordLoading());
+    emit(ForgotPasswordLoading());  // Hiển thị trạng thái loading
 
     try {
       final response = await authRepository.verifyOtp(
-        event.email, // Truyền thêm event.email
+        event.email,  // Truyền email
         event.otp,
       );
       if (response["success"]) {
         emit(ForgotPasswordOtpVerified());
       } else {
-        emit(ForgotPasswordFailure(message: response["message"]));
+        emit(ForgotPasswordFailure(message: response["message"]));  // Thông báo lỗi
+        emit(ForgotPasswordOtpSent(email: event.email));  // Quay lại nhập OTP
       }
     } catch (e) {
-      emit(ForgotPasswordFailure(message: e.toString()));
+      emit(ForgotPasswordFailure(message: e.toString()));  // Thông báo lỗi
+      emit(ForgotPasswordOtpSent(email: event.email));  // Quay lại nhập OTP
     }
   }
 
@@ -57,13 +59,13 @@ class ForgotPasswordBloc
     ResetPasswordEvent event,
     Emitter<ForgotPasswordState> emit,
   ) async {
-    emit(ForgotPasswordLoading());
+    emit(ForgotPasswordLoading());  // Hiển thị trạng thái loading
 
     try {
       final response = await authRepository.resetPassword(
-        event.email, // Truyền email
-        event.otp, // Truyền otp
-        event.newPassword, // Truyền mật khẩu mới
+        event.email,  // Truyền email
+        event.otp,    // Truyền OTP
+        event.newPassword,  // Truyền mật khẩu mới
       );
       if (response["success"]) {
         emit(ForgotPasswordResetSuccess());

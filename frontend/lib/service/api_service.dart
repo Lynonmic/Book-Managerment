@@ -367,19 +367,21 @@ class ApiService {
 
     return response.statusCode == 200;
   }
+Future<List<UserModels>> searchUsers(String query) async {
+  final response = await http.get(
+    Uri.parse('$baseUrl/users/search?keyword=$query'),
+  );
 
-  Future<List<UserModels>> searchUsers(String query) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/users/search?keyword=$query'),
-    );
+  print('API Response: ${response.body}');  // Debug log
 
-    if (response.statusCode == 200) {
-      List<dynamic> data = jsonDecode(response.body);
-      return data.map((json) => UserModels.fromJson(json)).toList();
-    } else {
-      throw Exception('Failed to search users');
-    }
+  if (response.statusCode == 200) {
+    List<dynamic> data = jsonDecode(response.body);
+    return data.map((json) => UserModels.fromJson(json)).toList();
+  } else {
+    throw Exception('Failed to search users');
   }
+}
+
 
   // Book API Methods
   static Future<List<Book>> getAllBooks() async {

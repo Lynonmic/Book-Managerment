@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:frontend/blocs/search/search_user_bloc.dart';
+import 'package:frontend/blocs/search/search_user_event.dart';
+import 'package:frontend/blocs/search/search_user_state.dart';
 import 'package:frontend/blocs/user/user_bloc.dart';
 import 'package:frontend/blocs/user/user_event.dart';
-import 'package:frontend/blocs/user/user_state.dart';
 import 'package:frontend/model/UserModels.dart';
 import 'package:frontend/screens/profile/edit_profile_page.dart';
 
@@ -15,6 +17,12 @@ class SearchUserPage extends StatefulWidget {
 
 class _SearchUserPageState extends State<SearchUserPage> {
   final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<SearchUserBloc>().add(PerformSearchUserEvent(''));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,81 +41,70 @@ class _SearchUserPageState extends State<SearchUserPage> {
                 prefixIcon: const Icon(Icons.search),
               ),
               onChanged: (query) {
-                BlocProvider.of<UserBloc>(context).add(SearchUserEvent(query));
+                context.read<SearchUserBloc>().add(PerformSearchUserEvent(query));
               },
             ),
             const SizedBox(height: 20),
-            BlocConsumer<UserBloc, UserState>(
-              listener: (context, state) {
-                if (state is UserError) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(state.message)),
-                  );
-                }
-                if (state is UserDeleted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Xóa người dùng thành công"),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                }
-              },
-              builder: (context, state) {
-                if (state is UserLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+            Expanded(
+              child: BlocConsumer<SearchUserBloc, SearchUserState>(
+                listener: (context, state) {
+                  if (state is SearchUserError) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(state.message)),
+                    );
+                  }
+                },
+                builder: (context, state) {
+                  if (state is SearchUserLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                if (state is UserLoaded) {
-                  final _searchResults = state.users;
-                  return Expanded(
-                    child: _searchResults.isEmpty
-                        ? const Center(
-                            child: Text("Không tìm thấy người dùng"),
-                          )
-                        : ListView.builder(
-                            itemCount: _searchResults.length,
-                            itemBuilder: (context, index) {
-                              final user = _searchResults[index];
-                              return ListTile(
-                                leading: user.urlAvata != null &&
-                                        user.urlAvata!.isNotEmpty
-                                    ? CircleAvatar(
-                                        backgroundImage: NetworkImage(
-                                          user.urlAvata!,
-                                        ),
-                                      )
-                                    : const Icon(Icons.person),
-                                title: Text(user.tenKhachHang ?? 'Không có tên'),
-                                subtitle: Text(user.email ?? 'Không có email'),
-                                onTap: () => _editUser(user),
-                                trailing: PopupMenuButton<String>(
-                                  onSelected: (value) {
-                                    if (value == 'edit') _editUser(user);
-                                    if (value == 'delete') _deleteUser(user);
-                                  },
-                                  itemBuilder: (context) => [
-                                    const PopupMenuItem(
-                                      value: 'edit',
-                                      child: Text("✏️ Sửa"),
-                                    ),
-                                    const PopupMenuItem(
-                                      value: 'delete',
-                                      child: Text(
-                                        "❌ Xóa",
-                                        style: TextStyle(color: Colors.red),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
+                  if (state is SearchUserSuccess) {
+                    final _searchResults = state.results;
+                    if (_searchResults.isEmpty) {
+                      return const Center(child: Text("Không tìm thấy người dùng"));
+                    }
+                    return ListView.builder(
+                      itemCount: _searchResults.length,
+                      itemBuilder: (context, index) {
+                        final user = _searchResults[index];
+                        return ListTile(
+                          leading: user.urlAvata != null &&
+                                  user.urlAvata!.isNotEmpty
+                              ? CircleAvatar(
+                                  backgroundImage: NetworkImage(user.urlAvata!),
+                                )
+                              : const Icon(Icons.person),
+                          title: Text(user.tenKhachHang ?? 'Không có tên'),
+                          subtitle: Text(user.email ?? 'Không có email'),
+                          onTap: () => _editUser(user),
+                          trailing: PopupMenuButton<String>(
+                            onSelected: (value) {
+                              if (value == 'edit') _editUser(user);
+                              if (value == 'delete') _deleteUser(user);
                             },
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: 'edit',
+                                child: Text("✏️ Sửa"),
+                              ),
+                              const PopupMenuItem(
+                                value: 'delete',
+                                child: Text(
+                                  "❌ Xóa",
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
                           ),
-                  );
-                }
+                        );
+                      },
+                    );
+                  }
 
-                return const Center(child: Text("Không có dữ liệu"));
-              },
+                  return const Center(child: Text("Không có dữ liệu"));
+                },
+              ),
             ),
           ],
         ),
@@ -134,7 +131,7 @@ class _SearchUserPageState extends State<SearchUserPage> {
     );
 
     if (updatedUser != null) {
-      BlocProvider.of<UserBloc>(context).add(UpdateUserEvent(
+      context.read<UserBloc>().add(UpdateUserEvent(
         userId: user.maKhachHang!,
         tenKhachHang: updatedUser['name'],
         soDienThoai: updatedUser['phone'],
@@ -148,7 +145,7 @@ class _SearchUserPageState extends State<SearchUserPage> {
   Future<void> _deleteUser(UserModels user) async {
     bool confirm = await _showDeleteConfirmation(user);
     if (confirm) {
-      BlocProvider.of<UserBloc>(context).add(DeleteUserEvent(user.maKhachHang!));
+      context.read<UserBloc>().add(DeleteUserEvent(user.maKhachHang!));
     }
   }
 

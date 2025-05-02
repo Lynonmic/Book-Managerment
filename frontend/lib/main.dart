@@ -8,6 +8,7 @@ import 'package:frontend/blocs/forgot_pass/forgot_password_bloc.dart';
 import 'package:frontend/blocs/order/order_bloc.dart';
 import 'package:frontend/blocs/profile/profile_bloc.dart';
 import 'package:frontend/blocs/publisher/publisher_bloc.dart';
+import 'package:frontend/blocs/search/search_user_bloc.dart';
 import 'package:frontend/blocs/user/user_bloc.dart';
 import 'package:frontend/repositories/auth_repository.dart';
 import 'package:frontend/repositories/book_repository.dart';
@@ -17,6 +18,7 @@ import 'package:frontend/repositories/order_repository.dart';
 import 'package:frontend/repositories/publisher_repository.dart';
 import 'package:frontend/repositories/user_repository.dart';
 import 'package:frontend/screens/login/login_page.dart';
+import 'package:frontend/service/api_service.dart';
 
 
 void main() {
@@ -32,6 +34,7 @@ void main() {
         BlocProvider(create: (_) => CategoryBloc(categoryRepository: CategoryRepository())),
         BlocProvider(create: (_) => OrderBloc(orderRepository: OrderRepository())),
         BlocProvider(create: (_) => EvaluationBloc(evaluationRepository: EvaluationRepository())),
+        BlocProvider(create: (_) => SearchUserBloc(ApiService()))
       ],
       child: const MyApp(),
     ),
