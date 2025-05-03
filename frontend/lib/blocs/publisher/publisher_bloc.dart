@@ -49,7 +49,6 @@ class PublisherBloc extends Bloc<PublisherEvent, PublisherState> {
     }
   }
 
-
   Future<void> _onUpdatePublisher(
     UpdatePublisherEvent event,
     Emitter<PublisherState> emit,
@@ -84,6 +83,7 @@ class PublisherBloc extends Bloc<PublisherEvent, PublisherState> {
       );
       if (result["success"]) {
         emit(PublisherActionSuccessState(result["message"]));
+        add(LoadPublishersEvent());
       } else {
         emit(PublisherActionFailureState(result["message"]));
       }

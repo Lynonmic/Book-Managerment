@@ -25,7 +25,6 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     }
   }
 
-
   Future<void> _onDeleteUser(
     DeleteUserEvent event,
     Emitter<UserState> emit,
@@ -50,7 +49,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   ) async {
     emit(UserUpdating());
     try {
-      final response = await userRepository.updateUser(
+      final updated = await userRepository.updateUser(
         userId: event.userId,
         tenKhachHang: event.tenKhachHang,
         soDienThoai: event.soDienThoai,
@@ -58,10 +57,14 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         email: event.email,
         avatar: event.avatar,
       );
-      if (response != null && response["success"] == true) {
+      print("Kết quả từ API (UserBloc): $updated");
+
+     if (updated != null && updated['success'] == true && updated['user'] != null)  {
+       final updatedUser = updated['user'];
         emit(UserUpdated(message: "Cập nhật người dùng thành công"));
+        add(LoadUsersEvent());
       } else {
-        emit(UserError("Cập nhật người dùng thất bại"));
+        emit(UserError("Cập nhật người dùng thất bại"));  
       }
     } catch (e) {
       emit(UserError("Lỗi khi cập nhật người dùng"));

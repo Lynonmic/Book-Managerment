@@ -9,21 +9,20 @@ class DeleteUserEvent extends UserEvent {
 
   DeleteUserEvent(this.userId);
 }
-
 class UpdateUserEvent extends UserEvent {
   final int userId;
-  final String? tenKhachHang;
-  final String? soDienThoai;
-  final String? diaChi;
-  final String? email;
+  final String tenKhachHang;
+  final String soDienThoai;
+  final String diaChi;
+  final String email;
   final File? avatar;
 
   UpdateUserEvent({
     required this.userId,
-    this.tenKhachHang,
-    this.soDienThoai,
-    this.diaChi,
-    this.email,
+    required this.tenKhachHang,
+    required this.soDienThoai,
+    required this.diaChi,
+    required this.email,
     this.avatar,
   });
 }

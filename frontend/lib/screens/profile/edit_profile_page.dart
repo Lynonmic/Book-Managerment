@@ -5,7 +5,6 @@ import 'package:frontend/blocs/profile/profile_bloc.dart';
 import 'package:frontend/blocs/profile/profile_event.dart';
 import 'package:frontend/blocs/user/user_bloc.dart';
 import 'package:frontend/blocs/user/user_event.dart';
-import 'package:frontend/repositories/user_repository.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 
@@ -52,23 +51,42 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   void _updateProfile() {
-    final updatedData = {
-      'id': widget.userData?['id'],
-      'name': _nameController.text,
-      'email': _emailController.text,
-      'phone': _phoneController.text,
-      'address': _addressController.text,
-      'avatar': _selectedImage,
-    };
+  final avatarToUse = _selectedImage ?? widget.userData?['avatar'];
 
-    // Dispatch the update event to the ProfileBloc
+  final updatedData = {
+    'id': widget.userData?['id'],
+    'name': _nameController.text,
+    'email': _emailController.text,
+    'phone': _phoneController.text,
+    'address': _addressController.text,
+    'avatar': avatarToUse,
+  };
+
+  final currentUserId = 9;
+
+  final editingUserId = widget.userData?['id'];
+
+  if (editingUserId == currentUserId) {
+    // Admin đang sửa chính họ
     context.read<ProfileBloc>().add(ProfileUpdateEvent(updatedData));
-
-    // After updating, trigger the event to load the updated users list
-    context.read<UserBloc>().add(LoadUsersEvent());
-
-    Navigator.pop(context, updatedData);
+  } else {
+    // Admin đang sửa người dùng khác
+    context.read<UserBloc>().add(UpdateUserEvent(
+      userId: editingUserId,
+      tenKhachHang: _nameController.text,
+      email: _emailController.text,
+      soDienThoai: _phoneController.text,
+      diaChi: _addressController.text,
+      avatar: _selectedImage,
+    ));
   }
+
+  // Load lại danh sách user
+  context.read<UserBloc>().add(LoadUsersEvent());
+
+  Navigator.pop(context, updatedData);
+}
+
 
   @override
   Widget build(BuildContext context) {
