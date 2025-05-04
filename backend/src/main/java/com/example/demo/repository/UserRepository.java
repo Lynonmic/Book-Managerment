@@ -19,10 +19,10 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     List<User> findByRoles(Integer roles);
 
-    @Query("SELECT u FROM User u WHERE " +
+    @Query("SELECT u FROM User u WHERE u.roles = 1 AND (" +
             "LOWER(u.ten_khach_hang) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(u.soDienThoai) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+            "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     List<User> searchUsers(@Param("keyword") String keyword);
 
 }

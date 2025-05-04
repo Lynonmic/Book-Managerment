@@ -48,11 +48,11 @@ class _SearchUserPageState extends State<SearchUserPage> {
             Expanded(
               child: BlocConsumer<SearchUserBloc, SearchUserState>(
                 listener: (context, state) {
-                  if (state is SearchUserError) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(state.message)),
-                    );
-                  }
+                  // if (state is SearchUserError) {
+                  //   ScaffoldMessenger.of(context).showSnackBar(
+                  //     SnackBar(content: Text(state.message)),
+                  //   );
+                  // }
                 },
                 builder: (context, state) {
                   if (state is SearchUserLoading) {
@@ -140,6 +140,7 @@ class _SearchUserPageState extends State<SearchUserPage> {
         avatar: updatedUser['avatar'],
       ));
     }
+    context.read<SearchUserBloc>().add(PerformSearchUserEvent(''));
   }
 
   Future<void> _deleteUser(UserModels user) async {
