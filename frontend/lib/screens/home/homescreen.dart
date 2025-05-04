@@ -105,7 +105,6 @@ class _HomeScreen extends State<HomeScreen> {
       } else if (value == 'search') {
         _currentItemType = 'search';
         context.read<SearchUserBloc>().add(PerformSearchUserEvent(''));
-
       } else if (value == 'categories') {
         _currentItemType = 'categories';
         context.read<CategoryBloc>().add(LoadCategories());
@@ -798,8 +797,8 @@ class _HomeScreen extends State<HomeScreen> {
                 onPressed: () {
                   _showAddCategoryDialog(context);
                 },
-                child: Icon(Icons.add),
                 tooltip: 'Add Category',
+                child: Icon(Icons.add),
               ),
             ),
           ],
@@ -939,7 +938,7 @@ class _HomeScreen extends State<HomeScreen> {
             ),
       ),
     );
-      context.read<UserBloc>().add(LoadUsersEvent());
+    context.read<UserBloc>().add(LoadUsersEvent());
   }
 
   @override

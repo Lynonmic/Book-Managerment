@@ -20,21 +20,30 @@ import 'package:frontend/repositories/user_repository.dart';
 import 'package:frontend/screens/login/login_page.dart';
 import 'package:frontend/service/api_service.dart';
 
-
 void main() {
   runApp(
     MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => AuthBloc(authRepository: AuthRepository())),
-        BlocProvider(create: (_) => ForgotPasswordBloc(authRepository: AuthRepository())),
+        BlocProvider(
+          create: (_) => ForgotPasswordBloc(authRepository: AuthRepository()),
+        ),
         BlocProvider(create: (_) => PublisherBloc(PublisherRepository())),
         BlocProvider(create: (_) => ProfileBloc(UserRepository())),
         BlocProvider(create: (_) => UserBloc(UserRepository())),
         BlocProvider(create: (_) => BookBloc(bookRepository: BookRepository())),
-        BlocProvider(create: (_) => CategoryBloc(categoryRepository: CategoryRepository())),
-        BlocProvider(create: (_) => OrderBloc(orderRepository: OrderRepository())),
-        BlocProvider(create: (_) => EvaluationBloc(evaluationRepository: EvaluationRepository())),
-        BlocProvider(create: (_) => SearchUserBloc(ApiService()))
+        BlocProvider(
+          create: (_) => CategoryBloc(categoryRepository: CategoryRepository()),
+        ),
+        BlocProvider(
+          create: (_) => OrderBloc(orderRepository: OrderRepository()),
+        ),
+        BlocProvider(
+          create:
+              (_) =>
+                  EvaluationBloc(evaluationRepository: EvaluationRepository()),
+        ),
+        BlocProvider(create: (_) => SearchUserBloc(ApiService())),
       ],
       child: const MyApp(),
     ),

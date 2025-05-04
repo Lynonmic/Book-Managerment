@@ -367,21 +367,21 @@ class ApiService {
 
     return response.statusCode == 200;
   }
-Future<List<UserModels>> searchUsers(String query) async {
-  final response = await http.get(
-    Uri.parse('$baseUrl/users/search?keyword=$query'),
-  );
 
-  print('API Response: ${response.body}');  // Debug log
+  Future<List<UserModels>> searchUsers(String query) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/users/search?keyword=$query'),
+    );
 
-  if (response.statusCode == 200) {
-    List<dynamic> data = jsonDecode(response.body);
-    return data.map((json) => UserModels.fromJson(json)).toList();
-  } else {
-    throw Exception('Failed to search users');
+    print('API Response: ${response.body}'); // Debug log
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => UserModels.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to search users');
+    }
   }
-}
-
 
   // Book API Methods
   static Future<List<Book>> getAllBooks() async {
@@ -535,8 +535,16 @@ Future<List<UserModels>> searchUsers(String query) async {
       );
 
       if (response.statusCode == 200) {
-        List<dynamic> jsonList = jsonDecode(response.body);
-        return jsonList.map((json) => CategoryModel.fromJson(json)).toList();
+        final decodedResponse = jsonDecode(response.body);
+
+        if (decodedResponse['success'] == true &&
+            decodedResponse.containsKey('data')) {
+          List<dynamic> jsonList = decodedResponse['data'];
+          print("Decoded JSON List: $jsonList"); // Debug log
+          return jsonList.map((json) => CategoryModel.fromJson(json)).toList();
+        } else {
+          throw Exception("Invalid response format or unsuccessful request");
+        }
       } else {
         throw Exception("Failed to fetch categories");
       }
