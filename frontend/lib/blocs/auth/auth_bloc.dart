@@ -9,6 +9,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc({required this.authRepository}) : super(AuthInitial()) {
     on<LoginRequested>(_onLoginRequested);
     on<AuthSignUpEvent>(_onSignUpRequested);
+    on<ResetAuthState>((event, emit) => emit(AuthInitial()));
   }
 
   Future<void> _onLoginRequested(

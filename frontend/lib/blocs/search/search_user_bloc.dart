@@ -11,8 +11,15 @@ class SearchUserBloc extends Bloc<SearchUserEvent, SearchUserState> {
     on<PerformSearchUserEvent>((event, emit) async {
       emit(SearchUserLoading());
       try {
-        final List<UserModels> results = await _apiService.searchUsers(event.query);
-        emit(SearchUserSuccess(results));
+        if (event.query.trim().isEmpty) {
+          final allUsers = await ApiService.getAllUser();
+          emit(SearchUserSuccess(allUsers));
+        } else {
+          final List<UserModels> results = await _apiService.searchUsers(
+            event.query,
+          );
+          emit(SearchUserSuccess(results));
+        }
       } catch (e) {
         emit(SearchUserError("Lỗi khi tìm kiếm người dùng: $e"));
       }

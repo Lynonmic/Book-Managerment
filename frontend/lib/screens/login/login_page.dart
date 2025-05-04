@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend/blocs/auth/auth_bloc.dart';
 import 'package:frontend/blocs/auth/auth_event.dart';
 import 'package:frontend/blocs/auth/auth_state.dart';
-import 'package:frontend/repositories/auth_repository.dart';
 import 'package:frontend/screens/home/homescreen.dart';
 import 'package:frontend/screens/login/forgot_password_page.dart';
 import 'package:frontend/screens/login/signin_page.dart';
@@ -20,6 +19,12 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
 
   bool isPasswordVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<AuthBloc>().add(ResetAuthState());
+  }
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(
@@ -48,9 +53,7 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: const Color.fromARGB(117, 222, 217, 217),
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is AuthLoading) {
-            _showMessage("Đang xử lý...");
-          } else if (state is AuthSuccess) {
+          if (state is AuthSuccess) {
             if (state.role == 0) {
               _showMessage("Đăng nhập thành công!");
               Navigator.pushReplacement(
@@ -59,13 +62,10 @@ class _LoginPageState extends State<LoginPage> {
                   builder: (context) => HomeScreen(userData: state.userData),
                 ),
               );
-            } else {
-              _showMessage("Bạn không có quyền admin");
             }
-          } else if (state is AuthFailure) {
-            _showMessage("❌ ${state.message}");
           }
         },
+
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20.0),
           child: Column(

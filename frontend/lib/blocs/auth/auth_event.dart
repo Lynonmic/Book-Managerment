@@ -27,4 +27,8 @@ class AuthSignUpEvent extends AuthEvent {
   });
 }
 
+
+
 class AuthSignOutEvent extends AuthEvent {}
+
+class ResetAuthState extends AuthEvent {}

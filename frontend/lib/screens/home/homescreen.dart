@@ -916,7 +916,6 @@ class _HomeScreen extends State<HomeScreen> {
             ),
       ),
     );
-
     context.read<PublisherBloc>().add(LoadPublishersEvent());
   }
 

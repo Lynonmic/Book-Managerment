@@ -56,9 +56,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   padding: const EdgeInsets.all(20.0),
                   child: BlocListener<ForgotPasswordBloc, ForgotPasswordState>(
                     listener: (context, state) {
-                      if (state is ForgotPasswordLoading) {
-                        _showMessage(context, "Đang xử lý...");
-                      } else if (state is ForgotPasswordOtpSent) {
+                      if (state is ForgotPasswordOtpSent) {
                         _showMessage(context, "OTP đã được gửi!");
                       } else if (state is ForgotPasswordOtpVerified) {
                         _showMessage(context, "OTP xác thực thành công!");

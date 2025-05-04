@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend/blocs/auth/auth_bloc.dart';
@@ -57,7 +59,7 @@ class _ProfilePageState extends State<ProfilePage> {
           if (state is AuthLoading) {
             return const Center(child: CircularProgressIndicator());
           } else if (state is AuthSuccess) {
-            final user = state.userData;
+            final user = _userData;
 
             return Stack(
               children: [
@@ -118,16 +120,23 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildAvatar(String? avatarUrl) {
+  Widget _buildAvatar(dynamic avatar) {
+    ImageProvider? imageProvider;
+    if (avatar is String) {
+      imageProvider = NetworkImage(avatar);
+    } else if (avatar is File) {
+      imageProvider = FileImage(avatar);
+    }
+
     return Center(
       child: CircleAvatar(
         radius: 55,
         backgroundColor: Colors.white,
         child: CircleAvatar(
           radius: 50,
-          backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+          backgroundImage: imageProvider,
           child:
-              avatarUrl == null
+              imageProvider == null
                   ? const Icon(Icons.person, size: 50, color: Colors.white)
                   : null,
         ),
