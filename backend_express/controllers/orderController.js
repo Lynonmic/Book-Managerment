@@ -67,12 +67,12 @@ exports.getOrderById = async (req, res) => {
 exports.createOrder = async (req, res) => {
   try {
     // Validate required fields
-    const { customerId, orderDate, totalAmount } = req.body;
+    const { customerId, totalAmount } = req.body;
     
-    if (!customerId || !orderDate || totalAmount === undefined) {
+    if (!customerId || !totalAmount) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: customerId, orderDate, totalAmount'
+        message: 'Missing required fields: customerId, totalAmount'
       });
     }
     

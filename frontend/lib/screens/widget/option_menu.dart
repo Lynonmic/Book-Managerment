@@ -67,16 +67,7 @@ class OptionMenu extends StatelessWidget {
                 ],
               ),
             ),
-            const PopupMenuItem<String>(
-              value: 'orders',
-              child: Row(
-                children: [
-                  Icon(Icons.shopping_cart),
-                  SizedBox(width: 8),
-                  Text('Order List'),
-                ],
-              ),
-            ),
+
             const PopupMenuItem<String>(
               value: 'evaluations',
               child: Row(
@@ -87,54 +78,7 @@ class OptionMenu extends StatelessWidget {
                 ],
               ),
             ),
-            PopupMenuItem<String>(
-              value: 'ratings',
-              child: Row(
-                children: [
-                  Icon(Icons.star),
-                  SizedBox(width: 8),
-                  Text('Rate Book'),
-                ],
-              ),
-            ),
           ],
     );
   }
 }
-
-// Example usage:
-// OptionMenu(
-//   onOptionSelected: (value) {
-//     switch (value) {
-//       case 'books':
-//         // Navigate to book list
-//         break;
-//       case 'users':
-//         // Navigate to user list
-//         break;
-//       case 'authors':
-//         // Navigate to author list
-//         break;
-//       case 'ratings':
-//         // Show rating dialog
-//         showDialog(
-//           context: context,
-//           builder: (context) => AlertDialog(
-//             title: Text('Rate this book'),
-//             content: InteractiveStarRating(
-//               onRatingChanged: (rating) {
-//                 // Handle rating change
-//               },
-//             ),
-//             actions: [
-//               TextButton(
-//                 onPressed: () => Navigator.pop(context),
-//                 child: Text('OK'),
-//               ),
-//             ],
-//           ),
-//         );
-//         break;
-//     }
-//   },
-// )

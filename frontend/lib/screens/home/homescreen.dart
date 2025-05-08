@@ -8,6 +8,7 @@ import 'package:frontend/blocs/category/category_event.dart';
 import 'package:frontend/blocs/category/category_state.dart';
 import 'package:frontend/blocs/evaluation/evaluation_bloc.dart';
 import 'package:frontend/blocs/evaluation/evaluation_event.dart';
+import 'package:frontend/blocs/evaluation/evaluation_state.dart';
 import 'package:frontend/blocs/order/order_bloc.dart';
 import 'package:frontend/blocs/order/order_event.dart';
 import 'package:frontend/blocs/publisher/publisher_bloc.dart';
@@ -22,7 +23,6 @@ import 'package:frontend/model/PublisherModels.dart';
 import 'package:frontend/model/UserModels.dart';
 import 'package:frontend/model/book_model.dart';
 import 'package:frontend/model/category_model.dart';
-import 'package:frontend/screens/evaluation/evaluation_list.dart';
 import 'package:frontend/screens/book/UI/book_item.dart';
 import 'package:frontend/screens/book/admin_book_page.dart';
 import 'package:frontend/screens/cart/cart_page.dart';
@@ -108,12 +108,10 @@ class _HomeScreen extends State<HomeScreen> {
       } else if (value == 'categories') {
         _currentItemType = 'categories';
         context.read<CategoryBloc>().add(LoadCategories());
-      } else if (value == 'orders') {
-        _currentItemType = 'orders';
-        context.read<OrderBloc>().add(FetchOrders());
       } else if (value == 'evaluations') {
         _currentItemType = 'evaluations';
         context.read<EvaluationBloc>().add(LoadAllReviews());
+        context.read<UserBloc>().add(LoadUsersEvent());
       } else if (value == 'add_book') {
         Navigator.push(
           context,
@@ -178,6 +176,7 @@ class _HomeScreen extends State<HomeScreen> {
                   return BookItem(
                     title: book.title,
                     description: book.description ?? 'No description available',
+                    imageUrl: book.imageUrl,
                     onTap: () {
                       if (book.roles != 0) {
                         Navigator.push(
@@ -273,7 +272,117 @@ class _HomeScreen extends State<HomeScreen> {
   }
 
   Widget _buildEvaluationList() {
-    return const EvaluationListScreen();
+    return BlocBuilder<EvaluationBloc, EvaluationState>(
+      builder: (context, state) {
+        // Check the status enum field
+        if (state.status == EvaluationStatus.loading) {
+          return Center(child: CircularProgressIndicator());
+        } else if (state.status == EvaluationStatus.loaded) {
+          // Access the list from state.reviews
+          final evaluations = state.reviews;
+
+          if (evaluations.isEmpty) {
+            return Center(child: Text('No evaluations available'));
+          }
+
+          return ListView.builder(
+            itemCount: evaluations.length,
+            itemBuilder: (context, index) {
+              final evaluation = evaluations[index];
+              return Card(
+                margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ListTile(
+                  contentPadding: EdgeInsets.all(16),
+                  title: Row(
+                    children: [
+                      Text(
+                        evaluation.bookTitle ?? 'Unknown Book',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(width: 8),
+                      _buildRatingStars(evaluation.rating),
+                    ],
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 8),
+                      Text('By: ${evaluation.userName ?? 'Anonymous'}'),
+                      SizedBox(height: 4),
+                      Text(evaluation.comment ?? 'No comment'),
+                      SizedBox(height: 4),
+                      Text(
+                        'Date: ${evaluation.createdAt != null ? evaluation.createdAt!.toString().substring(0, 10) : 'Unknown'}',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                  trailing: PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        // Implement edit functionality
+                        // _showEditEvaluationDialog(context, evaluation);
+                      } else if (value == 'delete') {
+                        // Implement delete functionality
+                        // _showDeleteEvaluationConfirmationDialog(context, evaluation);
+                      }
+                    },
+                    itemBuilder:
+                        (BuildContext context) => <PopupMenuEntry<String>>[
+                          PopupMenuItem<String>(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit, color: Colors.blue),
+                                SizedBox(width: 8),
+                                Text('Edit'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete, color: Colors.red),
+                                SizedBox(width: 8),
+                                Text('Delete'),
+                              ],
+                            ),
+                          ),
+                        ],
+                  ),
+                ),
+              );
+            },
+          );
+          // Check the status enum field
+        } else if (state.status == EvaluationStatus.error) {
+          return Center(
+            child: Text('Error: ${state.errorMessage ?? 'Unknown error'}'),
+          );
+        } else {
+          // Handles EvaluationStatus.initial
+          return Center(child: Text('No evaluations available'));
+        }
+      },
+    );
+  }
+
+  Widget _buildRatingStars(int? rating) {
+    final int starCount = rating ?? 0;
+    return Row(
+      children: List.generate(5, (index) {
+        return Icon(
+          index < starCount ? Icons.star : Icons.star_border,
+          color: Colors.amber,
+          size: 18,
+        );
+      }),
+    );
   }
 
   Widget _buildUserList() {
@@ -967,14 +1076,15 @@ class _HomeScreen extends State<HomeScreen> {
                   ? _buildCategoryList()
                   : _currentItemType == 'evaluations'
                   ? _buildEvaluationList()
-                  : Container())
+                  : Container()
+                      as Widget) // Ensure this branch returns a Widget
               : _currentIndex == 1
-              ? CartPage()
+              ? CartPage() as Widget
               : _currentIndex == 2
-              ? const SearchUserPage()
+              ? const SearchUserPage() as Widget
               : _currentIndex == 3
-              ? ProfilePage(userData: widget.userData)
-              : Container(),
+              ? ProfilePage(userData: widget.userData) as Widget
+              : SizedBox.shrink(),
       bottomNavigationBar: BottomMenu(
         initialIndex: _currentIndex,
         onIndexChanged: (index) {

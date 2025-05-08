@@ -26,9 +26,6 @@ class AuthSignUpEvent extends AuthEvent {
     this.avatar,
   });
 }
-
-
-
 class AuthSignOutEvent extends AuthEvent {}
 
 class ResetAuthState extends AuthEvent {}

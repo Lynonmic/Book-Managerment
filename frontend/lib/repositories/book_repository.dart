@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:frontend/model/book_model.dart';
 import 'package:frontend/service/api_service.dart';
 
@@ -36,11 +37,14 @@ class BookRepository {
     try {
       final response = await ApiService.createBook(book);
       if (response['success']) {
-        // Refresh the book list to get the newly created book
-        await getBooks();
-        // Find and return the new book (assuming the API returns the ID)
-        return _books.firstWhere((b) => b.id == response['bookId'], 
-          orElse: () => book);
+        if (response['book'] != null) { 
+          final createdBook = Book.fromJson(response['book']);
+          _books.add(createdBook); // Optionally update cache
+          return createdBook;
+        } else {
+           print("Warning: Create book response did not contain full book object.");
+           return book; // Fallback or fetch logic needed here
+        }
       } else {
         throw Exception(response['message']);
       }
@@ -120,5 +124,19 @@ class BookRepository {
     }).toList();
     
     return _filteredBooks;
+  }
+  
+  // Upload book image to Cloudinary
+  Future<String?> uploadImage(File imageFile) async {
+    try {
+      final response = await ApiService.uploadImage(imageFile);
+      if (response['success']) {
+        return response['imageUrl'];
+      } else {
+        throw Exception(response['message']);
+      }
+    } catch (e) {
+      throw Exception('Failed to upload image: $e');
+    }
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend/blocs/book/book_event.dart';
 import 'package:frontend/blocs/book/book_state.dart';
@@ -16,6 +17,7 @@ class BookBloc extends Bloc<BookEvent, BookState> {
     on<UpdateBook>(_onUpdateBook);
     on<DeleteBook>(_onDeleteBook);
     on<RateBook>(_onRateBook);
+    on<UploadImage>(_onUploadImage);
   }
 
   Future<void> _onLoadBooks(LoadBooks event, Emitter<BookState> emit) async {
@@ -48,12 +50,8 @@ class BookBloc extends Bloc<BookEvent, BookState> {
   Future<void> _onAddBook(AddBook event, Emitter<BookState> emit) async {
     emit(state.copyWith(status: BookStatus.loading));
     try {
-      final newBook = await _bookRepository.createBook(event.book);
-      final updatedBooks = List<Book>.from(state.books)..add(newBook);
-      emit(state.copyWith(
-        books: updatedBooks,
-        status: BookStatus.loaded,
-      ));
+      await _bookRepository.createBook(event.book);
+      add(LoadBooks());
     } catch (e) {
       emit(state.copyWith(
         status: BookStatus.error,
@@ -65,15 +63,8 @@ class BookBloc extends Bloc<BookEvent, BookState> {
   Future<void> _onUpdateBook(UpdateBook event, Emitter<BookState> emit) async {
     emit(state.copyWith(status: BookStatus.loading));
     try {
-      final updatedBook = await _bookRepository.updateBook(event.book);
-      final updatedBooks = state.books.map((book) {
-        return book.id == updatedBook.id ? updatedBook : book;
-      }).toList();
-      emit(state.copyWith(
-        books: updatedBooks,
-        selectedBook: updatedBook,
-        status: BookStatus.loaded,
-      ));
+      await _bookRepository.updateBook(event.book);
+      add(LoadBooks());
     } catch (e) {
       emit(state.copyWith(
         status: BookStatus.error,
@@ -87,11 +78,7 @@ class BookBloc extends Bloc<BookEvent, BookState> {
     try {
       final success = await _bookRepository.deleteBook(event.id);
       if (success) {
-        final updatedBooks = state.books.where((book) => book.id != event.id).toList();
-        emit(state.copyWith(
-          books: updatedBooks,
-          status: BookStatus.loaded,
-        ));
+        add(LoadBooks());
       } else {
         emit(state.copyWith(
           status: BookStatus.error,
@@ -117,6 +104,29 @@ class BookBloc extends Bloc<BookEvent, BookState> {
         emit(state.copyWith(
           status: BookStatus.error,
           errorMessage: 'Failed to rate book',
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        status: BookStatus.error,
+        errorMessage: e.toString(),
+      ));
+    }
+  }
+  
+  Future<void> _onUploadImage(UploadImage event, Emitter<BookState> emit) async {
+    emit(state.copyWith(status: BookStatus.loading));
+    try {
+      final imageUrl = await _bookRepository.uploadImage(event.imageFile);
+      if (imageUrl != null) {
+        emit(state.copyWith(
+          status: BookStatus.loaded,
+          uploadedImageUrl: imageUrl,
+        ));
+      } else {
+        emit(state.copyWith(
+          status: BookStatus.error,
+          errorMessage: 'Failed to upload image',
         ));
       }
     } catch (e) {

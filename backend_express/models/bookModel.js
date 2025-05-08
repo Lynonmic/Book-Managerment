@@ -13,6 +13,7 @@ class BookModel {
           gia as price,
           ma_nha_xuat_ban as publisher_id,
           so_luong as quantity,
+          series_id,
           ngay_tao as created_at,
           ngay_cap_nhat as updated_at
         FROM books
@@ -48,8 +49,8 @@ class BookModel {
       console.log('- All book data:', bookData.quantity);
 
       const [result] = await db.query(
-        `INSERT INTO books (ten_sach, url_anh, tac_gia, ma_danh_muc, ma_nha_xuat_ban, gia, so_luong, mo_ta, is_deleted, ngay_tao, ngay_cap_nhat) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), NOW())`,
+        `INSERT INTO books (ten_sach, url_anh, tac_gia, ma_danh_muc, ma_nha_xuat_ban, gia, so_luong, mo_ta, series_id, is_deleted, ngay_tao, ngay_cap_nhat) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), NOW())`,
         [
           bookData.title,
           bookData.imageUrl,
@@ -59,6 +60,7 @@ class BookModel {
           bookData.price,
           bookData.quantity || 0, // Default quantity to 0 if not provided
           bookData.description || null, // Allow description to be optional
+          bookData.seriesId || null, // Series ID
         ]
       );
       return result.insertId;
@@ -122,6 +124,11 @@ class BookModel {
       if (bookData.quantity) {
         updateFields.push('so_luong = ?');
         values.push(bookData.quantity);
+      }
+      
+      if (bookData.seriesId !== undefined) {
+        updateFields.push('series_id = ?');
+        values.push(bookData.seriesId);
       }
       
       // Always update the timestamp when updating a record

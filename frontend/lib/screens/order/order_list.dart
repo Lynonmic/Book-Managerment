@@ -116,8 +116,8 @@ class OrderListScreen extends StatelessWidget {
               right: 20,
               child: FloatingButton(
                 onPressed: () {
-                  // Create new order
-                  // TODO: Implement create order page
+                  // Show create order dialog
+                  _showCreateOrderDialog(context);
                 },
                 tooltip: 'Create Order',
                 backgroundColor: Colors.purple,
@@ -219,6 +219,112 @@ class OrderListScreen extends StatelessWidget {
               },
               style: TextButton.styleFrom(foregroundColor: Colors.red),
               child: Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Add new method to show create order dialog
+  void _showCreateOrderDialog(BuildContext context) {
+    final TextEditingController customerIdController = TextEditingController();
+    final TextEditingController customerNameController = TextEditingController();
+    final TextEditingController totalAmountController = TextEditingController();
+    String selectedStatus = 'Chờ xử lý';
+    final statuses = ['Chờ xử lý', 'Đang xử lý', 'Đã giao hàng', 'Đã hủy'];
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Create New Order'),
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: customerIdController,
+                      decoration: const InputDecoration(
+                        labelText: 'Customer ID',
+                        hintText: 'Enter customer ID',
+                      ),
+                      keyboardType: TextInputType.text,
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: customerNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Customer Name',
+                        hintText: 'Enter customer name',
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: totalAmountController,
+                      decoration: const InputDecoration(
+                        labelText: 'Total Amount',
+                        hintText: 'Enter total amount',
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(
+                        labelText: 'Status',
+                        border: OutlineInputBorder(),
+                      ),
+                      value: selectedStatus,
+                      items: statuses.map((status) {
+                        return DropdownMenuItem<String>(
+                          value: status,
+                          child: Text(status),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedStatus = value!;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (customerIdController.text.isEmpty ||
+                    customerNameController.text.isEmpty ||
+                    totalAmountController.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please fill all fields')),
+                  );
+                  return;
+                }
+
+                final newOrder = Order(
+                  customerId: customerIdController.text,
+                  customerName: customerNameController.text,
+                  totalAmount: double.tryParse(totalAmountController.text) ?? 0.0,
+                  orderDate: DateTime.now(),
+                  status: selectedStatus,
+                );
+
+                context.read<OrderBloc>().add(CreateOrder(newOrder));
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Order created successfully')),
+                );
+              },
+              child: const Text('Create'),
             ),
           ],
         );

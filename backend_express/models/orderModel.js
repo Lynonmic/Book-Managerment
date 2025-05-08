@@ -79,11 +79,11 @@ exports.getOrderWithDetails = async (id) => {
 // Create a new order
 exports.createOrder = async (orderData) => {
   try {
-    const { customerId, orderDate, totalAmount, status = "chờ xử lý" } = orderData;
-    
+    const { customerId, totalAmount, status = "chờ xử lý" } = orderData;
+    orderData.orderDate = new Date();
     const [result] = await db.query(
       'INSERT INTO orders (ma_khach_hang, ngay_dat, tong_tien, trang_thai) VALUES (?, ?, ?, ?)',
-      [customerId, new Date(orderDate), totalAmount, status]
+      [customerId, orderData.orderDate, totalAmount, status]
     );
     
     return result.insertId;

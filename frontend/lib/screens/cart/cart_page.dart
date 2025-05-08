@@ -1,7 +1,18 @@
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:frontend/blocs/user/user_bloc.dart';
+import 'package:frontend/blocs/user/user_event.dart';
+import 'package:frontend/blocs/user/user_state.dart';
+import 'package:frontend/blocs/book/book_bloc.dart';
+import 'package:frontend/blocs/book/book_event.dart';
+import 'package:frontend/blocs/book/book_state.dart';
+import 'package:frontend/model/UserModels.dart'; // Ensure this matches your model file
+import 'package:frontend/model/book_model.dart';
 import 'package:frontend/screens/cart/order_details_page.dart';
+import 'package:frontend/screens/widget/floating_button.dart';
+import 'package:http/http.dart' as http; // Ensure this matches your model file
 
 class CartPage extends StatefulWidget {
   const CartPage({Key? key}) : super(key: key);
@@ -12,13 +23,17 @@ class CartPage extends StatefulWidget {
 
 class _CartPageState extends State<CartPage> {
   List<Map<String, dynamic>> _orders = [];
-  bool _isLoading = true;
+  bool _isLoading = true; // Keep this for loading orders initially
   String _error = '';
 
   @override
   void initState() {
     super.initState();
+    // Fetch orders still uses http directly for now, or refactor it to use an OrderBloc if available
     _fetchOrders();
+    // Dispatch events to load users and books
+    context.read<UserBloc>().add(LoadUsersEvent());
+    context.read<BookBloc>().add(LoadBooks());
   }
 
   Future<void> _fetchOrders() async {
@@ -138,6 +153,14 @@ class _CartPageState extends State<CartPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingButton(
+        onPressed: () {
+          _showCreateOrderDialog(context);
+        },
+        tooltip: 'Create Order',
+        backgroundColor: Colors.purple,
+        icon: Icons.add_shopping_cart,
+      ),
       body:
           _isLoading
               ? Center(child: CircularProgressIndicator())
@@ -402,5 +425,389 @@ class _CartPageState extends State<CartPage> {
                 ],
               ),
     );
+  }
+
+  // Method to show the create order dialog
+  void _showCreateOrderDialog(BuildContext context) {
+    UserModels? selectedCustomer; // Use UserModels type
+    Book? selectedBook; // Use Book type
+    int quantity = 1;
+    List<Map<String, dynamic>> orderItems = [];
+    double totalAmount = 0.0;
+
+    final customerNameController = TextEditingController();
+    final customerPhoneController = TextEditingController();
+    final customerAddressController = TextEditingController();
+
+    // Function to update total amount
+    void updateTotalAmount() {
+      totalAmount = orderItems.fold(0.0, (sum, item) {
+        final price =
+            item['price'] as num? ?? 0; // Ensure price is treated as num
+        final qty = item['quantity'] as int? ?? 0; // Ensure quantity is int
+        return sum + (price * qty);
+      });
+      // No need to call setState here if totalAmount is only used within the dialog's stateful builder
+    }
+
+    // Helper function to update customer details (optional, but good practice)
+    void updateCustomerDetails(UserModels customer) {
+      selectedCustomer = customer;
+      customerNameController.text = customer.tenKhachHang ?? 'N/A';
+      customerPhoneController.text = customer.soDienThoai ?? '';
+      customerAddressController.text = customer.diaChi ?? '';
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        // Use StatefulBuilder to manage dialog's internal state like selected items
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Create New Order'),
+              content: Container(
+                width: MediaQuery.of(context).size.width * 0.8,
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.7,
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                    // User Dropdown using BlocBuilder
+                    BlocBuilder<UserBloc, UserState>(
+                      builder: (context, state) {
+                        if (state is UserLoading) {
+                          return const CircularProgressIndicator();
+                        } else if (state is UserLoaded) {
+                          // Ensure selectedCustomer is still valid if users list reloads
+                          if (selectedCustomer != null &&
+                              !state.users.any(
+                                (u) =>
+                                    u.maKhachHang ==
+                                    selectedCustomer!.maKhachHang,
+                              )) {
+                            selectedCustomer =
+                                null; // Reset if previous selection is gone
+                          }
+                          return DropdownButtonFormField<UserModels>(
+                            value: selectedCustomer,
+                            hint: const Text('Select Customer'),
+                            isExpanded: true,
+                            items:
+                                state.users.map((UserModels user) {
+                                  return DropdownMenuItem<UserModels>(
+                                    value: user,
+                                    child: Text(
+                                      user.tenKhachHang ?? 'Unnamed User',
+                                    ),
+                                  );
+                                }).toList(),
+                            onChanged: (UserModels? newValue) {
+                              setDialogState(() {
+                                // Use setDialogState here
+                                if (newValue != null) {
+                                  updateCustomerDetails(newValue);
+                                }
+                              });
+                            },
+                            validator:
+                                (value) =>
+                                    value == null
+                                        ? 'Please select a customer'
+                                        : null,
+                          );
+                        } else if (state is UserError) {
+                          return Text('Error: ${state.message}');
+                        }
+                        return const Text('Select Customer'); // Initial/default
+                      },
+                    ),
+                    TextField(
+                      controller: customerNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Customer Name',
+                      ),
+                      readOnly:
+                          true, // Make read-only if populated from dropdown
+                    ),
+                    TextField(
+                      controller: customerPhoneController,
+                      decoration: const InputDecoration(labelText: 'Phone'),
+                      readOnly: true,
+                    ),
+                    TextField(
+                      controller: customerAddressController,
+                      decoration: const InputDecoration(labelText: 'Address'),
+                      readOnly: true,
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Order Items',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    // Book Dropdown using BlocBuilder
+                    BlocBuilder<BookBloc, BookState>(
+                      builder: (context, state) {
+                        if (state.status == BookStatus.loading) {
+                          return const CircularProgressIndicator();
+                        } else if (state.status == BookStatus.loaded) {
+                          // Ensure selectedBook is valid if book list reloads
+                          if (selectedBook != null &&
+                              !state.books.any(
+                                (b) => b.id == selectedBook!.id,
+                              )) {
+                            selectedBook = null; // Reset
+                          }
+                          return DropdownButtonFormField<Book>(
+                            value: selectedBook,
+                            hint: const Text('Select Book'),
+                            isExpanded: true,
+                            items:
+                                state.books.map((Book book) {
+                                  return DropdownMenuItem<Book>(
+                                    value: book,
+                                    child: Text(
+                                      '${book.title} (\$${book.price?.toStringAsFixed(2) ?? 'N/A'})',
+                                    ), // Corrected escaping
+                                  );
+                                }).toList(),
+                            onChanged: (Book? newValue) {
+                              setDialogState(() {
+                                // Use setDialogState
+                                selectedBook = newValue;
+                              });
+                            },
+                          );
+                        } else if (state.status == BookStatus.error) {
+                          return Text('Error: ${state.errorMessage}');
+                        }
+                        return const Text('Select Book');
+                      },
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            decoration: const InputDecoration(
+                              labelText: 'Quantity',
+                            ),
+                            keyboardType: TextInputType.number,
+                            onChanged: (value) {
+                              quantity = int.tryParse(value) ?? 1;
+                            },
+                            controller: TextEditingController(
+                              text: '1',
+                            ), // Default qty
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add_circle),
+                          onPressed: () {
+                            if (selectedBook != null) {
+                              setDialogState(() {
+                                // Use setDialogState
+                                orderItems.add({
+                                  'bookId': selectedBook!.id,
+                                  'bookTitle': selectedBook!.title,
+                                  'quantity': quantity,
+                                  'price':
+                                      selectedBook!.price ??
+                                      0.0, // Use price from Book model
+                                });
+                                updateTotalAmount(); // Recalculate total
+                                // Optionally reset selectedBook and quantity for next item
+                                // selectedBook = null;
+                                // quantity = 1;
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    // Display Added Items
+                    SizedBox(
+                      height: 150, // Constrain height
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: orderItems.length,
+                        itemBuilder: (context, index) {
+                          final item = orderItems[index];
+                          final price = item['price'] as num? ?? 0;
+                          return ListTile(
+                            title: Text(item['bookTitle'] ?? 'Unknown Book'),
+                            subtitle: Text(
+                              'Qty: ${item['quantity']} @ \$${price.toStringAsFixed(2)}',
+                            ), // Corrected escaping
+                            trailing: IconButton(
+                              icon: const Icon(
+                                Icons.remove_circle_outline,
+                                color: Colors.red,
+                              ),
+                              onPressed: () {
+                                setDialogState(() {
+                                  // Use setDialogState
+                                  orderItems.removeAt(index);
+                                  updateTotalAmount();
+                                });
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    // Display Total Amount Dynamically
+                    Text(
+                      'Total: \$${totalAmount.toStringAsFixed(2)}', // Corrected escaping
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (selectedCustomer == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please select a customer'),
+                        ),
+                      );
+                      return;
+                    }
+                    if (orderItems.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please add at least one item'),
+                        ),
+                      );
+                      return;
+                    }
+
+                    // Use selectedCustomer data
+                    // Adjust based on your UserModels ID field (assuming it's int?)
+                    String customerId =
+                        selectedCustomer!.maKhachHang?.toString() ?? '';
+                    String customerName =
+                        selectedCustomer!.tenKhachHang ?? 'Unknown';
+
+                    _createOrder(
+                      customerId,
+                      customerName, // Use name from selected customer
+                      customerPhoneController.text,
+                      customerAddressController.text,
+                      totalAmount,
+                      orderItems,
+                    );
+                    Navigator.pop(context); // Close dialog
+                  },
+                  child: const Text('Create Order'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Create a new order with the API
+  Future<void> _createOrder(
+    String customerId,
+    String customerName,
+    String phone,
+    String address,
+    double totalAmount,
+    List<Map<String, dynamic>> orderItems,
+  ) async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      // Prepare order data (for orders table)
+      final orderData = {
+        'customerId': customerId,
+        'customerName': customerName,
+        'phone': phone,
+        'address': address,
+        'status': 'Chờ xử lý',
+        'orderDate': DateTime.now().toIso8601String(),
+        'totalAmount': totalAmount,
+        // Include order items for the backend to process
+        'orderDetails':
+            orderItems
+                .map(
+                  (item) => {
+                    'bookId': item['bookId'],
+                    'bookTitle': item['bookTitle'],
+                    'quantity': item['quantity'],
+                    'price': item['price'],
+                  },
+                )
+                .toList(),
+      };
+
+      // Send the combined data to the API
+      // The backend should handle splitting this into orders and order_details tables
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:3000/api/orders'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(orderData),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        // Parse the response to get the created order ID
+        final responseData = json.decode(response.body);
+        String orderId = 'Unknown';
+
+        if (responseData is Map && responseData.containsKey('id')) {
+          orderId = responseData['id'].toString();
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Order #$orderId created successfully')),
+        );
+
+        // Refresh the orders list
+        _fetchOrders();
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+
+        // Try to parse error message from response
+        String errorMessage = 'Failed to create order: ${response.statusCode}';
+        try {
+          final errorData = json.decode(response.body);
+          if (errorData is Map && errorData.containsKey('message')) {
+            errorMessage = errorData['message'];
+          }
+        } catch (_) {}
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(errorMessage)));
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error creating order: $e')));
+    }
   }
 }

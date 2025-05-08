@@ -34,7 +34,7 @@ class Book {
       'price': price,
       'publisher': publisher,
       'publisherId': publisherId, // Include in serialization
-      'imageUrl': imageUrl,
+      'image_url': imageUrl,
       'category': category,
       'quantity': quantity,
       'roles': roles,
@@ -50,7 +50,7 @@ class Book {
       price: json['price']?.toDouble(),
       publisher: json['publisher'],
       publisherId: json['publisherId'], // Include in deserialization
-      imageUrl: json['imageUrl'],
+      imageUrl: json['image_url'],
       category: json['category'],
       quantity: json['quantity'],
       roles: json['roles'],

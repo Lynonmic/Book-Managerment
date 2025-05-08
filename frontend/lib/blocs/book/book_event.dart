@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:equatable/equatable.dart';
 import 'package:frontend/model/book_model.dart';
 
@@ -54,4 +55,13 @@ class RateBook extends BookEvent {
 
   @override
   List<Object?> get props => [bookId, rating];
+}
+
+class UploadImage extends BookEvent {
+  final File imageFile;
+
+  const UploadImage(this.imageFile);
+
+  @override
+  List<Object?> get props => [imageFile];
 }

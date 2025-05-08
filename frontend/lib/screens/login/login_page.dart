@@ -4,6 +4,7 @@ import 'package:frontend/blocs/auth/auth_bloc.dart';
 import 'package:frontend/blocs/auth/auth_event.dart';
 import 'package:frontend/blocs/auth/auth_state.dart';
 import 'package:frontend/screens/home/homescreen.dart';
+import 'package:frontend/screens/home/user_homescreen.dart';
 import 'package:frontend/screens/login/forgot_password_page.dart';
 import 'package:frontend/screens/login/signin_page.dart';
 
@@ -54,15 +55,30 @@ class _LoginPageState extends State<LoginPage> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthSuccess) {
+            _showMessage("Đăng nhập thành công!");
+
             if (state.role == 0) {
-              _showMessage("Đăng nhập thành công!");
+              // Admin
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
                   builder: (context) => HomeScreen(userData: state.userData),
                 ),
               );
+            } else if (state.role == 1) {
+              // User
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (context) => UserHomescreen(userData: state.userData),
+                ),
+              );
+            } else {
+              _showMessage("Bạn không có quyền truy cập!");
             }
+          } else if (state is AuthFailure) {
+            _showMessage(state.message);
           }
         },
 

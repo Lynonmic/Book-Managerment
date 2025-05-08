@@ -5,10 +5,12 @@ import 'package:frontend/model/PublisherModels.dart';
 import 'package:frontend/model/UserModels.dart';
 import 'package:frontend/model/book_model.dart';
 import 'package:frontend/model/category_model.dart';
+import 'package:frontend/model/evaluation_model.dart';
 import 'package:frontend/model/order_model.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
+import 'package:path/path.dart' as path;
 
 class ApiService {
   static const String baseUrl = "http://10.0.2.2:9090/book_management/auth";
@@ -865,7 +867,7 @@ class ApiService {
   }
 
   // Review/Evaluation API Methods
-  static Future<List<dynamic>> getAllReviews() async {
+  static Future<List<EvaluationModel>> getAllReviews() async {
     try {
       final response = await http.get(
         Uri.parse("$apiUrl/reviews"),
@@ -873,12 +875,21 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final decodedResponse = jsonDecode(response.body);
+
+        if (decodedResponse['success'] == true &&
+            decodedResponse.containsKey('data')) {
+          List<dynamic> jsonList = decodedResponse['data'];
+          return jsonList.map((json) => EvaluationModel.fromJson(json)).toList();
+        } else {
+          throw Exception(
+              "Invalid response format or unsuccessful request for reviews");
+        }
       } else {
-        throw Exception("Failed to fetch reviews");
+        throw Exception("Failed to fetch reviews: ${response.statusCode}");
       }
     } catch (e) {
-      throw Exception("Error connecting to server: $e");
+      throw Exception("Error connecting to server for reviews: $e");
     }
   }
 
@@ -1013,6 +1024,51 @@ class ApiService {
         };
       }
     } catch (e) {
+      return {"success": false, "message": "Error connecting to server: $e"};
+    }
+  }
+
+  // Upload an image to Cloudinary via the Express backend
+  static Future<Map<String, dynamic>> uploadImage(File imageFile) async {
+    try {
+      // Create multipart request
+      final uri = Uri.parse("$apiUrl/uploads/book-image");
+      final request = http.MultipartRequest('POST', uri);
+
+      // Get file mime type
+      final mimeTypeData = lookupMimeType(imageFile.path)?.split('/');
+
+      // Add file to request
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'image',
+          imageFile.path,
+          contentType: mimeTypeData != null
+              ? MediaType(mimeTypeData[0], mimeTypeData[1])
+              : MediaType('image', 'jpeg'),
+        ),
+      );
+
+      // Send request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      final responseJson = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          "success": true,
+          "imageUrl": responseJson["imageUrl"],
+          "publicId": responseJson["publicId"],
+          "message": "Image uploaded successfully",
+        };
+      } else {
+        return {
+          "success": false,
+          "message": responseJson["message"] ?? "Failed to upload image",
+        };
+      }
+    } catch (e) {
+      print("Error uploading image: $e");
       return {"success": false, "message": "Error connecting to server: $e"};
     }
   }

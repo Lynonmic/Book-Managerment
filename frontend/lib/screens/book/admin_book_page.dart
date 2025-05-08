@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -50,12 +51,13 @@ class _BookFormScreenState extends State<BookFormScreen> {
   String? _imageUrl;
   File? _imageFile;
   double _rating = 0.0;
+  bool _isUploading = false;
   bool _isDeleting = false;
 
   // State for categories and publishers
   List<CategoryModel> _categories = [];
-  String? _selectedCategoryId;
-  String? _selectedCategoryName;
+  List<String> _selectedCategoryIds = []; // << Re-add state for multiple IDs
+  String? _dropdownSelectedCategoryId; // << Re-add state for dropdown value
 
   // Publisher-related state
   String? _selectedPublisherId;
@@ -83,16 +85,17 @@ class _BookFormScreenState extends State<BookFormScreen> {
 
     _imageUrl = widget.book?.imageUrl;
 
-    // Set the selected category if editing
-    if (widget.book?.category != null) {
-      _selectedCategoryId = widget.book!.category.toString();
-    }
+    _selectedCategoryIds =
+        widget.book?.category?.split(',').map((id) => id.trim()).toList() ??
+        []; // Initialize selected categories
 
     // Set the selected publisher ID and name if editing a book
     if (widget.book?.publisherId != null) {
       _selectedPublisherId = widget.book!.publisherId;
+      _selectedPublisherName = widget.book!.publisher;
+      // Initialize publisher name from the book
     }
-
+    print(_selectedPublisherName);
     // Use post-frame callback to ensure we're not in build phase
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Load categories and publishers using BLoC
@@ -139,8 +142,24 @@ class _BookFormScreenState extends State<BookFormScreen> {
       if (image != null) {
         setState(() {
           _imageFile = File(image.path);
-          _imageUrl = null; // Clear the URL when a file is picked
+          _isUploading = true; // Set uploading flag to true
         });
+
+        // Upload image to Cloudinary
+        try {
+          // Use the BLoC to upload the image
+          context.read<BookBloc>().add(UploadImage(_imageFile!));
+
+          // Listen for the result
+          // We'll handle this in the build method with a BlocListener
+        } catch (uploadError) {
+          setState(() {
+            _isUploading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error uploading image: $uploadError')),
+          );
+        }
       }
     } catch (e) {
       ScaffoldMessenger.of(
@@ -262,6 +281,23 @@ class _BookFormScreenState extends State<BookFormScreen> {
 
   Future<void> _saveBook() async {
     if (_formKey.currentState!.validate()) {
+      // Check if we're still uploading an image
+      if (_isUploading) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Please wait for image upload to complete')),
+        );
+        return;
+      }
+
+      // Make sure we're using the full Cloudinary URL if available
+      String? finalImageUrl = _imageUrl;
+      // Log the image URL for debugging
+      log('Saving book with image URL: $finalImageUrl');
+
+      final tenDanhMucString = _selectedCategoryIds.join(
+        ',',
+      ); // Join IDs back to string
+
       final book = Book(
         id: widget.book?.id,
         title: _titleController.text,
@@ -270,8 +306,9 @@ class _BookFormScreenState extends State<BookFormScreen> {
         price: double.tryParse(_priceController.text) ?? 0.0,
         publisher: _selectedPublisherName,
         publisherId: _selectedPublisherId,
-        imageUrl: _imageUrl,
-        category: _selectedCategoryId ?? 0 as String,
+        imageUrl: finalImageUrl, // Use the processed URL
+        category:
+            tenDanhMucString, // Use the joined string here with the CORRECT parameter name
         quantity: int.tryParse(_quantityController.text) ?? 0,
         roles: 1, // Default role for admin
       );
@@ -317,254 +354,464 @@ class _BookFormScreenState extends State<BookFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.book == null ? 'Add New Book' : 'Edit Book'),
-        actions:
-            widget.book != null
-                ? [
-                  IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: _deleteBook,
-                  ),
-                ]
-                : null,
-      ),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Book Image Picker
-              Center(
-                child: GestureDetector(
-                  onTap: _showImageSourceOptions,
-                  child: Container(
-                    width: 200,
-                    height: 280,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey[300]!),
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<BookBloc, BookState>(
+          listener: (context, state) {
+            // Handle image upload response
+            if (state.status == BookStatus.loaded &&
+                state.uploadedImageUrl != null) {
+              setState(() {
+                _imageUrl = state.uploadedImageUrl;
+                _isUploading = false;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Image uploaded successfully')),
+              );
+            } else if (state.status == BookStatus.error && _isUploading) {
+              setState(() {
+                _isUploading = false;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error uploading image: ${state.errorMessage}'),
+                ),
+              );
+            }
+          },
+        ),
+        // Add a listener for PublisherBloc to initialize publisher name when publishers are loaded
+        BlocListener<PublisherBloc, PublisherState>(
+          listener: (context, state) {
+            if (state is PublisherLoadedState &&
+                _selectedPublisherId != null &&
+                (_selectedPublisherName == null ||
+                    _selectedPublisherName!.isEmpty)) {
+              // Find the publisher name based on ID
+              final publisher = state.publishers.firstWhere(
+                (p) => p.maNhaXuatBan.toString() == _selectedPublisherId,
+                orElse:
+                    () => Publishermodels(
+                      maNhaXuatBan: 0,
+                      tenNhaXuatBan: 'Unknown',
                     ),
-                    child: _buildImageWidget(),
-                  ),
-                ),
-              ),
-              SizedBox(height: 16),
-
-              // Book Title
-              TextFormField(
-                controller: _titleController,
-                decoration: InputDecoration(
-                  labelText: 'Title',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a title';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
-
-              // Category dropdown using BLoC
-              BlocBuilder<CategoryBloc, CategoryState>(
-                builder: (context, state) {
-                  if (state.status == CategoryStatus.loading) {
-                    return DropdownButtonFormField<String>(
-                      decoration: InputDecoration(
-                        labelText: 'Category',
-                        border: OutlineInputBorder(),
+              );
+              setState(() {
+                _selectedPublisherName = publisher.tenNhaXuatBan;
+              });
+            }
+          },
+        ),
+      ],
+      child: BlocListener<BookBloc, BookState>(
+        listener: (context, state) {
+          // Empty listener - actual logic moved to MultiBlocListener above
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(widget.book == null ? 'Add New Book' : 'Edit Book'),
+            actions:
+                widget.book != null
+                    ? [
+                      IconButton(
+                        icon: Icon(Icons.delete, color: Colors.red),
+                        onPressed: _deleteBook,
                       ),
-                      hint: Text('Loading categories...'),
-                      items: [],
-                      onChanged: null,
-                    );
-                  }
+                    ]
+                    : null,
+          ),
+          body: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Book Image Picker
+                  Center(
+                    child: GestureDetector(
+                      onTap: _showImageSourceOptions,
+                      child: Container(
+                        width: 200,
+                        height: 280,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey[300]!),
+                        ),
+                        child: _buildImageWidget(),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 16),
 
-                  return DropdownButtonFormField<String>(
-                    value: _selectedCategoryId,
+                  // Book Title
+                  TextFormField(
+                    controller: _titleController,
                     decoration: InputDecoration(
-                      labelText: 'Category',
+                      labelText: 'Title',
                       border: OutlineInputBorder(),
                     ),
-                    hint: Text('Select a category'),
-                    isExpanded: true,
-                    items:
-                        state.categories.map((category) {
-                          return DropdownMenuItem(
-                            value: category.id?.toString(),
-                            child: Text(category.name),
-                          );
-                        }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedCategoryId = value;
-                        if (value != null) {
-                          final category = state.categories.firstWhere(
-                            (c) => c.id.toString() == value,
-                            orElse:
-                                () => CategoryModel(id: null, name: 'Unknown'),
-                          );
-                          _selectedCategoryName = category.name;
-                        }
-                      });
-                    },
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please select a category';
+                        return 'Please enter a title';
                       }
                       return null;
                     },
-                  );
-                },
-              ),
-              SizedBox(height: 16),
+                  ),
+                  SizedBox(height: 16),
+                  BlocBuilder<CategoryBloc, CategoryState>(
+                    builder: (context, state) {
+                      if (state.status == CategoryStatus.loading) {
+                        // Show disabled dropdown while loading
+                        return DropdownButtonFormField<String>(
+                          decoration: InputDecoration(
+                            labelText: 'Add Category',
+                            border: OutlineInputBorder(),
+                          ),
+                          hint: Text('Loading categories...'),
+                          items: [],
+                          onChanged: null, // Disable interaction
+                        );
+                      }
 
-              // Publisher dropdown using BLoC
-              BlocBuilder<PublisherBloc, PublisherState>(
-                builder: (context, state) {
-                  if (state is PublisherLoadingState) {
-                    return DropdownButtonFormField<String>(
-                      decoration: InputDecoration(
-                        labelText: 'Publisher',
-                        border: OutlineInputBorder(),
-                      ),
-                      hint: Text('Loading publishers...'),
-                      items: [],
-                      onChanged: null,
-                    );
-                  }
-
-                  if (state is PublisherLoadedState) {
-                    return DropdownButtonFormField<String>(
-                      value: _selectedPublisherId,
-                      decoration: InputDecoration(
-                        labelText: 'Publisher',
-                        border: OutlineInputBorder(),
-                      ),
-                      hint: Text('Select a publisher'),
-                      isExpanded: true,
-                      items:
-                          state.publishers.map((publisher) {
-                            return DropdownMenuItem(
-                              value: publisher.maNhaXuatBan?.toString(),
-                              child: Text(publisher.tenNhaXuatBan ?? 'Unknown'),
-                            );
-                          }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedPublisherId = value;
-                          if (value != null) {
-                            final publisher = state.publishers.firstWhere(
-                              (p) => p.maNhaXuatBan.toString() == value,
-                              orElse:
-                                  () => Publishermodels(
-                                    maNhaXuatBan: 0,
-                                    tenNhaXuatBan: 'Unknown',
+                      // Only build dropdown if categories loaded successfully
+                      if (state.status == CategoryStatus.loaded) {
+                        // << Use loaded instead of success
+                        return DropdownButtonFormField<String>(
+                          value:
+                              _dropdownSelectedCategoryId, // Use a separate state for dropdown value
+                          decoration: InputDecoration(
+                            labelText: 'Add Category', // Changed label
+                            border: OutlineInputBorder(),
+                          ),
+                          hint: Text('Select a category to add'),
+                          isExpanded: true,
+                          items:
+                              state.categories.map((category) {
+                                return DropdownMenuItem(
+                                  value: category.id?.toString(),
+                                  // Disable item if already selected
+                                  enabled:
+                                      !_selectedCategoryIds.contains(
+                                        category.id.toString(),
+                                      ),
+                                  child: Text(
+                                    category.name,
+                                    style:
+                                        !_selectedCategoryIds.contains(
+                                              category.id.toString(),
+                                            )
+                                            ? null
+                                            : TextStyle(
+                                              color: Colors.grey,
+                                            ), // Grey out if selected
                                   ),
-                            );
-                            _selectedPublisherName = publisher.tenNhaXuatBan;
-                          }
-                        });
-                      },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please select a publisher';
-                        }
-                        return null;
-                      },
-                    );
-                  }
+                                );
+                              }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              if (value != null &&
+                                  !_selectedCategoryIds.contains(value)) {
+                                _selectedCategoryIds.add(
+                                  value,
+                                ); // Add to the list
+                                _dropdownSelectedCategoryId =
+                                    null; // Reset dropdown after selection
+                              } else if (value != null) {
+                                // Optional: Provide feedback if category is already selected
+                                final categoryName =
+                                    state.categories
+                                        .firstWhere(
+                                          (c) => c.id.toString() == value,
+                                        )
+                                        .name;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Category "$categoryName" already selected',
+                                    ),
+                                  ),
+                                );
+                                _dropdownSelectedCategoryId =
+                                    null; // Reset dropdown
+                              }
+                            });
+                          },
+                          // No validator needed for 'Add' button usually
+                        );
+                      }
 
-                  // Error or initial state
-                  return DropdownButtonFormField<String>(
+                      // Handle failure case
+                      if (state.status == CategoryStatus.error) {
+                        // << Use error instead of failure
+                        return DropdownButtonFormField<String>(
+                          decoration: InputDecoration(
+                            labelText: 'Add Category',
+                            border: OutlineInputBorder(),
+                            errorText: 'Failed to load categories',
+                          ),
+                          hint: Text('Error loading'),
+                          items: [],
+                          onChanged: null,
+                        );
+                      }
+
+                      // Default empty state
+                      return SizedBox.shrink();
+                    },
+                  ),
+
+                  SizedBox(height: 16),
+
+                  BlocBuilder<CategoryBloc, CategoryState>(
+                    builder: (context, state) {
+                      String displayText;
+                      bool isLoading =
+                          state.status == CategoryStatus.loading ||
+                          state.status == CategoryStatus.initial;
+                      bool isError = state.status == CategoryStatus.error;
+
+                      if (isLoading) {
+                        if (_selectedCategoryIds.isEmpty) {
+                          displayText = 'None (Loading categories...)';
+                        } else {
+                          // Show IDs while loading names
+                          displayText =
+                              'IDs: ${_selectedCategoryIds.join(', ')} (Loading names...)';
+                        }
+                      } else if (state.status == CategoryStatus.loaded) {
+                        if (_selectedCategoryIds.isEmpty) {
+                          displayText = 'None';
+                        } else {
+                          // Find category names based on selected IDs
+                          final selectedCategoryNames = _selectedCategoryIds
+                              .map((id) {
+                                final category = state.categories.firstWhere(
+                                  (cat) => cat.id.toString() == id,
+                                  orElse:
+                                      () => CategoryModel(
+                                        id: null,
+                                        name: 'Unknown ($id)',
+                                      ), // Handle case where ID might not be found
+                                );
+                                return category.name;
+                              })
+                              .join(', ');
+                          displayText = selectedCategoryNames;
+                        }
+                      } else {
+                        // Error state
+                        if (_selectedCategoryIds.isEmpty) {
+                          displayText = 'Error loading categories';
+                        } else {
+                          // Show IDs even on error, but indicate error
+                          displayText =
+                              'IDs: ${_selectedCategoryIds.join(', ')} (Error loading names)';
+                        }
+                      }
+
+                      return InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: 'Selected Categories',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12.0,
+                            vertical: 16.0,
+                          ),
+                          // Show error text directly in the decorator if there's an error loading names
+                          errorText:
+                              isError ? 'Failed to load category names' : null,
+                        ),
+                        child: Text(displayText),
+                      );
+                    },
+                  ),
+
+                  SizedBox(height: 16),
+
+                  // Publisher dropdown using BLoC
+                  BlocBuilder<PublisherBloc, PublisherState>(
+                    builder: (context, state) {
+                      if (state is PublisherLoadingState) {
+                        return DropdownButtonFormField<String>(
+                          decoration: InputDecoration(
+                            labelText: 'Publisher',
+                            border: OutlineInputBorder(),
+                          ),
+                          hint: Text('Loading publishers...'),
+                          items: [],
+                          onChanged: null,
+                        );
+                      }
+
+                      if (state is PublisherLoadedState) {
+                        // If editing an existing book and publisher ID is available, set the selected value
+                        if (widget.book != null &&
+                            widget.book!.publisherId != null &&
+                            _selectedPublisherId == null) {
+                          _initializePublisherSelection(
+                            state.publishers,
+                            widget.book!.publisherId,
+                          );
+                        }
+
+                        return DropdownButtonFormField<String>(
+                          value: _selectedPublisherId,
+                          decoration: InputDecoration(
+                            labelText: 'Publisher',
+                            border: OutlineInputBorder(),
+                          ),
+                          hint: Text(
+                            _selectedPublisherName.toString() ??
+                                'Select a publisher',
+                          ),
+                          isExpanded: true,
+                          items:
+                              state.publishers.map((publisher) {
+                                return DropdownMenuItem(
+                                  value: publisher.maNhaXuatBan?.toString(),
+                                  child: Text(
+                                    publisher.tenNhaXuatBan ?? 'Unknown',
+                                  ),
+                                );
+                              }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedPublisherId = value;
+                              if (value != null) {
+                                _selectedPublisherName = _findPublisherName(
+                                  state.publishers,
+                                  value,
+                                );
+                              }
+                            });
+                          },
+                          validator: (value) {
+                            // Only validate if no publisher is selected and this is a new book
+                            // For existing books, the publisher should already be set
+                            if ((value == null || value.isEmpty) &&
+                                widget.book == null) {
+                              return 'Please select a publisher';
+                            }
+                            return null;
+                          },
+                        );
+                      }
+
+                      // Error or initial state
+                      return DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          labelText: 'Publisher',
+                          border: OutlineInputBorder(),
+                        ),
+                        hint: Text('Failed to load publishers'),
+                        items: [],
+                        onChanged: null,
+                      );
+                    },
+                  ),
+                  SizedBox(height: 16),
+
+                  // Author input (now optional since we use publisher ID)
+                  TextFormField(
+                    controller: _authorController,
                     decoration: InputDecoration(
-                      labelText: 'Publisher',
+                      labelText: 'Author Name (Optional)',
+                      border: OutlineInputBorder(),
+                      hintText: 'Enter author name if different from publisher',
+                    ),
+                  ),
+                  SizedBox(height: 16),
+
+                  // Description
+                  TextFormField(
+                    controller: _descriptionController,
+                    decoration: InputDecoration(
+                      labelText: 'Description',
                       border: OutlineInputBorder(),
                     ),
-                    hint: Text('Failed to load publishers'),
-                    items: [],
-                    onChanged: null,
-                  );
-                },
-              ),
-              SizedBox(height: 16),
+                    maxLines: 4,
+                  ),
+                  SizedBox(height: 16),
 
-              // Author input (now optional since we use publisher ID)
-              TextFormField(
-                controller: _authorController,
-                decoration: InputDecoration(
-                  labelText: 'Author Name (Optional)',
-                  border: OutlineInputBorder(),
-                  hintText: 'Enter author name if different from publisher',
-                ),
-              ),
-              SizedBox(height: 16),
+                  // Price
+                  TextFormField(
+                    controller: _priceController,
+                    decoration: InputDecoration(
+                      labelText: 'Price',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a price';
+                      }
+                      if (double.tryParse(value) == null) {
+                        return 'Please enter a valid number';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 16),
 
-              // Description
-              TextFormField(
-                controller: _descriptionController,
-                decoration: InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 4,
-              ),
-              SizedBox(height: 16),
+                  // Quantity input
+                  TextFormField(
+                    controller: _quantityController,
+                    decoration: InputDecoration(
+                      labelText: 'Quantity',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a quantity';
+                      }
+                      if (int.tryParse(value) == null) {
+                        return 'Please enter a valid number';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 16),
 
-              // Price
-              TextFormField(
-                controller: _priceController,
-                decoration: InputDecoration(
-                  labelText: 'Price',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a price';
-                  }
-                  if (double.tryParse(value) == null) {
-                    return 'Please enter a valid number';
-                  }
-                  return null;
-                },
+                  // Save Button
+                  PrimaryButton(label: 'Save Book', onPressed: _saveBook),
+                ],
               ),
-              SizedBox(height: 16),
-
-              // Quantity input
-              TextFormField(
-                controller: _quantityController,
-                decoration: InputDecoration(
-                  labelText: 'Quantity',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a quantity';
-                  }
-                  if (int.tryParse(value) == null) {
-                    return 'Please enter a valid number';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
-
-              // Save Button
-              PrimaryButton(label: 'Save Book', onPressed: _saveBook),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
+
+  // Helper method to find publisher name by ID
+  String _findPublisherName(
+    List<Publishermodels> publishers,
+    String publisherId,
+  ) {
+    final publisher = publishers.firstWhere(
+      (p) => p.maNhaXuatBan.toString() == publisherId,
+      orElse: () => Publishermodels(maNhaXuatBan: 0, tenNhaXuatBan: 'Unknown'),
+    );
+    return publisher.tenNhaXuatBan ?? 'Unknown';
+  }
+
+  // Helper method to initialize publisher selection when editing a book
+  void _initializePublisherSelection(
+    List<Publishermodels> publishers,
+    String? publisherId,
+  ) {
+    if (publisherId != null) {
+      setState(() {
+        _selectedPublisherId = publisherId;
+        _selectedPublisherName = _findPublisherName(publishers, publisherId);
+      });
+    }
+  }
+
+  // Helper method to find publisher name by ID
 
   Widget _buildImageWidget() {
     if (_imageFile != null) {
@@ -573,30 +820,48 @@ class _BookFormScreenState extends State<BookFormScreen> {
         borderRadius: BorderRadius.circular(12),
         child: Image.file(_imageFile!, fit: BoxFit.cover),
       );
-    } else if (_imageUrl != null) {
-      // If the image URL is a network URL
-      if (_imageUrl!.startsWith('http')) {
+    } else if (_imageUrl != null && _imageUrl!.isNotEmpty) {
+      // Check if it's a network URL (http or https)
+      if (_imageUrl!.startsWith('http') || _imageUrl!.startsWith('https')) {
         return ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: Image.network(
             _imageUrl!,
             fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Center(
+                child: CircularProgressIndicator(
+                  value:
+                      loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                          : null,
+                ),
+              );
+            },
             errorBuilder: (context, error, stackTrace) {
-              return Center(child: Text('Error loading image'));
+              print('Error loading network image in form: $_imageUrl - $error');
+              return Center(
+                child: Icon(Icons.error_outline, color: Colors.red),
+              );
             },
           ),
         );
       } else {
-        // Correct asset path
+        // Assume it's an asset path (though unlikely in this context now)
+        // Consider adding better handling if local assets are still expected here
         return Image.asset(
-          'assets/images/$_imageUrl', // Correct path
+          'assets/images/$_imageUrl', // Assuming asset path if not URL
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
-            return Center(child: Text('Error loading image'));
+            print('Error loading asset image in form: $_imageUrl - $error');
+            return Center(child: Icon(Icons.error_outline, color: Colors.grey));
           },
         );
       }
     } else {
+      // Placeholder when no image file or URL is available
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
