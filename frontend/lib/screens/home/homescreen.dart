@@ -25,7 +25,7 @@ import 'package:frontend/model/book_model.dart';
 import 'package:frontend/model/category_model.dart';
 import 'package:frontend/screens/book/UI/book_item.dart';
 import 'package:frontend/screens/book/admin_book_page.dart';
-import 'package:frontend/screens/cart/cart_page.dart';
+import 'package:frontend/screens/cart/order_page.dart';
 import 'package:frontend/screens/profile/edit_profile_page.dart';
 import 'package:frontend/screens/profile/profile_page.dart';
 import 'package:frontend/screens/publisher/publisher_edit_page.dart';
@@ -35,7 +35,7 @@ import 'package:frontend/screens/widget/floating_button.dart';
 import 'package:frontend/screens/widget/option_menu.dart';
 
 class HomeScreen extends StatefulWidget {
-  final Map<String, dynamic> userData; //
+  final Map<String, dynamic> userData; 
 
   const HomeScreen({super.key, required this.userData});
 
@@ -1079,7 +1079,7 @@ class _HomeScreen extends State<HomeScreen> {
                   : Container()
                       as Widget) // Ensure this branch returns a Widget
               : _currentIndex == 1
-              ? CartPage() as Widget
+              ? OrderPage() as Widget
               : _currentIndex == 2
               ? const SearchUserPage() as Widget
               : _currentIndex == 3

@@ -13,17 +13,9 @@ import 'package:frontend/blocs/publisher/publisher_bloc.dart';
 import 'package:frontend/blocs/publisher/publisher_event.dart';
 import 'package:frontend/blocs/publisher/publisher_state.dart';
 import 'package:frontend/model/book_model.dart';
-import 'package:frontend/screens/widget/action_button.dart';
-import 'package:frontend/screens/widget/rating_star.dart';
-import 'package:frontend/screens/widget/category_pills.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:path/path.dart' as path;
-import 'package:frontend/screens/widget/backbutton_and_title.dart';
 import 'package:frontend/screens/widget/primary_button.dart';
 import 'package:frontend/model/PublisherModels.dart';
-import 'package:frontend/model/UserModels.dart';
 import 'package:frontend/model/category_model.dart';
 
 class BookFormScreen extends StatefulWidget {

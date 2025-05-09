@@ -17,8 +17,8 @@ import 'package:frontend/blocs/user/user_bloc.dart';
 import 'package:frontend/blocs/user/user_event.dart';
 import 'package:frontend/screens/book/UI/book_item_user.dart';
 import 'package:frontend/screens/book/user_book_page.dart';
-import 'package:frontend/screens/evaluation/evaluation_list.dart';
 import 'package:frontend/screens/cart/cart_page.dart';
+import 'package:frontend/screens/evaluation/evaluation_list.dart';
 import 'package:frontend/screens/profile/profile_page.dart';
 import 'package:frontend/screens/search/search_page.dart';
 import 'package:frontend/screens/widget/bottom_menu.dart';
@@ -65,6 +65,8 @@ class _UserHomescreen extends State<UserHomescreen> {
       } else if (value == 'evaluations') {
         _currentItemType = 'evaluations';
         context.read<EvaluationBloc>().add(LoadAllReviews());
+      } else if (value == 'cart') {
+        _currentItemType = 'cart';
       }
     });
   }
@@ -153,8 +155,8 @@ class _UserHomescreen extends State<UserHomescreen> {
         return 'Profile';
       case 'search':
         return 'Search';
-      case 'orders':
-        return 'Order Management';
+      case 'cart':
+        return 'Cart Management';
       case 'evaluations':
         return 'Reviews Management';
       default:
@@ -194,6 +196,8 @@ class _UserHomescreen extends State<UserHomescreen> {
                   ? const SearchUserPage()
                   : _currentItemType == 'evaluations'
                   ? _buildEvaluationList()
+                  : _currentItemType == 'cart'
+                  ? CartPage()
                   : Container())
               : _currentIndex == 1
               ? CartPage()
@@ -211,7 +215,7 @@ class _UserHomescreen extends State<UserHomescreen> {
             if (_currentIndex == 0) {
               _currentItemType = 'books';
             } else if (_currentIndex == 1) {
-              _currentItemType = 'orders';
+              _currentItemType = 'cart';
             } else if (_currentIndex == 2) {
               _currentItemType = 'search';
             } else if (_currentIndex == 3) {
