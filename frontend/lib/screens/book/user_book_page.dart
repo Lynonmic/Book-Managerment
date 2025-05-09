@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/model/book_model.dart';
+import 'package:frontend/screens/cart/cart_page.dart';
 
 class UserBookPage extends StatelessWidget {
   final Book book;
@@ -15,9 +16,11 @@ class UserBookPage extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.shopping_cart),
             onPressed: () {
-              // TODO: Chuyển tới trang giỏ hàng
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Go to cart (not implemented yet)')),
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CartPage(),
+                ),
               );
             },
           ),

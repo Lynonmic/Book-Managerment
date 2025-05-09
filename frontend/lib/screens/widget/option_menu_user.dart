@@ -43,7 +43,7 @@ class OptionMenuUser extends StatelessWidget {
                 children: [
                   Icon(Icons.shopping_cart),
                   SizedBox(width: 8),
-                  Text('Order List'),
+                  Text('Cart'),
                 ],
               ),
             ),
