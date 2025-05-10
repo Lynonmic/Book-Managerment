@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend/blocs/book/book_event.dart';
 import 'package:frontend/blocs/book/book_state.dart';
-import 'package:frontend/model/book_model.dart';
 import 'package:frontend/repositories/book_repository.dart';
 
 class BookBloc extends Bloc<BookEvent, BookState> {

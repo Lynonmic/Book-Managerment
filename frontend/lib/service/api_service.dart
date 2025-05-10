@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:frontend/model/CartModel.dart';
 import 'package:frontend/model/PublisherModels.dart';
 import 'package:frontend/model/UserModels.dart';
 import 'package:frontend/model/book_model.dart';
@@ -880,10 +881,13 @@ class ApiService {
         if (decodedResponse['success'] == true &&
             decodedResponse.containsKey('data')) {
           List<dynamic> jsonList = decodedResponse['data'];
-          return jsonList.map((json) => EvaluationModel.fromJson(json)).toList();
+          return jsonList
+              .map((json) => EvaluationModel.fromJson(json))
+              .toList();
         } else {
           throw Exception(
-              "Invalid response format or unsuccessful request for reviews");
+            "Invalid response format or unsuccessful request for reviews",
+          );
         }
       } else {
         throw Exception("Failed to fetch reviews: ${response.statusCode}");
@@ -1043,9 +1047,10 @@ class ApiService {
         await http.MultipartFile.fromPath(
           'image',
           imageFile.path,
-          contentType: mimeTypeData != null
-              ? MediaType(mimeTypeData[0], mimeTypeData[1])
-              : MediaType('image', 'jpeg'),
+          contentType:
+              mimeTypeData != null
+                  ? MediaType(mimeTypeData[0], mimeTypeData[1])
+                  : MediaType('image', 'jpeg'),
         ),
       );
 
@@ -1070,6 +1075,116 @@ class ApiService {
     } catch (e) {
       print("Error uploading image: $e");
       return {"success": false, "message": "Error connecting to server: $e"};
+    }
+  }
+
+
+
+
+  static Future<List<CartModel>> getUserCart(int userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$apiUrl/cart/user/$userId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        if (responseData['success'] == true) {
+          final List<dynamic> cartData = responseData['data'];
+          return cartData.map((item) => CartModel.fromJson(item)).toList();
+        }
+      }
+      throw Exception('Failed to load cart');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Thêm sách vào giỏ hàng
+  static Future<CartModel> addToCart({
+    required int userId,
+    required int bookId,
+    required int quantity,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$apiUrl/cart/add'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'userId': userId,
+          'bookId': bookId,
+          'quantity': quantity,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        if (responseData['success'] == true) {
+          return CartModel.fromJson(responseData['data']);
+        }
+      }
+      throw Exception('Failed to add to cart');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Cập nhật số lượng sách trong giỏ hàng
+  static Future<CartModel> updateCartItem({
+    required int cartId,
+    required int quantity,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$apiUrl/cart/$cartId'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'quantity': quantity,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        if (responseData['success'] == true) {
+          return CartModel.fromJson(responseData['data']);
+        }
+      }
+      throw Exception('Failed to update cart');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Xóa một sản phẩm khỏi giỏ hàng
+  static Future<void> removeFromCart(int cartId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$apiUrl/cart/$cartId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to remove from cart');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Xóa toàn bộ giỏ hàng của user
+  static Future<void> clearCart(int userId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$apiUrl/cart/user/$userId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to clear cart');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
     }
   }
 }

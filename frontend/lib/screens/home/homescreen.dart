@@ -178,7 +178,6 @@ class _HomeScreen extends State<HomeScreen> {
                     description: book.description ?? 'No description available',
                     imageUrl: book.imageUrl,
                     onTap: () {
-                      if (book.roles != 0) {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -210,13 +209,6 @@ class _HomeScreen extends State<HomeScreen> {
                                 ),
                           ),
                         );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('You do not have permission to edit'),
-                          ),
-                        );
-                      }
                     },
                   );
                 },

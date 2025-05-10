@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend/blocs/auth/auth_bloc.dart';
 import 'package:frontend/blocs/book/book_bloc.dart';
+import 'package:frontend/blocs/cart/cart_bloc.dart';
 import 'package:frontend/blocs/category/category_bloc.dart';
 import 'package:frontend/blocs/evaluation/evaluation_bloc.dart';
 import 'package:frontend/blocs/forgot_pass/forgot_password_bloc.dart';
@@ -10,6 +11,7 @@ import 'package:frontend/blocs/profile/profile_bloc.dart';
 import 'package:frontend/blocs/publisher/publisher_bloc.dart';
 import 'package:frontend/blocs/search/search_user_bloc.dart';
 import 'package:frontend/blocs/user/user_bloc.dart';
+import 'package:frontend/repositories/CartRepository.dart';
 import 'package:frontend/repositories/auth_repository.dart';
 import 'package:frontend/repositories/book_repository.dart';
 import 'package:frontend/repositories/category_repository.dart';
@@ -44,6 +46,9 @@ void main() {
                   EvaluationBloc(evaluationRepository: EvaluationRepository()),
         ),
         BlocProvider(create: (_) => SearchUserBloc(ApiService())),
+        BlocProvider(
+          create: (_) => CartBloc(CartRepository()),
+        ),
       ],
       child: const MyApp(),
     ),

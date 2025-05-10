@@ -1,6 +1,5 @@
 import 'dart:developer';
 import 'dart:io';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend/blocs/book/book_bloc.dart';
@@ -40,6 +39,10 @@ class _BookFormScreenState extends State<BookFormScreen> {
   late TextEditingController _publisherController;
   late TextEditingController _quantityController;
 
+  late TextEditingController _shelfController;
+  late TextEditingController _warehouseController;
+  late TextEditingController _specificLocationController;
+
   String? _imageUrl;
   File? _imageFile;
   double _rating = 0.0;
@@ -52,7 +55,7 @@ class _BookFormScreenState extends State<BookFormScreen> {
   String? _dropdownSelectedCategoryId; // << Re-add state for dropdown value
 
   // Publisher-related state
-  String? _selectedPublisherId;
+  int? _selectedPublisherId;
   String? _selectedPublisherName;
   List<Publishermodels> _publishers = [];
 
@@ -69,10 +72,18 @@ class _BookFormScreenState extends State<BookFormScreen> {
       text: widget.book?.price?.toString() ?? '',
     );
     _publisherController = TextEditingController(
-      text: widget.book?.publisher ?? '',
+      text: widget.book?.publisherId?.toString() ?? '',
     );
     _quantityController = TextEditingController(
       text: widget.book?.quantity?.toString() ?? '0',
+    );
+
+    _shelfController = TextEditingController(text: widget.book?.shelf ?? '');
+    _warehouseController = TextEditingController(
+      text: widget.book?.warehouse ?? '',
+    );
+    _specificLocationController = TextEditingController(
+      text: widget.book?.specificLocation ?? '',
     );
 
     _imageUrl = widget.book?.imageUrl;
@@ -84,7 +95,7 @@ class _BookFormScreenState extends State<BookFormScreen> {
     // Set the selected publisher ID and name if editing a book
     if (widget.book?.publisherId != null) {
       _selectedPublisherId = widget.book!.publisherId;
-      _selectedPublisherName = widget.book!.publisher;
+      _selectedPublisherName = widget.book!.publisherName;
       // Initialize publisher name from the book
     }
     print(_selectedPublisherName);
@@ -123,6 +134,9 @@ class _BookFormScreenState extends State<BookFormScreen> {
     _priceController.dispose();
     _publisherController.dispose();
     _quantityController.dispose();
+    _shelfController.dispose();
+    _warehouseController.dispose();
+    _specificLocationController.dispose();
     super.dispose();
   }
 
@@ -286,9 +300,8 @@ class _BookFormScreenState extends State<BookFormScreen> {
       // Log the image URL for debugging
       log('Saving book with image URL: $finalImageUrl');
 
-      final tenDanhMucString = _selectedCategoryIds.join(
-        ',',
-      ); // Join IDs back to string
+      final tenDanhMucString =
+          _selectedCategoryIds.isEmpty ? null : _selectedCategoryIds.join(',');
 
       final book = Book(
         id: widget.book?.id,
@@ -296,17 +309,17 @@ class _BookFormScreenState extends State<BookFormScreen> {
         author: _authorController.text,
         description: _descriptionController.text,
         price: double.tryParse(_priceController.text) ?? 0.0,
-        publisher: _selectedPublisherName,
+        publisherName: _selectedPublisherName,
         publisherId: _selectedPublisherId,
-        imageUrl: finalImageUrl, // Use the processed URL
-        category:
-            tenDanhMucString, // Use the joined string here with the CORRECT parameter name
+        imageUrl: finalImageUrl,
+        category: tenDanhMucString,
         quantity: int.tryParse(_quantityController.text) ?? 0,
-        roles: 1, // Default role for admin
+        shelf: _shelfController.text,
+        warehouse: _warehouseController.text,
+        specificLocation: _specificLocationController.text,
       );
 
       // Use the onSave callback provided by the parent widget
-      // This will use BLoC in the parent component
       widget.onSave(book);
       Navigator.pop(context);
     } else {
@@ -644,12 +657,13 @@ class _BookFormScreenState extends State<BookFormScreen> {
                             _selectedPublisherId == null) {
                           _initializePublisherSelection(
                             state.publishers,
-                            widget.book!.publisherId,
+                            widget.book!.publisherId
+                                ?.toString(), // Thêm toString()
                           );
                         }
 
                         return DropdownButtonFormField<String>(
-                          value: _selectedPublisherId,
+                          value: _selectedPublisherId?.toString(),
                           decoration: InputDecoration(
                             labelText: 'Publisher',
                             border: OutlineInputBorder(),
@@ -670,7 +684,10 @@ class _BookFormScreenState extends State<BookFormScreen> {
                               }).toList(),
                           onChanged: (value) {
                             setState(() {
-                              _selectedPublisherId = value;
+                              _selectedPublisherId =
+                                  value != null
+                                      ? int.parse(value)
+                                      : null; // Chuyển String thành int
                               if (value != null) {
                                 _selectedPublisherName = _findPublisherName(
                                   state.publishers,
@@ -766,7 +783,62 @@ class _BookFormScreenState extends State<BookFormScreen> {
                     },
                   ),
                   SizedBox(height: 16),
+                  Text(
+                    'Location Information',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
 
+                  // Shelf
+                  TextFormField(
+                    controller: _shelfController,
+                    decoration: InputDecoration(
+                      labelText: 'Shelf',
+                      border: OutlineInputBorder(),
+                      hintText: 'Enter shelf number or identifier',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter shelf information';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 16),
+
+                  // Warehouse
+                  TextFormField(
+                    controller: _warehouseController,
+                    decoration: InputDecoration(
+                      labelText: 'Warehouse',
+                      border: OutlineInputBorder(),
+                      hintText: 'Enter warehouse name or identifier',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter warehouse information';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 16),
+
+                  // Specific Location
+                  TextFormField(
+                    controller: _specificLocationController,
+                    decoration: InputDecoration(
+                      labelText: 'Specific Location',
+                      border: OutlineInputBorder(),
+                      hintText: 'Enter specific location details',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter specific location information';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 16),
                   // Save Button
                   PrimaryButton(label: 'Save Book', onPressed: _saveBook),
                 ],
@@ -797,7 +869,10 @@ class _BookFormScreenState extends State<BookFormScreen> {
   ) {
     if (publisherId != null) {
       setState(() {
-        _selectedPublisherId = publisherId;
+        _selectedPublisherId =
+            publisherId != null
+                ? int.parse(publisherId)
+                : null; // Chuyển String thành int
         _selectedPublisherName = _findPublisherName(publishers, publisherId);
       });
     }

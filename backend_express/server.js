@@ -1,12 +1,14 @@
+// server.js
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const bookRoutes = require('./routes/bookRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const orderRoutes = require('./routes/orderRoutes');
-const reviewRoutes = require('./routes/reviewRoutes'); // Import review routes
-const uploadRoutes = require('./routes/uploadRoutes'); // Import upload routes
-const seriesRoutes = require('./routes/seriesRoutes'); // Import series routes
+const reviewRoutes = require('./routes/reviewRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
+const seriesRoutes = require('./routes/seriesRoutes');
+const cartRoutes = require('./routes/cartRoutes'); // Thêm cart routes
 const db = require('./config/database');
 
 // Create Express app
@@ -15,7 +17,7 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors({
-  origin: '*', // Allow all origins during development
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
@@ -26,9 +28,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/books', bookRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/reviews', reviewRoutes); // Add reviews routes
-app.use('/api/uploads', uploadRoutes); // Add upload routes
-app.use('/api/series', seriesRoutes); // Add series routes
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/uploads', uploadRoutes);
+app.use('/api/series', seriesRoutes);
+app.use('/api/cart', cartRoutes); // Thêm cart routes
 
 // Create temp directory for file uploads if it doesn't exist
 const tempDir = path.join(__dirname, 'temp');

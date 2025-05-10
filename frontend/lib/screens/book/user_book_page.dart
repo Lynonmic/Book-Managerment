@@ -1,31 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend/model/book_model.dart';
-import 'package:frontend/screens/cart/cart_page.dart';
+import 'package:frontend/blocs/cart/cart_bloc.dart'; // Thêm import cho CartBloc
+import 'package:frontend/blocs/cart/cart_event.dart'; // Import CartEvent
 
-class UserBookPage extends StatelessWidget {
-  final Book book;
+class UserBookPage extends StatefulWidget {
+  final Map<String, dynamic> userData; // User data
+  final Book book; // Book data
 
-  const UserBookPage({Key? key, required this.book}) : super(key: key);
+  const UserBookPage({Key? key, required this.book, required this.userData})
+    : super(key: key);
+
+  @override
+  _UserBookPageState createState() => _UserBookPageState();
+}
+
+class _UserBookPageState extends State<UserBookPage> {
+  int quantity = 1; // Declare quantity state
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(book.title),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.shopping_cart),
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => CartPage(),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+      appBar: AppBar(title: Text(widget.book.title)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -34,47 +30,34 @@ class UserBookPage extends StatelessWidget {
             Center(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child:
-                    book.imageUrl != null && book.imageUrl!.isNotEmpty
-                        ? Image.asset(
-                          book.imageUrl!,
-                          width: 160,
-                          height: 220,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Icon(
-                              Icons.broken_image,
-                              size: 100,
-                              color: Colors.grey,
-                            );
-                          },
-                        )
-                        : Image.asset(
-                          'assets/images/default_book_image.png',
-                          width: 160,
-                          height: 220,
-                          fit: BoxFit.cover,
-                        ),
+                child: Image.network(
+                  widget.book.imageUrl ??
+                      'https://res.cloudinary.com/dyxy8asve/image/upload/v1746379643/harryposter_wmvvpx.jpg',
+                  width: 160,
+                  height: 220,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Icon(
+                      Icons.broken_image,
+                      size: 100,
+                      color: Colors.grey,
+                    );
+                  },
+                ),
               ),
             ),
-
             const SizedBox(height: 20),
-
-            // Title
             Text(
-              book.title,
+              widget.book.title,
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-
             const SizedBox(height: 12),
-
-            // Author
-            if (book.author != null && book.author!.isNotEmpty)
+            if (widget.book.author != null && widget.book.author!.isNotEmpty)
               Row(
                 children: [
                   Expanded(
                     child: Text(
-                      book.author!,
+                      widget.book.author!,
                       style: const TextStyle(
                         fontSize: 16,
                         color: Colors.black87,
@@ -84,11 +67,8 @@ class UserBookPage extends StatelessWidget {
                   ),
                 ],
               ),
-
             const SizedBox(height: 12),
-
-            // Price
-            if (book.price != null)
+            if (widget.book.price != null)
               Row(
                 children: [
                   const Icon(
@@ -97,7 +77,7 @@ class UserBookPage extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '${book.price!.toStringAsFixed(0)}₫',
+                    '${widget.book.price!.toStringAsFixed(0)}₫',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -106,20 +86,12 @@ class UserBookPage extends StatelessWidget {
                   ),
                 ],
               ),
-
             const SizedBox(height: 20),
-
-            // Description
-            if (book.description != null && book.description!.isNotEmpty)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 6),
-                  Text(
-                    book.description!,
-                    style: const TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                ],
+            if (widget.book.description != null &&
+                widget.book.description!.isNotEmpty)
+              Text(
+                widget.book.description!,
+                style: const TextStyle(fontSize: 16, color: Colors.grey),
               ),
             const SizedBox(height: 16),
             const Text(
@@ -149,7 +121,6 @@ class UserBookPage extends StatelessWidget {
         color: Colors.white,
         child: ElevatedButton.icon(
           onPressed: () => _showAddToCartDialog(context),
-
           icon: const Icon(Icons.add_shopping_cart, color: Colors.white),
           label: const Text(
             'Thêm vào giỏ hàng',
@@ -169,8 +140,6 @@ class UserBookPage extends StatelessWidget {
   }
 
   void _showAddToCartDialog(BuildContext context) {
-    int quantity = 1;
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -255,17 +224,25 @@ class UserBookPage extends StatelessWidget {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
+                          // Trong _showAddToCartDialog, sửa phần onPressed của nút Xác nhận:
                           onPressed: () {
+                            // Thêm vào giỏ hàng thông qua CartBloc
+                            context.read<CartBloc>().add(
+                              AddToCart(
+                                userId: widget.userData['id'],
+                                bookId: widget.book.id?.toString() ?? '0',
+                                quantity: quantity,
+                              ),
+                            );
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  'Đã thêm $quantity cuốn "${book.title}" vào giỏ hàng',
+                                  'Đã thêm $quantity cuốn "${widget.book.title}" vào giỏ hàng',
                                 ),
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
-                            // TODO: gọi API thêm vào giỏ hàng
                           },
                           icon: const Icon(Icons.check, color: Colors.white),
                           label: const Text(

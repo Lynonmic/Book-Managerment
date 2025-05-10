@@ -1,29 +1,54 @@
 class Book {
   final int? id;
   final String title;
-  final String? author;
-  final String? description;
-  final double? price;
-  final String? publisher; // Display name
-  final String? publisherId; // Database ID - new field
+  final String author;
+  final String description;
+  final double price;
   final String? imageUrl;
   final String? category;
-  final int? quantity;
-  final int? roles;
+  final int quantity;
+  final int? publisherId;
+  final String? publisherName;
+  // Add location fields
+  final String? shelf;
+  final String? warehouse;
+  final String? position;
 
   Book({
     this.id,
     required this.title,
-    this.author,
-    this.description,
-    this.price,
-    this.publisher,
-    this.publisherId, // Add this field
+    required this.author,
+    required this.description,
+    required this.price,
     this.imageUrl,
     this.category,
-    this.quantity,
-    this.roles,
+    required this.quantity,
+    this.publisherId,
+    this.publisherName,
+    // Add location parameters
+    this.shelf,
+    this.warehouse,
+    this.position,
   });
+
+  factory Book.fromJson(Map<String, dynamic> json) {
+    return Book(
+      id: json['id'],
+      title: json['title'],
+      author: json['author'],
+      description: json['description'],
+      price: json['price'].toDouble(),
+      imageUrl: json['image_url'],
+      category: json['category'],
+      quantity: json['quantity'],
+      publisherId: json['publisher_id'],
+      publisherName: json['publisher_name'],
+      // Add location fields from JSON
+      shelf: json['shelf'],
+      warehouse: json['warehouse'],
+      position: json['position'],
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -32,28 +57,15 @@ class Book {
       'author': author,
       'description': description,
       'price': price,
-      'publisher': publisher,
-      'publisherId': publisherId, // Include in serialization
       'image_url': imageUrl,
       'category': category,
       'quantity': quantity,
-      'roles': roles,
+      'publisher_id': publisherId,
+      'publisher_name': publisherName,
+      // Add location fields to JSON
+      'shelf': shelf,
+      'warehouse': warehouse,
+      'position': position,
     };
-  }
-
-  factory Book.fromJson(Map<String, dynamic> json) {
-    return Book(
-      id: json['id'],
-      title: json['title'],
-      author: json['author'],
-      description: json['description'],
-      price: json['price']?.toDouble(),
-      publisher: json['publisher'],
-      publisherId: json['publisherId'], // Include in deserialization
-      imageUrl: json['image_url'],
-      category: json['category'],
-      quantity: json['quantity'],
-      roles: json['roles'],
-    );
   }
 }

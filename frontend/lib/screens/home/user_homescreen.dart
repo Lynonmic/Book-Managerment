@@ -129,7 +129,7 @@ class _UserHomescreen extends State<UserHomescreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => UserBookPage(book: book),
+                        builder: (context) => UserBookPage(book: book, userData: widget.userData),
                       ),
                     );
                   },
@@ -197,10 +197,10 @@ class _UserHomescreen extends State<UserHomescreen> {
                   : _currentItemType == 'evaluations'
                   ? _buildEvaluationList()
                   : _currentItemType == 'cart'
-                  ? CartPage()
+                  ? CartPage(userId: widget.userData['id'])
                   : Container())
               : _currentIndex == 1
-              ? CartPage()
+              ? CartPage(userId: widget.userData['id'])
               : _currentIndex == 2
               ? const SearchUserPage()
               : _currentIndex == 3
