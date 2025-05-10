@@ -46,6 +46,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreen extends State<HomeScreen> {
   int _currentIndex = 0;
   String _currentItemType = 'books';
+  List<Book>? _filteredBooks;
 
   @override
   void initState() {
@@ -164,25 +165,52 @@ class _HomeScreen extends State<HomeScreen> {
 
         return Stack(
           children: [
-            RefreshIndicator(
-              onRefresh: () async {
-                context.read<BookBloc>().add(LoadBooks());
-                return Future.delayed(Duration(milliseconds: 300));
-              },
-              child: ListView.builder(
-                itemCount: state.books.length,
-                itemBuilder: (context, index) {
-                  final book = state.books[index];
-                  return BookItem(
-                    title: book.title,
-                    description: book.description ?? 'No description available',
-                    imageUrl: book.imageUrl,
-                    onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) => BookFormScreen(
+            Column(
+              children: [
+                // Search Bar
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Search books...',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(vertical: 0),
+                    ),
+                    onChanged: (query) {
+                      // Filter books based on search query
+                      final filteredBooks = state.books.where((book) {
+                        return book.title.toLowerCase().contains(query.toLowerCase());
+                      }).toList();
+                      
+                      // Update the displayed books
+                      setState(() {
+                        _filteredBooks = filteredBooks;
+                      });
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      context.read<BookBloc>().add(LoadBooks());
+                      return Future.delayed(Duration(milliseconds: 300));
+                    },
+                    child: ListView.builder(
+                      itemCount: _filteredBooks?.length ?? state.books.length,
+                      itemBuilder: (context, index) {
+                        final book = _filteredBooks?[index] ?? state.books[index];
+                        return BookItem(
+                          title: book.title,
+                          description: book.description ?? 'No description available',
+                          imageUrl: book.imageUrl,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => BookFormScreen(
                                   book: book,
                                   onSave: (updatedBook) async {
                                     try {
@@ -191,13 +219,9 @@ class _HomeScreen extends State<HomeScreen> {
                                         context.read<BookBloc>().add(
                                           UpdateBook(updatedBook),
                                         );
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
+                                        ScaffoldMessenger.of(context).showSnackBar(
                                           SnackBar(
-                                            content: Text(
-                                              'Book updated successfully',
-                                            ),
+                                            content: Text('Book updated successfully'),
                                           ),
                                         );
                                       }
@@ -207,12 +231,15 @@ class _HomeScreen extends State<HomeScreen> {
                                     }
                                   },
                                 ),
-                          ),
+                              ),
+                            );
+                          },
                         );
-                    },
-                  );
-                },
-              ),
+                      },
+                    ),
+                  ),
+                ),
+              ],
             ),
             Positioned(
               bottom: 20,

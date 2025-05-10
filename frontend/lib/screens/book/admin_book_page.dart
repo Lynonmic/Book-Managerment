@@ -30,6 +30,7 @@ class BookFormScreen extends StatefulWidget {
 
 class _BookFormScreenState extends State<BookFormScreen> {
   final _formKey = GlobalKey<FormState>();
+  List<Book>? _filteredBooks;
 
   // Controllers for form fields
   late TextEditingController _titleController;
@@ -41,7 +42,7 @@ class _BookFormScreenState extends State<BookFormScreen> {
 
   late TextEditingController _shelfController;
   late TextEditingController _warehouseController;
-  late TextEditingController _specificLocationController;
+  late TextEditingController _positionController;
 
   String? _imageUrl;
   File? _imageFile;
@@ -82,8 +83,8 @@ class _BookFormScreenState extends State<BookFormScreen> {
     _warehouseController = TextEditingController(
       text: widget.book?.warehouse ?? '',
     );
-    _specificLocationController = TextEditingController(
-      text: widget.book?.specificLocation ?? '',
+    _positionController = TextEditingController(
+      text: widget.book?.position ?? '',
     );
 
     _imageUrl = widget.book?.imageUrl;
@@ -136,7 +137,7 @@ class _BookFormScreenState extends State<BookFormScreen> {
     _quantityController.dispose();
     _shelfController.dispose();
     _warehouseController.dispose();
-    _specificLocationController.dispose();
+    _positionController.dispose();
     super.dispose();
   }
 
@@ -316,7 +317,7 @@ class _BookFormScreenState extends State<BookFormScreen> {
         quantity: int.tryParse(_quantityController.text) ?? 0,
         shelf: _shelfController.text,
         warehouse: _warehouseController.text,
-        specificLocation: _specificLocationController.text,
+        position: _positionController.text,
       );
 
       // Use the onSave callback provided by the parent widget
@@ -823,17 +824,17 @@ class _BookFormScreenState extends State<BookFormScreen> {
                   ),
                   SizedBox(height: 16),
 
-                  // Specific Location
+                  // Position
                   TextFormField(
-                    controller: _specificLocationController,
+                    controller: _positionController,
                     decoration: InputDecoration(
-                      labelText: 'Specific Location',
+                      labelText: 'Position',
                       border: OutlineInputBorder(),
-                      hintText: 'Enter specific location details',
+                      hintText: 'Enter position details',
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter specific location information';
+                        return 'Please enter position information';
                       }
                       return null;
                     },
