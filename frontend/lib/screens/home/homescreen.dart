@@ -123,7 +123,10 @@ class _HomeScreen extends State<HomeScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => BookFormScreen(onSave: (Book newBook) {}),
+            builder: (context) => BookFormScreen(onSave: (Book newBook) async {
+              // Example: Return a dummy integer value
+              return 0;
+            }),
           ),
         );
       } else if (value == 'edit_profile') {
@@ -230,11 +233,13 @@ class _HomeScreen extends State<HomeScreen> {
                                             content: Text('Book updated successfully'),
                                           ),
                                         );
+                                        return updatedBook.id!;
                                       }
                                     } finally {
                                       // Refresh books list
                                       context.read<BookBloc>().add(LoadBooks());
                                     }
+                                    return 0; // Default return value if no ID is available
                                   },
                                 ),
                               ),
@@ -281,6 +286,7 @@ class _HomeScreen extends State<HomeScreen> {
                                           LoadBooks(),
                                         );
                                       }
+                                      return 0; // Ensure a return value
                                     },
                                   ),
                             ),

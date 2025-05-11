@@ -33,7 +33,6 @@ router.post('/', async (req, res) => {
   const { 
     title, author, description, imageUrl, price, 
     publisherId, category, quantity, seriesId,
-    shelf, warehouse, position 
   } = req.body;
 
   const newBookData = {
@@ -46,9 +45,6 @@ router.post('/', async (req, res) => {
     category,
     quantity,
     seriesId,
-    shelf,
-    warehouse,
-    position
   };
 
   try {
@@ -78,9 +74,6 @@ router.put('/:id', async (req, res) => {
     category: req.body.category,
     quantity: req.body.quantity,
     seriesId: req.body.seriesId,
-    shelf: req.body.shelf,
-    warehouse: req.body.warehouse,
-    position: req.body.position
   };
   
   try {

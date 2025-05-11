@@ -16,10 +16,6 @@ const formatBookResponse = (book) => {
     seriesId: book.series_id,
     createdAt: book.ngay_tao,
     updatedAt: book.ngay_cap_nhat,
-    // Thêm thông tin vị trí sách
-    shelf: book.ma_ke,
-    warehouse: book.ma_kho,
-    position: book.vi_tri
   };
 };
 
@@ -76,10 +72,6 @@ exports.createBook = async (req, res) => {
       quantity: req.body.quantity,
       description: req.body.description,
       seriesId: req.body.seriesId,
-      // Thêm thông tin vị trí sách
-      shelf: req.body.shelf,
-      warehouse: req.body.warehouse,
-      position: req.body.position
     };
 
     const bookId = await BookModel.createBook(bookData);
@@ -110,10 +102,6 @@ exports.updateBook = async (req, res) => {
       quantity: req.body.quantity,
       description: req.body.description,
       seriesId: req.body.seriesId,
-      // Thêm thông tin vị trí sách
-      shelf: req.body.shelf,
-      warehouse: req.body.warehouse,
-      position: req.body.position
     };
 
     const affected = await BookModel.updateBook(req.params.id, bookData);

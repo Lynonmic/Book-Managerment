@@ -14,12 +14,8 @@ class BookModel {
           b.so_luong as quantity,
           b.series_id,
           b.ngay_tao as created_at,
-          b.ngay_cap_nhat as updated_at,
-          bl.ma_ke as shelf,
-          bl.ma_kho as warehouse,
-          bl.vi_tri as position
+          b.ngay_cap_nhat as updated_at
         FROM books b
-        LEFT JOIN book_locations bl ON b.ma_sach = bl.ma_sach AND bl.is_deleted = 1
         WHERE b.is_deleted = 1
       `);
       return rows;
@@ -33,12 +29,8 @@ class BookModel {
       const [rows] = await db.query(
         `
         SELECT 
-          b.*,
-          bl.ma_ke as shelf,
-          bl.ma_kho as warehouse,
-          bl.vi_tri as position
+          b.*
         FROM books b
-        LEFT JOIN book_locations bl ON b.ma_sach = bl.ma_sach AND bl.is_deleted = 1
         WHERE b.ma_sach = ? AND b.is_deleted = 1
       `,
         [id]
@@ -77,15 +69,6 @@ class BookModel {
         );
 
         const bookId = bookResult.insertId;
-
-        // Insert book location if provided
-        if (bookData.shelf && bookData.warehouse && bookData.position) {
-          await connection.query(
-            `INSERT INTO book_locations (ma_sach, ma_ke, ma_kho, vi_tri, is_deleted)
-             VALUES (?, ?, ?, ?, 1)`,
-            [bookId, bookData.shelf, bookData.warehouse, bookData.position]
-          );
-        }
 
         await connection.commit();
         return bookId;
@@ -167,34 +150,6 @@ class BookModel {
             values
           );
         }
-
-        // Update book location if provided
-        if (bookData.shelf || bookData.warehouse || bookData.position) {
-          const [existingLocation] = await connection.query(
-            "SELECT id FROM book_locations WHERE ma_sach = ? AND is_deleted = 1",
-            [id]
-          );
-
-          if (existingLocation.length > 0) {
-            // Update existing location
-            await connection.query(
-              `UPDATE book_locations 
-             SET ma_ke = COALESCE(?, ma_ke),
-                 ma_kho = COALESCE(?, ma_kho),
-                 vi_tri = COALESCE(?, vi_tri)
-             WHERE ma_sach = ? AND is_deleted = 1`,
-              [bookData.shelf, bookData.warehouse, bookData.position, id]
-            );
-          } else {
-            // Insert new location
-            await connection.query(
-              `INSERT INTO book_locations (ma_sach, ma_ke, ma_kho, vi_tri, is_deleted)
-             VALUES (?, ?, ?, ?, 1)`,
-              [id, bookData.shelf, bookData.warehouse, bookData.position]
-            );
-          }
-        }
-
         await connection.commit();
         return true;
       } catch (error) {

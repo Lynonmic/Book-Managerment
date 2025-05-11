@@ -9,7 +9,8 @@ class AddPositionFieldScreen extends StatefulWidget {
 class _AddPositionFieldScreenState extends State<AddPositionFieldScreen> {
   final TextEditingController _positionNameController = TextEditingController();
   List<String> _positionNames = []; // Danh sách mới thêm (chưa lưu)
-  List<String> _existingPositionFields = []; // Danh sách từ DB
+  List<Map<String, dynamic>> _existingPositionFields = [];
+
   String? _errorMessage;
 
   @override
@@ -22,7 +23,7 @@ class _AddPositionFieldScreenState extends State<AddPositionFieldScreen> {
     try {
       final fields = await PositionRepo.getPositionFields();
       setState(() {
-        _existingPositionFields = fields.map((e) => e['name'] as String).toList();
+        _existingPositionFields = fields.cast<Map<String, dynamic>>();
       });
     } catch (e) {
       print('Error fetching position fields: $e');
@@ -85,7 +86,9 @@ class _AddPositionFieldScreenState extends State<AddPositionFieldScreen> {
         _positionNames.clear();
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Đã lưu các trường vị trí!')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Đã lưu các trường vị trí!')));
       _fetchExistingPositionFields(); // Cập nhật lại danh sách từ DB
     } catch (e) {
       setState(() {
@@ -114,7 +117,10 @@ class _AddPositionFieldScreenState extends State<AddPositionFieldScreen> {
               child: Text('Thêm Thành Phần Vị Trí'),
             ),
             SizedBox(height: 20),
-            Text('📝 Danh sách chờ lưu:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              '📝 Danh sách chờ lưu:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             ..._positionNames.map((name) {
               int index = _positionNames.indexOf(name);
               return ListTile(
@@ -140,14 +146,34 @@ class _AddPositionFieldScreenState extends State<AddPositionFieldScreen> {
               child: Text('Lưu Tất Cả'),
             ),
             Divider(height: 40),
-            Text('📦 Các trường vị trí đã có:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              '📦 Các trường vị trí đã có:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             Expanded(
               child: ListView.builder(
                 itemCount: _existingPositionFields.length,
                 itemBuilder: (context, index) {
+                  final field = _existingPositionFields[index];
+                  final id = field['id'];
+                  final name = field['name'];
+
                   return ListTile(
                     leading: Icon(Icons.location_on_outlined),
-                    title: Text(_existingPositionFields[index]),
+                    title: Text(name),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.edit),
+                          onPressed: () => _showEditDialog(id, name),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete),
+                          onPressed: () => _confirmDeletePosition(id),
+                        ),
+                      ],
+                    ),
                   );
                 },
               ),
@@ -155,6 +181,91 @@ class _AddPositionFieldScreenState extends State<AddPositionFieldScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showEditDialog(int id, String currentName) {
+    final TextEditingController editController = TextEditingController(
+      text: currentName,
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Chỉnh sửa vị trí'),
+          content: TextField(
+            controller: editController,
+            decoration: InputDecoration(labelText: 'Tên mới'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Hủy'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final newName = editController.text.trim();
+                if (newName.isNotEmpty) {
+                  Navigator.of(context).pop();
+                  try {
+                    await PositionRepo.updatePositionField(
+                      id: id,
+                      newName: newName,
+                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('Đã cập nhật!')));
+                    _fetchExistingPositionFields(); // Refresh
+                  } catch (e) {
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('Lỗi cập nhật: $e')));
+                  }
+                }
+              },
+              child: Text('Lưu'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _confirmDeletePosition(int id) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Xóa vị trí'),
+          content: Text('Bạn có chắc muốn xóa vị trí này?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Hủy'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                try {
+                  await PositionRepo.deletePositionField(
+                    id: id,
+                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Đã xóa!')));
+                  _fetchExistingPositionFields(); // Refresh
+                } catch (e) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Lỗi xóa: $e')));
+                }
+              },
+              child: Text('Xóa'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

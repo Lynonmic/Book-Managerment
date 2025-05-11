@@ -2,19 +2,19 @@ const db = require("../config/database");
 
 const BookPositionModel = {
   // Lấy tất cả các vị trí của sách
-  getBookPositions: async (bookId) => {
+  getBookPositions: async (ma_sach) => {
     try {
       const [rows] = await db.query(`
         SELECT 
           bp.id,
-          bp.bookId,
-          bp.positionFieldId,
-          bp.positionValue,
+          bp.ma_sach ,
+          bp.position_field_id,
+          bp.position_value,
           pf.name AS positionName
         FROM book_positions bp
-        JOIN position_fields pf ON bp.positionFieldId = pf.id
-        WHERE bp.bookId = ?
-      `, [bookId]);
+        JOIN position_fields pf ON bp.position_field_id = pf.id
+        WHERE bp.ma_sach  = ?
+      `, [ma_sach]);
       return rows;
     } catch (error) {
       throw error;
@@ -22,27 +22,27 @@ const BookPositionModel = {
   },
 
   // Thêm vị trí cho sách
-  addBookPosition: async (bookId, positionFieldId, positionValue) => {
+  addBookPosition: async (ma_sach, position_field_id, position_value) => {
     try {
       // Kiểm tra xem vị trí này đã tồn tại chưa
       const [existingPosition] = await db.query(
-        'SELECT * FROM book_positions WHERE bookId = ? AND positionFieldId = ?',
-        [bookId, positionFieldId]
+        'SELECT * FROM book_positions WHERE ma_sach = ? AND position_field_id = ?',
+        [ma_sach, position_field_id]
       );
 
       if (existingPosition.length > 0) {
         // Nếu vị trí đã tồn tại, chỉ cần cập nhật
         const [result] = await db.query(
-          'UPDATE book_positions SET positionValue = ? WHERE bookId = ? AND positionFieldId = ?',
-          [positionValue, bookId, positionFieldId]
+          'UPDATE book_positions SET position_value = ? WHERE ma_sach  = ? AND position_field_id = ?',
+          [position_value, ma_sach, position_field_id]
         );
         return result.affectedRows;
       } else {
         // Nếu không có, tạo mới vị trí cho sách
         const [result] = await db.query(
-          `INSERT INTO book_positions (bookId, positionFieldId, positionValue) 
+          `INSERT INTO book_positions (ma_sach , position_field_id, position_value) 
            VALUES (?, ?, ?)`,
-          [bookId, positionFieldId, positionValue]
+          [ma_sach, position_field_id, position_value]
         );
         return result.insertId;
       }
@@ -52,11 +52,11 @@ const BookPositionModel = {
   },
 
   // Xóa vị trí sách
-  removeBookPosition: async (bookId, positionFieldId) => {
+  removeBookPosition: async (ma_sach, position_field_id) => {
     try {
       const [result] = await db.query(
-        'DELETE FROM book_positions WHERE bookId = ? AND positionFieldId = ?',
-        [bookId, positionFieldId]
+        'DELETE FROM book_positions WHERE ma_sach  = ? AND position_field_id = ?',
+        [ma_sach, position_field_id]
       );
       return result.affectedRows;
     } catch (error) {
@@ -65,11 +65,11 @@ const BookPositionModel = {
   },
 
   // Xóa tất cả các vị trí của sách
-  clearBookPositions: async (bookId) => {
+  clearBookPositions: async (ma_sach) => {
     try {
       const [result] = await db.query(
-        'DELETE FROM book_positions WHERE bookId = ?',
-        [bookId]
+        'DELETE FROM book_positions WHERE ma_sach  = ?',
+        [ma_sach]
       );
       return result.affectedRows;
     } catch (error) {

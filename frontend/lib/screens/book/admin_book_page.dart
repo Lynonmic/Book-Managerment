@@ -12,6 +12,8 @@ import 'package:frontend/blocs/publisher/publisher_bloc.dart';
 import 'package:frontend/blocs/publisher/publisher_event.dart';
 import 'package:frontend/blocs/publisher/publisher_state.dart';
 import 'package:frontend/model/book_model.dart';
+import 'package:frontend/model/posotionField_model.dart';
+import 'package:frontend/repositories/position_repo.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:frontend/screens/widget/primary_button.dart';
 import 'package:frontend/model/PublisherModels.dart';
@@ -19,7 +21,7 @@ import 'package:frontend/model/category_model.dart';
 
 class BookFormScreen extends StatefulWidget {
   final Book? book;
-  final Function(Book) onSave;
+  final Future<int> Function(Book) onSave;
 
   const BookFormScreen({Key? key, this.book, required this.onSave})
     : super(key: key);
@@ -31,6 +33,8 @@ class BookFormScreen extends StatefulWidget {
 class _BookFormScreenState extends State<BookFormScreen> {
   final _formKey = GlobalKey<FormState>();
   List<Book>? _filteredBooks;
+  List<PositionFieldModel> _positionFields = [];
+  Map<int, TextEditingController> _positionControllers = {};
 
   // Controllers for form fields
   late TextEditingController _titleController;
@@ -39,10 +43,6 @@ class _BookFormScreenState extends State<BookFormScreen> {
   late TextEditingController _priceController;
   late TextEditingController _publisherController;
   late TextEditingController _quantityController;
-
-  late TextEditingController _shelfController;
-  late TextEditingController _warehouseController;
-  late TextEditingController _positionController;
 
   String? _imageUrl;
   File? _imageFile;
@@ -63,6 +63,7 @@ class _BookFormScreenState extends State<BookFormScreen> {
   @override
   void initState() {
     super.initState();
+    _loadPositionFields();
     // Initialize controllers with the book data if editing
     _titleController = TextEditingController(text: widget.book?.title ?? '');
     _authorController = TextEditingController(text: widget.book?.author ?? '');
@@ -77,14 +78,6 @@ class _BookFormScreenState extends State<BookFormScreen> {
     );
     _quantityController = TextEditingController(
       text: widget.book?.quantity?.toString() ?? '0',
-    );
-
-    _shelfController = TextEditingController(text: widget.book?.shelf ?? '');
-    _warehouseController = TextEditingController(
-      text: widget.book?.warehouse ?? '',
-    );
-    _positionController = TextEditingController(
-      text: widget.book?.position ?? '',
     );
 
     _imageUrl = widget.book?.imageUrl;
@@ -106,6 +99,25 @@ class _BookFormScreenState extends State<BookFormScreen> {
       context.read<CategoryBloc>().add(LoadCategories());
       context.read<PublisherBloc>().add(LoadPublishersEvent());
     });
+  }
+
+  Future<void> _loadPositionFields() async {
+    try {
+      final data = await PositionRepo.getPositionFields(); // GỌI REPO
+
+      setState(() {
+        _positionFields = List<PositionFieldModel>.from(
+          data.map((item) => PositionFieldModel.fromJson(item)),
+        );
+        for (var field in _positionFields) {
+          _positionControllers[field.id] = TextEditingController();
+        }
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Không thể tải các trường vị trí: $e')),
+      );
+    }
   }
 
   Future<void> _handleRatingChanged(int bookId, int rating) async {
@@ -135,9 +147,6 @@ class _BookFormScreenState extends State<BookFormScreen> {
     _priceController.dispose();
     _publisherController.dispose();
     _quantityController.dispose();
-    _shelfController.dispose();
-    _warehouseController.dispose();
-    _positionController.dispose();
     super.dispose();
   }
 
@@ -296,9 +305,7 @@ class _BookFormScreenState extends State<BookFormScreen> {
         return;
       }
 
-      // Make sure we're using the full Cloudinary URL if available
       String? finalImageUrl = _imageUrl;
-      // Log the image URL for debugging
       log('Saving book with image URL: $finalImageUrl');
 
       final tenDanhMucString =
@@ -315,14 +322,31 @@ class _BookFormScreenState extends State<BookFormScreen> {
         imageUrl: finalImageUrl,
         category: tenDanhMucString,
         quantity: int.tryParse(_quantityController.text) ?? 0,
-        shelf: _shelfController.text,
-        warehouse: _warehouseController.text,
-        position: _positionController.text,
       );
 
-      // Use the onSave callback provided by the parent widget
-      widget.onSave(book);
-      Navigator.pop(context);
+      try {
+        final bookId = await widget.onSave(book);
+        log('Book saved with ID: $bookId');
+
+        // Lưu vị trí sách với bookId đã có
+        log('Saving positions for bookId: $bookId');
+        for (var field in _positionFields) {
+          final value = _positionControllers[field.id]?.text ?? '';
+          log('Field: ${field.name}, Value: $value');
+          if (value.isNotEmpty) {
+            log(
+              'Adding position: bookId=$bookId, fieldId=${field.id}, positionValue=$value',
+            );
+            await PositionRepo.addBookPosition(bookId, field.id, value);
+          }
+          Navigator.pop(context); // Trở lại màn hình trước
+        }
+      } catch (e) {
+        log('Error saving book or position: $e');
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('An error occurred: $e')));
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Please fill in all required fields')),
@@ -790,55 +814,25 @@ class _BookFormScreenState extends State<BookFormScreen> {
                   ),
                   SizedBox(height: 8),
 
-                  // Shelf
-                  TextFormField(
-                    controller: _shelfController,
-                    decoration: InputDecoration(
-                      labelText: 'Shelf',
-                      border: OutlineInputBorder(),
-                      hintText: 'Enter shelf number or identifier',
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter shelf information';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 16),
+                  ..._positionFields.map((field) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: TextFormField(
+                        controller: _positionControllers[field.id],
+                        decoration: InputDecoration(
+                          labelText: field.name,
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Vui lòng nhập ${field.name.toLowerCase()}';
+                          }
+                          return null;
+                        },
+                      ),
+                    );
+                  }).toList(),
 
-                  // Warehouse
-                  TextFormField(
-                    controller: _warehouseController,
-                    decoration: InputDecoration(
-                      labelText: 'Warehouse',
-                      border: OutlineInputBorder(),
-                      hintText: 'Enter warehouse name or identifier',
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter warehouse information';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 16),
-
-                  // Position
-                  TextFormField(
-                    controller: _positionController,
-                    decoration: InputDecoration(
-                      labelText: 'Position',
-                      border: OutlineInputBorder(),
-                      hintText: 'Enter position details',
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter position information';
-                      }
-                      return null;
-                    },
-                  ),
                   SizedBox(height: 16),
                   // Save Button
                   PrimaryButton(label: 'Save Book', onPressed: _saveBook),

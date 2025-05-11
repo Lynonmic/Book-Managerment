@@ -1252,37 +1252,138 @@ class ApiService {
     }
   }
 
-// ApiService
-static Future<void> addPositionField(
-  String positionName,
-  BuildContext context, // Nhận BuildContext từ UI
-) async {
-  try {
-    final response = await http.post(
-      Uri.parse('$apiUrl/position-fields'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'name': positionName}),
-    );
-
-    print("Position added: ${response.statusCode}");
-    print("Response body: ${response.body}");
-
-    if (response.statusCode != 201) {
-      final errorMessage =
-          json.decode(response.body)['message'] ?? 'Unknown error';
-
-      // Hiển thị lỗi cho người dùng trên UI
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage)),
+  // ApiService
+  static Future<void> addPositionField(
+    String positionName,
+    BuildContext context, // Nhận BuildContext từ UI
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$apiUrl/position-fields'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'name': positionName}),
       );
-      throw Exception('Failed to add position: $errorMessage');
+
+      print("Position added: ${response.statusCode}");
+      print("Response body: ${response.body}");
+
+      if (response.statusCode != 201) {
+        final errorMessage =
+            json.decode(response.body)['message'] ?? 'Unknown error';
+
+        // Hiển thị lỗi cho người dùng trên UI
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(errorMessage)));
+        throw Exception('Failed to add position: $errorMessage');
+      }
+
+      print('Position added successfully');
+    } catch (e) {
+      print('Error occurred while adding position: $e');
+      throw Exception('Failed to add position: $e');
     }
-
-    print('Position added successfully');
-  } catch (e) {
-    print('Error occurred while adding position: $e');
-    throw Exception('Failed to add position: $e');
   }
-}
 
+  static Future<void> updatePositionField({
+    required int id,
+    required String newName,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$apiUrl/position-fields/$id'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'name': newName}),
+      );
+
+      if (response.statusCode != 200) {
+        final errorMessage =
+            json.decode(response.body)['message'] ?? 'Unknown error';
+        throw Exception('Cập nhật thất bại: $errorMessage');
+      }
+    } catch (e) {
+      print('Error updating position field: $e');
+      throw Exception('Lỗi khi cập nhật: $e');
+    }
+  }
+
+  static Future<void> deletePositionField({required int id}) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$apiUrl/position-fields/$id'),
+      );
+
+      if (response.statusCode != 200) {
+        final errorMessage =
+            json.decode(response.body)['message'] ?? 'Unknown error';
+        throw Exception('Xóa thất bại: $errorMessage');
+      }
+    } catch (e) {
+      print('Error deleting position field: $e');
+      throw Exception('Lỗi khi xóa: $e');
+    }
+  }
+
+  // Cập nhật vị trí sách
+  static Future<void> updateBookPosition({
+    required int bookId,
+    required int positionFieldId,
+    required String newValue,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$apiUrl/book-positions/$bookId/$positionFieldId'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'positionValue': newValue}),
+      );
+
+      if (response.statusCode != 200) {
+        final errorMessage =
+            json.decode(response.body)['message'] ?? 'Unknown error';
+        throw Exception('Cập nhật vị trí thất bại: $errorMessage');
+      }
+    } catch (e) {
+      print('Error updating book position: $e');
+      throw Exception('Lỗi khi cập nhật vị trí sách: $e');
+    }
+  }
+
+  // Xóa một vị trí cụ thể của sách
+  static Future<void> deleteBookPosition({
+    required int bookId,
+    required int positionFieldId,
+  }) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$apiUrl/book-positions/$bookId/$positionFieldId'),
+      );
+
+      if (response.statusCode != 200) {
+        final errorMessage =
+            json.decode(response.body)['message'] ?? 'Unknown error';
+        throw Exception('Xóa vị trí thất bại: $errorMessage');
+      }
+    } catch (e) {
+      print('Error deleting book position: $e');
+      throw Exception('Lỗi khi xóa vị trí sách: $e');
+    }
+  }
+
+  // Xóa tất cả vị trí của sách
+  static Future<void> clearAllBookPositions(int bookId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$apiUrl/book-positions/$bookId'),
+      );
+
+      if (response.statusCode != 200) {
+        final errorMessage =
+            json.decode(response.body)['message'] ?? 'Unknown error';
+        throw Exception('Xóa toàn bộ vị trí thất bại: $errorMessage');
+      }
+    } catch (e) {
+      print('Error clearing book positions: $e');
+      throw Exception('Lỗi khi xóa tất cả vị trí: $e');
+    }
+  }
 }

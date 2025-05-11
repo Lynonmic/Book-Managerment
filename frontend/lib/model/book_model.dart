@@ -9,10 +9,6 @@ class Book {
   final int quantity;
   final int? publisherId;
   final String? publisherName;
-  // Add location fields
-  final String? shelf;
-  final String? warehouse;
-  final String? position;
 
   Book({
     this.id,
@@ -25,10 +21,6 @@ class Book {
     required this.quantity,
     this.publisherId,
     this.publisherName,
-    // Add location parameters
-    this.shelf,
-    this.warehouse,
-    this.position,
   });
 
   factory Book.fromJson(Map<String, dynamic> json) {
@@ -43,10 +35,6 @@ class Book {
       quantity: json['quantity'],
       publisherId: json['publisher_id'],
       publisherName: json['publisher_name'],
-      // Add location fields from JSON
-      shelf: json['shelf'],
-      warehouse: json['warehouse'],
-      position: json['position'],
     );
   }
 
@@ -62,9 +50,6 @@ class Book {
       'quantity': quantity,
       'publisher_id': publisherId,
       'publisher_name': publisherName,
-      'shelf': shelf,
-      'warehouse': warehouse,
-      'position': position,
     };
   }
 }
