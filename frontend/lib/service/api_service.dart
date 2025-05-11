@@ -1078,9 +1078,6 @@ class ApiService {
     }
   }
 
-
-
-
   static Future<List<CartModel>> getUserCart(int userId) async {
     try {
       final response = await http.get(
@@ -1139,9 +1136,7 @@ class ApiService {
       final response = await http.put(
         Uri.parse('$apiUrl/cart/$cartId'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'quantity': quantity,
-        }),
+        body: json.encode({'quantity': quantity}),
       );
 
       if (response.statusCode == 200) {
@@ -1187,4 +1182,107 @@ class ApiService {
       throw Exception('Error: $e');
     }
   }
+
+  static Future<List<Map<String, dynamic>>> getPositionFields() async {
+    try {
+      final response = await http.get(Uri.parse('$apiUrl/position-fields'));
+
+      if (response.statusCode == 200) {
+        // Chuyển đổi dữ liệu JSON thành danh sách các trường vị trí
+        List<dynamic> data = json.decode(response.body);
+        return data.map((e) => e as Map<String, dynamic>).toList();
+      } else {
+        // In ra chi tiết lỗi nếu API trả về lỗi khác ngoài 200
+        print("Error fetching position fields: ${response.statusCode}");
+        throw Exception('Failed to load position fields');
+      }
+    } catch (e) {
+      // Catch any errors that might occur during the request
+      print("Exception in getPositionFields: $e");
+      throw Exception('Failed to load position fields: $e');
+    }
+  }
+
+  // Thêm vị trí cho sách
+  static Future<Map<String, dynamic>> addBookPosition(
+    int bookId,
+    int positionFieldId,
+    String positionValue,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$apiUrl/book-positions'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'bookId': bookId,
+          'positionFieldId': positionFieldId,
+          'positionValue': positionValue,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        return json.decode(response.body);
+      } else {
+        print("Error adding book position: ${response.statusCode}");
+        throw Exception('Failed to add book position');
+      }
+    } catch (e) {
+      print("Exception in addBookPosition: $e");
+      throw Exception('Failed to add book position: $e');
+    }
+  }
+
+  // Lấy các vị trí của sách theo ID
+  static Future<List<Map<String, dynamic>>> getBookPositions(int bookId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$apiUrl/book-positions/$bookId'),
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        return data.map((e) => e as Map<String, dynamic>).toList();
+      } else {
+        print("Error fetching book positions: ${response.statusCode}");
+        throw Exception('Failed to load book positions');
+      }
+    } catch (e) {
+      print("Exception in getBookPositions: $e");
+      throw Exception('Failed to load book positions: $e');
+    }
+  }
+
+// ApiService
+static Future<void> addPositionField(
+  String positionName,
+  BuildContext context, // Nhận BuildContext từ UI
+) async {
+  try {
+    final response = await http.post(
+      Uri.parse('$apiUrl/position-fields'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'name': positionName}),
+    );
+
+    print("Position added: ${response.statusCode}");
+    print("Response body: ${response.body}");
+
+    if (response.statusCode != 201) {
+      final errorMessage =
+          json.decode(response.body)['message'] ?? 'Unknown error';
+
+      // Hiển thị lỗi cho người dùng trên UI
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMessage)),
+      );
+      throw Exception('Failed to add position: $errorMessage');
+    }
+
+    print('Position added successfully');
+  } catch (e) {
+    print('Error occurred while adding position: $e');
+    throw Exception('Failed to add position: $e');
+  }
+}
+
 }

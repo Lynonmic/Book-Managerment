@@ -62,7 +62,6 @@ class Book {
       'quantity': quantity,
       'publisher_id': publisherId,
       'publisher_name': publisherName,
-      // Add location fields to JSON
       'shelf': shelf,
       'warehouse': warehouse,
       'position': position,

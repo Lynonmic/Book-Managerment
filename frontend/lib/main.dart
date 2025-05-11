@@ -7,6 +7,7 @@ import 'package:frontend/blocs/category/category_bloc.dart';
 import 'package:frontend/blocs/evaluation/evaluation_bloc.dart';
 import 'package:frontend/blocs/forgot_pass/forgot_password_bloc.dart';
 import 'package:frontend/blocs/order/order_bloc.dart';
+import 'package:frontend/blocs/position/position_bloc.dart';
 import 'package:frontend/blocs/profile/profile_bloc.dart';
 import 'package:frontend/blocs/publisher/publisher_bloc.dart';
 import 'package:frontend/blocs/search/search_user_bloc.dart';
@@ -19,6 +20,7 @@ import 'package:frontend/repositories/evaluation_repository.dart';
 import 'package:frontend/repositories/order_repository.dart';
 import 'package:frontend/repositories/publisher_repository.dart';
 import 'package:frontend/repositories/user_repository.dart';
+import 'package:frontend/screens/book/add_position.dart';
 import 'package:frontend/screens/login/login_page.dart';
 import 'package:frontend/service/api_service.dart';
 
@@ -46,8 +48,10 @@ void main() {
                   EvaluationBloc(evaluationRepository: EvaluationRepository()),
         ),
         BlocProvider(create: (_) => SearchUserBloc(ApiService())),
+        BlocProvider(create: (_) => CartBloc(CartRepository())),
         BlocProvider(
-          create: (_) => CartBloc(CartRepository()),
+          create: (context) => PositionBloc(),
+          child: AddPositionFieldScreen(),
         ),
       ],
       child: const MyApp(),

@@ -78,6 +78,16 @@ class OptionMenu extends StatelessWidget {
                 ],
               ),
             ),
+            const PopupMenuItem<String>(
+              value: 'positions',
+              child: Row(
+                children: [
+                  Icon(Icons.rate_review),
+                  SizedBox(width: 8),
+                  Text('Position'),
+                ],
+              ),
+            ),
           ],
     );
   }

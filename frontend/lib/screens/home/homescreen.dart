@@ -11,6 +11,8 @@ import 'package:frontend/blocs/evaluation/evaluation_event.dart';
 import 'package:frontend/blocs/evaluation/evaluation_state.dart';
 import 'package:frontend/blocs/order/order_bloc.dart';
 import 'package:frontend/blocs/order/order_event.dart';
+import 'package:frontend/blocs/position/position_bloc.dart';
+import 'package:frontend/blocs/position/position_event.dart';
 import 'package:frontend/blocs/publisher/publisher_bloc.dart';
 import 'package:frontend/blocs/publisher/publisher_event.dart';
 import 'package:frontend/blocs/publisher/publisher_state.dart';
@@ -24,6 +26,7 @@ import 'package:frontend/model/UserModels.dart';
 import 'package:frontend/model/book_model.dart';
 import 'package:frontend/model/category_model.dart';
 import 'package:frontend/screens/book/UI/book_item.dart';
+import 'package:frontend/screens/book/add_position.dart';
 import 'package:frontend/screens/book/admin_book_page.dart';
 import 'package:frontend/screens/cart/order_page.dart';
 import 'package:frontend/screens/profile/edit_profile_page.dart';
@@ -60,6 +63,7 @@ class _HomeScreen extends State<HomeScreen> {
       context.read<PublisherBloc>().add(LoadPublishersEvent());
       context.read<EvaluationBloc>().add(LoadAllReviews());
       context.read<SearchUserBloc>().add(PerformSearchUserEvent(''));
+      context.read<PositionBloc>().add(FetchPositionFields());
     });
   }
 
@@ -109,6 +113,8 @@ class _HomeScreen extends State<HomeScreen> {
       } else if (value == 'categories') {
         _currentItemType = 'categories';
         context.read<CategoryBloc>().add(LoadCategories());
+      }else if (value == 'positions') {
+        _currentItemType = 'positions';
       } else if (value == 'evaluations') {
         _currentItemType = 'evaluations';
         context.read<EvaluationBloc>().add(LoadAllReviews());
@@ -952,6 +958,8 @@ class _HomeScreen extends State<HomeScreen> {
         return 'Category Management';
       case 'orders':
         return 'Order Management';
+      case 'positions':
+        return 'Position Management';
       case 'evaluations':
         return 'Reviews Management';
       default:
@@ -1095,6 +1103,8 @@ class _HomeScreen extends State<HomeScreen> {
                   ? _buildCategoryList()
                   : _currentItemType == 'evaluations'
                   ? _buildEvaluationList()
+                  : _currentItemType == 'positions'
+                  ? AddPositionFieldScreen()
                   : Container()
                       as Widget) // Ensure this branch returns a Widget
               : _currentIndex == 1

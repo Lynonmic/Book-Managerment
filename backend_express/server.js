@@ -9,6 +9,7 @@ const reviewRoutes = require('./routes/reviewRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const seriesRoutes = require('./routes/seriesRoutes');
 const cartRoutes = require('./routes/cartRoutes'); // Thêm cart routes
+const positionRoutes = require('./routes/location');
 const db = require('./config/database');
 
 // Create Express app
@@ -32,6 +33,9 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/series', seriesRoutes);
 app.use('/api/cart', cartRoutes); // Thêm cart routes
+app.use('/api', positionRoutes);
+
+
 
 // Create temp directory for file uploads if it doesn't exist
 const tempDir = path.join(__dirname, 'temp');
