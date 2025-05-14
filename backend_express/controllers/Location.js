@@ -1,3 +1,4 @@
+const db = require('../config/database');
 const PositionField = require("../models/PositionField");
 const BookPosition = require("../models/BookPosition");
 const Book = require("../models/bookModel");
@@ -68,13 +69,15 @@ const getBookPositions = async (req, res) => {
     const bookPositions = await BookPosition.getBookPositions(bookId);
 
     if (!bookPositions || bookPositions.length === 0) {
-      return res.status(404).json({ message: 'Không có vị trí sách nào' });
+      return res.status(404).json({ message: "Không có vị trí sách nào" });
     }
 
     res.json(bookPositions);
   } catch (error) {
-    console.error('Lỗi khi lấy vị trí sách:', error);
-    res.status(500).json({ message: 'Lỗi khi lấy vị trí sách', error: error.message });
+    console.error("Lỗi khi lấy vị trí sách:", error);
+    res
+      .status(500)
+      .json({ message: "Lỗi khi lấy vị trí sách", error: error.message });
   }
 };
 
@@ -92,12 +95,10 @@ const updatePositionField = async (req, res) => {
     }
     res.json({ message: "Cập nhật thành công" });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: "Lỗi khi cập nhật trường vị trí",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Lỗi khi cập nhật trường vị trí",
+      error: error.message,
+    });
   }
 };
 
@@ -106,19 +107,42 @@ const deletePositionField = async (req, res) => {
   const { id } = req.params;
 
   try {
+    // Kiểm tra ID có hợp lệ không
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ message: "ID không hợp lệ" });
+    }
+
+    // Kiểm tra xem có sách nào đang sử dụng trường vị trí này không
+    const [booksUsingField] = await db.query(
+      "SELECT 1 FROM book_positions WHERE position_field_id = ? LIMIT 1",
+      [id]
+    );
+
+    if (booksUsingField.length > 0) {
+      return res.status(400).json({
+        message: "Không thể xóa vì có sách đang sử dụng trường vị trí này",
+      });
+    }
+
+    // Tiến hành xóa nếu không bị ràng buộc
     const deleted = await PositionField.removePositionField(id);
+
     if (deleted === 0) {
       return res
         .status(404)
         .json({ message: "Không tìm thấy trường vị trí để xóa" });
     }
-    res.json({ message: "Đã xóa thành công" });
+
+    res.json({ message: "Đã xóa trường vị trí thành công" });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Lỗi khi xóa trường vị trí", error: error.message });
+    console.error("Lỗi khi xóa trường vị trí:", error);
+    res.status(500).json({
+      message: "Lỗi khi xóa trường vị trí",
+      error: error.message,
+    });
   }
 };
+
 
 const removeBookPosition = async (req, res) => {
   const { bookId, positionFieldId } = req.params;
@@ -186,6 +210,28 @@ const updateBookPosition = async (req, res) => {
   }
 };
 
+// Lấy tất cả sách theo một trường vị trí
+const getBookPositionsByField = async (req, res) => {
+  const { positionFieldId } = req.params;
+
+  try {
+    const booksWithPosition = await BookPosition.getBooksByPositionField(
+      positionFieldId
+    );
+
+    if (!booksWithPosition || booksWithPosition.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Không có sách nào với trường vị trí này" });
+    }
+
+    res.json(booksWithPosition);
+  } catch (error) {
+    console.error("Lỗi khi lấy sách theo trường vị trí:", error);
+    res.status(500).json({ message: "Lỗi server", error: error.message });
+  }
+};
+
 module.exports = {
   getAllPositionFields,
   addBookPosition,
@@ -196,4 +242,5 @@ module.exports = {
   removeBookPosition,
   clearBookPositions,
   updateBookPosition,
+  getBookPositionsByField,
 };

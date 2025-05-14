@@ -9,7 +9,8 @@ const {
   deletePositionField,
   removeBookPosition,
   clearBookPositions,
-  updateBookPosition
+  updateBookPosition,
+  getBookPositionsByField
 } = require('../controllers/Location');
 
 // ===== VỊ TRÍ TRƯỜNG (Position Fields) ===== //
@@ -24,5 +25,9 @@ router.get('/book-positions/:bookId', getBookPositions);          // Lấy tất
 router.put('/book-positions/:bookId/:positionFieldId', updateBookPosition);  // Cập nhật vị trí sách
 router.delete('/book-positions/:bookId/:positionFieldId', removeBookPosition); // Xóa 1 vị trí sách
 router.delete('/book-positions/:bookId', clearBookPositions);     // Xóa tất cả vị trí của sách
+
+// Lấy tất cả sách theo trường vị trí
+router.get('/book-positions/by-field/:positionFieldId', getBookPositionsByField);
+
 
 module.exports = router;

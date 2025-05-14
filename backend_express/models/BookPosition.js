@@ -77,5 +77,24 @@ const BookPositionModel = {
     }
   }
 };
+// Lấy danh sách sách theo một trường vị trí cụ thể
+getBooksByPositionField: async (position_field_id) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT 
+        bp.ma_sach,
+        b.ten_sach,
+        bp.position_value,
+        pf.name AS position_field_name
+      FROM book_positions bp
+      JOIN books b ON bp.ma_sach = b.id
+      JOIN position_fields pf ON bp.position_field_id = pf.id
+      WHERE bp.position_field_id = ?
+    `, [position_field_id]);
+    return rows;
+  } catch (error) {
+    throw error;
+  }
+},
 
 module.exports = BookPositionModel;

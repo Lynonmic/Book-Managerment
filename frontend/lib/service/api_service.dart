@@ -1327,7 +1327,7 @@ class ApiService {
       }
     } catch (e) {
       print('Error deleting position field: $e');
-      throw Exception('Lỗi khi xóa: $e');
+      throw Exception('$e');
     }
   }
 
