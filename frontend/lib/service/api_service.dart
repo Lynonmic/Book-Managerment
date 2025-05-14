@@ -422,7 +422,7 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> createBook(Book book) async {
+  static Future<Book?> createBook(Book book) async {
     try {
       final response = await http.post(
         Uri.parse("$apiUrl/books"),
@@ -433,19 +433,26 @@ class ApiService {
       final responseJson = jsonDecode(response.body);
 
       if (response.statusCode == 201) {
-        return {
-          "success": true,
-          "message": responseJson["message"] ?? "Book added successfully",
-          "bookId": responseJson["bookId"],
-        };
+        // Tạo book với bookId nhận được từ response
+        return Book(
+          id: responseJson["bookId"], // Nhận bookId từ API
+          title: book.title,
+          author: book.author,
+          description: book.description,
+          price: book.price,
+          publisher: book.publisher,
+          publisherId: book.publisherId,
+          imageUrl: book.imageUrl,
+          category: book.category,
+          quantity: book.quantity,
+        );
       } else {
-        return {
-          "success": false,
-          "message": responseJson["message"] ?? "Failed to add book",
-        };
+        print('Failed to add book: ${responseJson["message"]}');
+        return null;
       }
     } catch (e) {
-      return {"success": false, "message": "Error connecting to server: $e"};
+      print("Error: $e");
+      return null;
     }
   }
 
@@ -1214,9 +1221,9 @@ class ApiService {
         Uri.parse('$apiUrl/book-positions'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
-          'bookId': bookId,
-          'positionFieldId': positionFieldId,
-          'positionValue': positionValue,
+          'ma_sach': bookId,
+          'position_field_id': positionFieldId,
+          'position_value': positionValue,
         }),
       );
 

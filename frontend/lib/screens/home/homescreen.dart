@@ -36,9 +36,10 @@ import 'package:frontend/screens/search/search_page.dart';
 import 'package:frontend/screens/widget/bottom_menu.dart';
 import 'package:frontend/screens/widget/floating_button.dart';
 import 'package:frontend/screens/widget/option_menu.dart';
+import 'package:frontend/service/api_service.dart';
 
 class HomeScreen extends StatefulWidget {
-  final Map<String, dynamic> userData; 
+  final Map<String, dynamic> userData;
 
   const HomeScreen({super.key, required this.userData});
 
@@ -113,7 +114,7 @@ class _HomeScreen extends State<HomeScreen> {
       } else if (value == 'categories') {
         _currentItemType = 'categories';
         context.read<CategoryBloc>().add(LoadCategories());
-      }else if (value == 'positions') {
+      } else if (value == 'positions') {
         _currentItemType = 'positions';
       } else if (value == 'evaluations') {
         _currentItemType = 'evaluations';
@@ -123,10 +124,14 @@ class _HomeScreen extends State<HomeScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => BookFormScreen(onSave: (Book newBook) async {
-              // Example: Return a dummy integer value
-              return 0;
-            }),
+            builder:
+                (context) => BookFormScreen(
+                  onSave: (book) async {
+                    return await ApiService.createBook(
+                      book,
+                    ); // Trả về Book sau khi lưu
+                  },
+                ),
           ),
         );
       } else if (value == 'edit_profile') {
@@ -190,10 +195,13 @@ class _HomeScreen extends State<HomeScreen> {
                     ),
                     onChanged: (query) {
                       // Filter books based on search query
-                      final filteredBooks = state.books.where((book) {
-                        return book.title.toLowerCase().contains(query.toLowerCase());
-                      }).toList();
-                      
+                      final filteredBooks =
+                          state.books.where((book) {
+                            return book.title.toLowerCase().contains(
+                              query.toLowerCase(),
+                            );
+                          }).toList();
+
                       // Update the displayed books
                       setState(() {
                         _filteredBooks = filteredBooks;
@@ -210,38 +218,44 @@ class _HomeScreen extends State<HomeScreen> {
                     child: ListView.builder(
                       itemCount: _filteredBooks?.length ?? state.books.length,
                       itemBuilder: (context, index) {
-                        final book = _filteredBooks?[index] ?? state.books[index];
+                        final book =
+                            _filteredBooks?[index] ?? state.books[index];
                         return BookItem(
                           title: book.title,
-                          description: book.description ?? 'No description available',
+                          description:
+                              book.description ?? 'No description available',
                           imageUrl: book.imageUrl,
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => BookFormScreen(
-                                  book: book,
-                                  onSave: (updatedBook) async {
-                                    try {
-                                      if (updatedBook.id != null) {
-                                        // Update existing book using BLoC
-                                        context.read<BookBloc>().add(
-                                          UpdateBook(updatedBook),
-                                        );
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text('Book updated successfully'),
-                                          ),
-                                        );
-                                        return updatedBook.id!;
-                                      }
-                                    } finally {
-                                      // Refresh books list
-                                      context.read<BookBloc>().add(LoadBooks());
-                                    }
-                                    return 0; // Default return value if no ID is available
-                                  },
-                                ),
+                                builder:
+                                    (context) => BookFormScreen(
+                                      book: book,
+                                      onSave: (updatedBook) async {
+                                        try {
+                                          // Update existing book using BLoC
+                                          context.read<BookBloc>().add(
+                                            UpdateBook(updatedBook),
+                                          );
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Book updated successfully',
+                                              ),
+                                            ),
+                                          );
+                                          return updatedBook;
+                                        } finally {
+                                          // Refresh books list
+                                          context.read<BookBloc>().add(
+                                            LoadBooks(),
+                                          );
+                                        }
+                                      },
+                                    ),
                               ),
                             );
                           },
@@ -286,7 +300,6 @@ class _HomeScreen extends State<HomeScreen> {
                                           LoadBooks(),
                                         );
                                       }
-                                      return 0; // Ensure a return value
                                     },
                                   ),
                             ),

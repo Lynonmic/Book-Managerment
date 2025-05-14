@@ -5,7 +5,7 @@ import 'package:frontend/service/api_service.dart';
 class BookRepository {
   List<Book> _books = [];
   List<Book> _filteredBooks = [];
-  
+
   List<Book> get books => _filteredBooks.isNotEmpty ? _filteredBooks : _books;
 
   // Get all books
@@ -32,26 +32,21 @@ class BookRepository {
     }
   }
 
-  // Create a new book
-  Future<Book> createBook(Book book) async {
-    try {
-      final response = await ApiService.createBook(book);
-      if (response['success']) {
-        if (response['book'] != null) { 
-          final createdBook = Book.fromJson(response['book']);
-          _books.add(createdBook); // Optionally update cache
-          return createdBook;
-        } else {
-           print("Warning: Create book response did not contain full book object.");
-           return book; // Fallback or fetch logic needed here
-        }
-      } else {
-        throw Exception(response['message']);
-      }
-    } catch (e) {
-      throw Exception('Failed to create book: $e');
+Future<Book?> createBook(Book book) async {
+  try {
+    final createdBook = await ApiService.createBook(book);
+    if (createdBook != null) {
+      _books.add(createdBook); // Update the in-memory book list
+      return createdBook; // Return the created book
+    } else {
+      print("Warning: Create book response did not return a Book object.");
+      return null;
     }
+  } catch (e) {
+    print("Error creating book: $e");
+    throw Exception('Failed to create book: $e');
   }
+}
 
   // Update an existing book
   Future<Book> updateBook(Book book) async {
@@ -101,31 +96,33 @@ class BookRepository {
 
   // Filter books by category
   List<Book> filterByCategory(String categoryName) {
-    _filteredBooks = _books.where((book) => book.category == categoryName).toList();
+    _filteredBooks =
+        _books.where((book) => book.category == categoryName).toList();
     return _filteredBooks;
   }
-  
+
   // Clear filters
   void clearFilters() {
     _filteredBooks = [];
   }
-  
+
   // Search books by title or author
   List<Book> searchBooks(String query) {
     if (query.isEmpty) {
       _filteredBooks = [];
       return _books;
     }
-    
+
     final lowercaseQuery = query.toLowerCase();
-    _filteredBooks = _books.where((book) {
-      return book.title.toLowerCase().contains(lowercaseQuery) ||
-             (book.author?.toLowerCase().contains(lowercaseQuery) ?? false);
-    }).toList();
-    
+    _filteredBooks =
+        _books.where((book) {
+          return book.title.toLowerCase().contains(lowercaseQuery) ||
+              (book.author?.toLowerCase().contains(lowercaseQuery) ?? false);
+        }).toList();
+
     return _filteredBooks;
   }
-  
+
   // Upload book image to Cloudinary
   Future<String?> uploadImage(File imageFile) async {
     try {

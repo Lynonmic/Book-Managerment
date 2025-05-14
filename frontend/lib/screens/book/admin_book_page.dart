@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'dart:io';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend/blocs/book/book_bloc.dart';
@@ -21,7 +22,7 @@ import 'package:frontend/model/category_model.dart';
 
 class BookFormScreen extends StatefulWidget {
   final Book? book;
-  final Future<int> Function(Book) onSave;
+  final Future<Book?> Function(Book) onSave;
 
   const BookFormScreen({Key? key, this.book, required this.onSave})
     : super(key: key);
@@ -56,14 +57,14 @@ class _BookFormScreenState extends State<BookFormScreen> {
   String? _dropdownSelectedCategoryId; // << Re-add state for dropdown value
 
   // Publisher-related state
-  int? _selectedPublisherId;
+  String? _selectedPublisherId;
   String? _selectedPublisherName;
   List<Publishermodels> _publishers = [];
 
   @override
   void initState() {
     super.initState();
-    _loadPositionFields();
+    _loadPositionFields(widget.book?.id ?? 0); // Load position fields
     // Initialize controllers with the book data if editing
     _titleController = TextEditingController(text: widget.book?.title ?? '');
     _authorController = TextEditingController(text: widget.book?.author ?? '');
@@ -74,7 +75,7 @@ class _BookFormScreenState extends State<BookFormScreen> {
       text: widget.book?.price?.toString() ?? '',
     );
     _publisherController = TextEditingController(
-      text: widget.book?.publisherId?.toString() ?? '',
+      text: widget.book?.publisher ?? '',
     );
     _quantityController = TextEditingController(
       text: widget.book?.quantity?.toString() ?? '0',
@@ -89,7 +90,7 @@ class _BookFormScreenState extends State<BookFormScreen> {
     // Set the selected publisher ID and name if editing a book
     if (widget.book?.publisherId != null) {
       _selectedPublisherId = widget.book!.publisherId;
-      _selectedPublisherName = widget.book!.publisherName;
+      _selectedPublisherName = widget.book!.publisher;
       // Initialize publisher name from the book
     }
     print(_selectedPublisherName);
@@ -101,24 +102,47 @@ class _BookFormScreenState extends State<BookFormScreen> {
     });
   }
 
-  Future<void> _loadPositionFields() async {
-    try {
-      final data = await PositionRepo.getPositionFields(); // GỌI REPO
+  Future<void> _loadPositionFields(int bookId) async {
+  try {
+    final data = await PositionRepo.getPositionFields(); // Gọi repo để lấy các trường vị trí
 
-      setState(() {
-        _positionFields = List<PositionFieldModel>.from(
-          data.map((item) => PositionFieldModel.fromJson(item)),
-        );
-        for (var field in _positionFields) {
-          _positionControllers[field.id] = TextEditingController();
-        }
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Không thể tải các trường vị trí: $e')),
+    setState(() {
+      _positionFields = List<PositionFieldModel>.from(
+        data.map((item) => PositionFieldModel.fromJson(item)),
       );
-    }
+
+      // Khởi tạo controller cho mỗi trường vị trí
+      for (var field in _positionFields) {
+        _positionControllers[field.id] = TextEditingController();
+      }
+
+      // Lấy các vị trí của sách nếu có
+      _loadBookPositions(bookId);
+    });
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Không thể tải các trường vị trí: $e')),
+    );
   }
+}
+
+Future<void> _loadBookPositions(int bookId) async {
+    final bookPositions = await PositionRepo.getBookPositions(bookId); // Gọi repo để lấy các vị trí của sách
+
+    setState(() {
+      // Cập nhật thông tin vị trí cho từng trường
+      for (var position in bookPositions) {
+        int positionFieldId = position['position_field_id'];
+        String positionValue = position['position_value'];
+
+        // Kiểm tra và cập nhật giá trị cho các controller tương ứng
+        if (_positionControllers.containsKey(positionFieldId)) {
+          _positionControllers[positionFieldId]?.text = positionValue;
+        }
+      }
+    });
+  } 
+
 
   Future<void> _handleRatingChanged(int bookId, int rating) async {
     try {
@@ -297,7 +321,7 @@ class _BookFormScreenState extends State<BookFormScreen> {
 
   Future<void> _saveBook() async {
     if (_formKey.currentState!.validate()) {
-      // Check if we're still uploading an image
+      // Kiểm tra trạng thái tải ảnh
       if (_isUploading) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Please wait for image upload to complete')),
@@ -317,35 +341,36 @@ class _BookFormScreenState extends State<BookFormScreen> {
         author: _authorController.text,
         description: _descriptionController.text,
         price: double.tryParse(_priceController.text) ?? 0.0,
-        publisherName: _selectedPublisherName,
+        publisher: _selectedPublisherName,
         publisherId: _selectedPublisherId,
         imageUrl: finalImageUrl,
         category: tenDanhMucString,
         quantity: int.tryParse(_quantityController.text) ?? 0,
       );
 
-      try {
-        final bookId = await widget.onSave(book);
-        log('Book saved with ID: $bookId');
+      // Chờ đợi hàm onSave trả về kết quả
+      final savedBook = await widget.onSave(book);
 
-        // Lưu vị trí sách với bookId đã có
-        log('Saving positions for bookId: $bookId');
+      if (savedBook == null || savedBook.id == null) {
+        Navigator.pop(context);
+      }
+
+      final bookId = savedBook?.id!;
+
+      try {
+        // Lưu vị trí sách
         for (var field in _positionFields) {
           final value = _positionControllers[field.id]?.text ?? '';
-          log('Field: ${field.name}, Value: $value');
           if (value.isNotEmpty) {
-            log(
-              'Adding position: bookId=$bookId, fieldId=${field.id}, positionValue=$value',
-            );
-            await PositionRepo.addBookPosition(bookId, field.id, value);
+            await PositionRepo.addBookPosition(bookId!, field.id, value);
           }
-          Navigator.pop(context); // Trở lại màn hình trước
         }
+        Navigator.pop(context);
       } catch (e) {
-        log('Error saving book or position: $e');
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('An error occurred: $e')));
+        print('Error saving position: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Book saved but failed to save position: $e')),
+        );
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -682,13 +707,12 @@ class _BookFormScreenState extends State<BookFormScreen> {
                             _selectedPublisherId == null) {
                           _initializePublisherSelection(
                             state.publishers,
-                            widget.book!.publisherId
-                                ?.toString(), // Thêm toString()
+                            widget.book!.publisherId,
                           );
                         }
 
                         return DropdownButtonFormField<String>(
-                          value: _selectedPublisherId?.toString(),
+                          value: _selectedPublisherId,
                           decoration: InputDecoration(
                             labelText: 'Publisher',
                             border: OutlineInputBorder(),
@@ -709,10 +733,7 @@ class _BookFormScreenState extends State<BookFormScreen> {
                               }).toList(),
                           onChanged: (value) {
                             setState(() {
-                              _selectedPublisherId =
-                                  value != null
-                                      ? int.parse(value)
-                                      : null; // Chuyển String thành int
+                              _selectedPublisherId = value;
                               if (value != null) {
                                 _selectedPublisherName = _findPublisherName(
                                   state.publishers,
@@ -808,12 +829,6 @@ class _BookFormScreenState extends State<BookFormScreen> {
                     },
                   ),
                   SizedBox(height: 16),
-                  Text(
-                    'Location Information',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 8),
-
                   ..._positionFields.map((field) {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12.0),
@@ -864,10 +879,7 @@ class _BookFormScreenState extends State<BookFormScreen> {
   ) {
     if (publisherId != null) {
       setState(() {
-        _selectedPublisherId =
-            publisherId != null
-                ? int.parse(publisherId)
-                : null; // Chuyển String thành int
+        _selectedPublisherId = publisherId;
         _selectedPublisherName = _findPublisherName(publishers, publisherId);
       });
     }
